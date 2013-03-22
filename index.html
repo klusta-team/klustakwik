@@ -1,0 +1,157 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Klustakwik by klusta-team</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1>Klustakwik</h1>
+        <p></p>
+
+        <p class="view"><a href="https://github.com/klusta-team/klustakwik">View the Project on GitHub <small>klusta-team/klustakwik</small></a></p>
+
+
+        <ul>
+          <li><a href="https://github.com/klusta-team/klustakwik/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/klusta-team/klustakwik/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="https://github.com/klusta-team/klustakwik">View On <strong>GitHub</strong></a></li>
+        </ul>
+      </header>
+      <section>
+        <h1>KlustaKwik</h1>
+
+<h2>Documentation for Masked KlustaKwik</h2>
+
+<h2>0) Introduction</h2>
+
+<hr><p>The new masked version of KlustaKwik, currently KlustaKwik3.0.2, differs from previous versions in its use of a maskfile (either binary in the form of a .mask file  or floats between 0 and 1, .fmask file) in addition to the usual features file (.fet file). </p>
+
+<p>It is designed to be used in conjunction with SpikeDetekt for clustering spike waveforms recorded on large dense probes. </p>
+
+<p><em>Unmasked</em> channels are channels on which spiking activity has been found to occur by the program SpikeDetekt, whereas <em>masked</em> channels contain only noise.The .mask file or the .fmask file is a text file, every line of which is a vector giving the positions of the unmasked channels. In the .mask file, <strong>1</strong> denotes <em>unmasked</em> and <strong>0</strong> denotes <em>masked</em>. The .fmask file in contrast permits values between 0 and 1.</p>
+
+<h2>1) Parameters</h2>
+
+<hr><p>The current release of masked KlustaKwik has an enormous range of parameters which can be adjusted according to the user's needs. Many unnecessary parameters will soon be phased out, but in the interim to help beta-testers, we will describe a few of the relevant ones.</p>
+
+<pre><code>Usage: MaskedKlustaKwik FileBase ElecNo [Arguments]
+
+Arguments (with default values): 
+
+FileBase  electrode
+ElecNo  1
+MinClusters 20
+MaxClusters 30
+MaxPossibleClusters 100
+nStarts 1
+RandomSeed  1
+Debug   0
+Verbose 1
+UseFeatures 11111111111100001
+DistDump    0
+DistThresh  6.907755
+FullStepEvery   20
+ChangedThresh   0.050000
+Log 1
+Screen  1
+MaxIter 500
+StartCluFile    
+SplitEvery  40
+PenaltyK    0.000000
+PenaltyKLogN    1.000000
+Subset  1
+PriorPoint  1
+SaveSorted  0
+UseMaskedEStep  0
+UseMaskedMStep  0
+UseClusterPenalty   0
+SaveCovarianceMeans 0
+UseMaskedInitialConditions  0
+AssignToFirstClosestMask    0
+UseDistributional   0
+UseDistributionalEStep  1
+UseFloatMasks   0
+help    0
+</code></pre>
+
+<p>The above defaults cause KlustaKwik to run exactly as previous versions, but 10 times faster. The only difference is that the parameter PenaltyMix has been replaced with two parameters, PenaltyK and PenaltyKLogN.</p>
+
+<ul>
+<li><strong>Penalties</strong></li>
+</ul><p>PenaltyMix 1 corresponds to (PenaltyK 0, PenaltyKLogN 1)(Bayesian Information Criterion)</p>
+
+<p>PenaltyMix 0 corresponds to (PenaltyK 1, PenaltyKLogN 0) (Akaike Information Criterion)</p>
+
+<p>The parameters PenaltyK and PenaltyKLogN can be given positive values. The higher the values, the fewer clusters you obtain. Higher penalties discourage splitting.</p>
+
+<p>AIC is recommended for larger probes.</p>
+
+<ul>
+<li><strong>UseDistributional, UseDistributionalEStep and UseClusterPenalty</strong></li>
+</ul><p>These enables the use of the new `distributional Expectation-Maximization' algorithm. Set these all to 1. </p>
+
+<ul>
+<li><strong>UseFloatMasks</strong></li>
+</ul><p>It has been observed that using soft masks of the form. e.g.:</p>
+
+<p>0 0 0 0.3 0.3 0.3 1 1 1 1 1 1 0.4 0.4 0.4 0 0 0 0 0 0 </p>
+
+<p>leads to improved clusterings than using binary masks:</p>
+
+<p>0 0 0 0 0 0 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 </p>
+
+<p>Set this to 1 to enable masks to take floating point values. </p>
+
+<ul>
+<li>
+<strong>UseMaskedInitialConditions</strong>, <strong>AssignToFirstClosestMask</strong> and <strong>SplitEvery</strong>
+</li>
+</ul><p>The quality of clustering obtained from EM-type algorithms is sensitive to the initialization. A good way to initialize that works better than random initializations is to start with clusters which depend on unique masks or clusters containing similar masks. Set both of these options to 1 to enable masked initializations. At the same time set <strong>MinClusters</strong>= <strong>MaxClusters</strong> to the number of distinct masks (also set MaxPossibleClusters to a value greater than this). </p>
+
+<p>(If you do not know the number of distinct masks, run KlustaKwik, with arbitrary values of MinClusters and MaxClusters, read the first line giving the number of distinct masks, and then prematurely terminate the program).</p>
+
+<p><strong>SplitEvery</strong> is an integer which is the number of iterations after which KlustaKwik attempts to split existing clusters. When using masked initializations, to save time due to excessive splitting, set <strong>SplitEvery</strong> to a large number, close to the number of distinct masks. </p>
+
+<ul>
+<li><strong>UseFeatures</strong></li>
+</ul><p>Make sure to include a <strong>1</strong> for every feature you would like to include and a <strong>0</strong> for every feature you want to leave out (i.e. features corresponding to bad channels that you don't want).</p>
+
+<ul>
+<li><strong><em>Warning: Ignore UseMaskedEStep and UseMaskedMStep</em></strong></li>
+</ul><p>They should be set to 0 (as is the default). They are obsolete.</p>
+
+<h2>2) Command line input</h2>
+
+<hr><p>A typical command to run the masked version of KlustaKwik therefore looks as follows in a linux terminal:</p>
+
+<pre><code>[yourterminal]$./KlustaKwik yourfetfilename shanknumber -UseDistributional 1 -UseDistributionalEStep 1 -UseMaskedMStep 0 -UseMaskedEStep 0 -FullStepEvery 1 -SplitEvery 40 -UseMaskedInitialConditions 1 -AssignToFirstClosestMask 1 -UseClusterPenalty 1 -UseFloatMasks 0 -RandomSeed 123 -MaxIter 10000 -MaxPossibleClusters 500 -MinClusters 130 -MaxClusters 130 -PenaltyK 1 -PenaltyKLogN 0 -UseFeatures 111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111110
+</code></pre>
+
+<p>e.g. if your .fet file is called <strong>recording.fet.4</strong> (and your other files are <strong>recording.mask.4</strong>, <strong>recording.fmask.4</strong>)  for the fourth shank, then the command looks like:</p>
+
+<pre><code>[yourterminal]$./KlustaKwik recording 4 -UseDistributional 1 -UseDistributionalEStep 1 -UseMaskedMStep 0 -UseMaskedEStep 0 -FullStepEvery 1 -SplitEvery 40 -UseMaskedInitialConditions 1 -AssignToFirstClosestMask 1 -UseClusterPenalty 1 -UseFloatMasks 0 -RandomSeed 123 -MaxIter 10000 -MaxPossibleClusters 500 -MinClusters 130 -MaxClusters 130 -PenaltyK 1 -PenaltyKLogN 0 -UseFeatures 111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111110
+</code></pre>
+
+<p>You may consider writing a script to generate such a complicated command.</p>
+
+<p><strong>We apologize for the current somewhat complicated set-up. Everything will be simplified once beta testing has been completed.</strong></p>
+      </section>
+      <footer>
+        <p>This project is maintained by <a href="https://github.com/klusta-team">klusta-team</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+      </footer>
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+    
+  </body>
+</html>
