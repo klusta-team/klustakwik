@@ -27,8 +27,7 @@ void KK::LoadData(char *FileBase, int ElecNo, char *UseFeatures)
 	int maskval;
 	int UseLen;
 	scalar max, min;
-	bool usemasks = (UseMaskedMStep || UseMaskedEStep ||
-					 (UseDistributional && !UseFloatMasks));
+	bool usemasks = (UseDistributional && !UseFloatMasks);
 
 	// open file
 	sprintf(fname, "%s.fet.%d", FileBase, ElecNo);
@@ -189,7 +188,7 @@ void KK::LoadData(char *FileBase, int ElecNo, char *UseFeatures)
 		for(p=0; p<nPoints; p++) Data[p*nDims+i] = (Data[p*nDims+i] - min) / (max-min);
 	}
 
-	Output("Loaded %d data points of dimension %d.\n", nPoints, nDims);
+	Output("-----------------------------------------\n Loaded %d data points of dimension %d.\n", nPoints, nDims);
 }
 
 // write output to .clu file - with 1 added to cluster numbers, and empties removed.
@@ -226,6 +225,46 @@ void KK::SaveOutput()
 
 	fclose(fp);
 
+	if(SaveCovarianceMeans)
+		SaveCovMeans();
+	if(SaveSorted)
+		SaveSortedClu();
+}
+
+// write output to .clu file - with 1 added to cluster numbers, and empties removed.
+void KK::SaveTempOutput()
+{
+	int c;
+	unsigned int p;
+	char fname[STRLEN];
+	FILE *fp;
+	int MaxClass = 0;
+	vector<int> NotEmpty(MaxPossibleClusters);
+	vector<int> NewLabel(MaxPossibleClusters);
+    
+	// find non-empty clusters
+	for(c=0;c<MaxPossibleClusters;c++) NewLabel[c] = NotEmpty[c] = 0;
+	for(p=0; p<BestClass.size(); p++) NotEmpty[BestClass[p]] = 1;
+    
+	// make new cluster labels so we don't have empty ones
+    NewLabel[0] = 1;
+	MaxClass = 1;
+	for(c=1;c<MaxPossibleClusters;c++) {
+		if (NotEmpty[c]) {
+			MaxClass++;
+			NewLabel[c] = MaxClass;
+		}
+	}
+    
+	// print file
+	sprintf(fname, "%s.temp.clu.%d", FileBase, ElecNo);
+	fp = fopen_safe(fname, "w");
+    
+	fprintf(fp, "%d\n", MaxClass);
+	for (p=0; p<BestClass.size(); p++) fprintf(fp, "%d\n", NewLabel[BestClass[p]]);
+    
+	fclose(fp);
+    
 	if(SaveCovarianceMeans)
 		SaveCovMeans();
 	if(SaveSorted)

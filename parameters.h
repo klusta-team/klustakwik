@@ -83,10 +83,6 @@ enum type_t {FLOAT = 'f', INT = 'd',  BOOLEAN = 'b', STRING = 's'};
 	  INT_PARAM,   PriorPoint,            int PriorPoint,      1              )\
 	F("Save FileBase.sorted.*.ElecNo data files (data in sorted order).",      \
 	  BOOLEAN_PARAM, SaveSorted,          char SaveSorted,           false    )\
-	F("Use masked E-step",                                                     \
-	  BOOLEAN_PARAM, UseMaskedEStep,      char UseMaskedEStep,       false    )\
-	F("Use masked M-step",                                                     \
-	  BOOLEAN_PARAM, UseMaskedMStep,      char UseMaskedMStep,       false    )\
 	F("Use cluster-specific penalty",                                          \
 	  BOOLEAN_PARAM, UseClusterPenalty,   char UseClusterPenalty,    false    )\
 	F("Save covariance and means",                                             \

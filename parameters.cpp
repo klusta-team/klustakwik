@@ -61,11 +61,11 @@ void SetupParams(int argc, char **argv) {
 		params_error();
 	}
 
-	if(UseDistributional)
-	{
-		UseMaskedMStep = false;
-		UseMaskedEStep = false;
-	}
+	//if(UseDistributional)
+	//{
+	//	UseMaskedMStep = false;
+	//	UseMaskedEStep = false;
+	//}
 
 	if (Screen) print_params(stdout);
 

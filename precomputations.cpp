@@ -16,7 +16,7 @@ using namespace std;
 // the class.
 void KK::DoInitialPrecomputations()
 {
-	if(UseMaskedEStep || UseMaskedMStep || UseClusterPenalty)
+	if(UseClusterPenalty)
 	{
 		// Precompute the indices of the unmasked dimensions for each point
 		ComputeUnmasked();
@@ -28,14 +28,11 @@ void KK::DoInitialPrecomputations()
         // Compute the sum of the masks/float masks for each point (used for computing the cluster penalty)
         PointMaskDimension(); 
 	}
-	if(UseMaskedEStep || UseMaskedMStep || UseDistributional)
+	if(UseDistributional)
 	{
 		// Precompute the noise means and variances
 		ComputeNoiseMeansAndVariances();
-	}
-	if(UseDistributional)
-	{
-		ComputeCorrectionTermsAndReplaceData();
+	    ComputeCorrectionTermsAndReplaceData();
 	}
 }
 
@@ -45,7 +42,7 @@ void KK::DoInitialPrecomputations()
 
 void KK::DoPrecomputations()
 {
-	if(UseMaskedEStep || UseMaskedMStep || UseClusterPenalty)
+	if(UseClusterPenalty)
 	{
 		// Precompute the indices of the unmasked dimensions for each point
 		ComputeUnmasked();
@@ -202,7 +199,7 @@ void KK::ComputeNoiseMeansAndVariances()
 {
 	// compute noise mean and variance of each channel
 	// compute number of masked points in each channel
-	Output("ComputeNoiseMeansandVariances ");
+	Output("Masked EM: Computing Noise Means and Variances \n -----------------------------------------");
 
 	NoiseMean.resize(nDims);
 	NoiseVariance.resize(nDims);
@@ -292,14 +289,14 @@ void KK::PointMaskDimension()
 	
     for (p=0; p<nPoints; p++) 
     {
-        MaskDims[p]=0;
+        UnMaskDims[p]=0;
         for (i=0;i<nDims;i++)
         {
-            MaskDims[p] += FloatMasks[p*nDims+i];
+            UnMaskDims[p] += FloatMasks[p*nDims+i];
         }
         if (Debug)
         {
-            Output("MaskDims[%d] = %f ",p,MaskDims[p]);
+            Output("UnMaskDims[%d] = %f ",p,UnMaskDims[p]);
         }
         
     }	

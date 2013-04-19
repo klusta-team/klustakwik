@@ -35,7 +35,6 @@ public:
 	KK(const KK &Source);
 	/////////////// FUNCTIONS //////////////////////////////////////////////////
     void AllocateArrays();
-	void MeanMaskDimension();
     void Reindex();
     // Random initial starting conditions functions
     void StartingConditionsRandom();
@@ -57,11 +56,7 @@ public:
 	void ComputeClassPenalties();
 	// Main algorithm functions
 	void MStep();
-	void MaskedMStep();
-	void UnmaskedMStep();
 	void EStep();
-	void MaskedEStep();
-	void UnmaskedEStep();
 	void CStep(bool allow_assign_to_noise=true);
 	void ConsiderDeletion();
     int TrySplits();
@@ -71,12 +66,13 @@ public:
 	void LoadData(char *FileBase, int ElecNo, char *UseFeatures);
     void LoadClu(char *StartCluFile);
     void SaveOutput();
+    void SaveTempOutput();
     void SaveSortedData();
     void SaveSortedClu();
     void SaveCovMeans();
 public:
 	/////////////// VARIABLES //////////////////////////////////////////////////
-	int nDims, nDims2, meanDims; // nDims2 is nDims squared and the mean of the unmasked dimensions.
+	int nDims, nDims2; // nDims2 is nDims squared and the mean of the unmasked dimensions.
 	int nStartingClusters; // total # starting clusters, including clu 0, the noise cluster.
     int nClustersAlive; // nClustersAlive is total number with points in, excluding noise cluster
 	int nPoints;
@@ -110,7 +106,7 @@ public:
     // ComputeSortedUnmaskedChangePoints()
     vector<int> SortedMaskChange;
 	
-	vector<scalar> MaskDims; //SNK: Number of unmasked dimensions for each data point. In the Float masks case, the sum of the weights.
+	vector<scalar> UnMaskDims; //SNK: Number of unmasked dimensions for each data point. In the Float masks case, the sum of the weights.
 	vector<int> nClassMembers;
 	
 	vector<scalar> Weight; // Weight[c] = Class weight for class c
