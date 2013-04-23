@@ -49,8 +49,8 @@ enum type_t {FLOAT = 'f', INT = 'd',  BOOLEAN = 'b', STRING = 's'};
 	  INT_PARAM,     nStarts,             int nStarts,               1        )\
 	F("Specify random seed for reproducible results, or leave for random.",    \
 	  INT_PARAM,     RandomSeed,          int RandomSeed,            1        )\
-	F("Whether or not to run in debug mode (prints lots of detail).",          \
-	  BOOLEAN_PARAM, Debug,               char Debug,                0        )\
+	F("Whether or not to run in debug mode (prints lots of detail). 0 = None, 1 = Partial info, 2=Full Info",          \
+	  INT_PARAM, Debug,                   char Debug,                0        )\
 	F("Whether or not to print information as the program runs.",              \
 	  INT_PARAM,     Verbose,             int Verbose,               1        )\
 	F("String of 0s and 1s indicating which features to use.",                 \
@@ -80,11 +80,9 @@ enum type_t {FLOAT = 'f', INT = 'd',  BOOLEAN = 'b', STRING = 's'};
 	F("Do clustering on 1/Subset points, and then generalise to whole set.",   \
 	  INT_PARAM,     Subset,              int Subset,                1        )\
 	F("Number of 'PriorPoints'",                                               \
-	  INT_PARAM,   PriorPoint,            int PriorPoint,      1              )\
+	  INT_PARAM,   PriorPoint,            int PriorPoint,            1        )\
 	F("Save FileBase.sorted.*.ElecNo data files (data in sorted order).",      \
 	  BOOLEAN_PARAM, SaveSorted,          char SaveSorted,           false    )\
-	F("Use cluster-specific penalty",                                          \
-	  BOOLEAN_PARAM, UseClusterPenalty,   char UseClusterPenalty,    false    )\
 	F("Save covariance and means",                                             \
 	  BOOLEAN_PARAM, SaveCovarianceMeans, char SaveCovarianceMeans,  false    )\
 	F("Use mask based initial conditions",                                     \
@@ -92,11 +90,9 @@ enum type_t {FLOAT = 'f', INT = 'd',  BOOLEAN = 'b', STRING = 's'};
 	F("Assign to first closest mask in mask based initial conditions",         \
 	  BOOLEAN_PARAM, AssignToFirstClosestMask, char AssignToFirstClosestMask, false)\
 	F("Use distributional EM steps",                                           \
-	  BOOLEAN_PARAM, UseDistributional,   char UseDistributional,    false    )\
-	F("Use distributional E step when using distributional EM step, 0=off, 1=partial correction, 2=full correction",\
-	  INT_PARAM, UseDistributionalEStep,  char UseDistributionalEStep,1       )\
-	F("Use floating point masks",                                              \
-	  BOOLEAN_PARAM, UseFloatMasks,       char UseFloatMasks,        false    )
+	  BOOLEAN_PARAM, UseDistributional,   char UseDistributional,    false    )  
+
+//TODO: Implement the two Debug modes, one less verbose than the other
 
 #define STRINGIFY(x) #x
 

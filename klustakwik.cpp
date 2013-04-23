@@ -37,8 +37,7 @@ void KK::AllocateArrays() {
 	if(UseDistributional)
 	{
 		CorrectionTerm.resize(nPoints * nDims);
-		if(UseDistributionalEStep)
-			ClassCorrectionFactor.resize(MaxPossibleClusters*nDims);
+		ClassCorrectionFactor.resize(MaxPossibleClusters*nDims);
 	}
 }
 
@@ -81,7 +80,7 @@ scalar KK::Penalty(int n)
 // Penalties for Masked CEM
 void KK::ComputeClassPenalties()
 {
-	if(!((bool)UseClusterPenalty))
+	if(!((bool)UseDistributional)) // This function must only be called in Use Distributional  mode
 		return;
 	for(int c=0; c<MaxPossibleClusters; c++)
 		ClassPenalty[c] = (scalar)0;
@@ -123,6 +122,7 @@ void KK::MStep()
 	memset((void*)&nClassMembers.front(), 0, MaxPossibleClusters*sizeof(int));
 	memset((void*)&Mean.front(), 0, MaxPossibleClusters*nDims*sizeof(scalar));
 	memset((void*)&Cov.front(), 0, MaxPossibleClusters*nDims*nDims*sizeof(scalar));
+// NOTE: memset commands above replace the code below:
 //	for(c=0; c<MaxPossibleClusters; c++) {
 //		nClassMembers[c] = 0;
 //		for(i=0; i<nDims; i++) Mean[c*nDims + i] = 0;
@@ -296,8 +296,7 @@ void KK::MStep()
 				//Output("Class %d Class correction factor[%d] = %f \n",c,i,ccf);
 				Cov[c*nDims2+i*nDims+i] += ccf;
 			//	Output("Class %d Covariance diagonal[%d] = %f \n",c,i,Cov[c*nDims2+i*nDims+i] );
-				if(UseDistributionalEStep)
-					ClassCorrectionFactor[c*nDims+i] = ccf/(scalar)(nClassMembers[c]*nClassMembers[c]);
+                ClassCorrectionFactor[c*nDims+i] = ccf/(scalar)(nClassMembers[c]*nClassMembers[c]);
     		}
     	}
 
@@ -371,7 +370,7 @@ void KK::EStep()
 	vector<scalar> Vec2Mean(nDims); // stores data point minus class mean
 	vector<scalar> Root(nDims); // stores result of Chol*Root = Vec
 	vector<scalar> InvCovDiag;
-	if(UseDistributional && UseDistributionalEStep)
+	if(UseDistributional)
 		InvCovDiag.resize(nDims);
 
     SafeArray<scalar> safeChol(Chol, "safeChol");
@@ -410,7 +409,7 @@ void KK::EStep()
 			LogRootDet += (float)log(Chol[i*nDims + i]);
 
 		// if distributional E step, compute diagonal of inverse of cov matrix
-		if(UseDistributional && UseDistributionalEStep)
+		if(UseDistributional)
 		{
 			vector<scalar> BasisVector(nDims);
 			SafeArray<scalar> safeBasisVector(BasisVector, "BasisVector");
@@ -458,12 +457,12 @@ void KK::EStep()
     //        if(Debug)Output("Mahal = %f",Mahal);
 
 			// if distributional E step, add correction term
-			if(UseDistributional && UseDistributionalEStep)
+			if(UseDistributional)
 				for(i=0; i<nDims; i++)
 				{
-					if(UseDistributionalEStep==2)
-						correction_factor = ClassCorrectionFactor[c*nDims+i]+
-								(1.0-2.0/(scalar)nClassMembers[c]);
+					//if(UseDistributionalEStep==2)      // Distribution E-Step 2 "semi-Bayesian", no longer used, code retained here in case
+					//	correction_factor = ClassCorrectionFactor[c*nDims+i]+
+					//			(1.0-2.0/(scalar)nClassMembers[c]);
 					Mahal += correction_factor*CorrectionTerm[p*nDims+i]*safeInvCovDiag[i];
 		//			                    if(Debug) {Output("CorrectionTerm[%d*nDims+%d] = %f ",p,CorrectionTerm[p*nDims+i],i);
 		//			   Output("Mahal = %f",Mahal);}
@@ -546,7 +545,7 @@ void KK::ConsiderDeletion()
 
 	// find class with smallest increase in total score
 	Loss = HugeScore;
-    if (UseClusterPenalty)
+    if (UseDistributional) //For UseDistribution, we use the ClusterPenalty
     {
         for(c=1; c<MaxPossibleClusters; c++)
         {
@@ -574,7 +573,7 @@ void KK::ConsiderDeletion()
 	
 
 	// what is the change in penalty?
-	if(UseClusterPenalty)
+	if(UseDistributional) //For the distributional algorithm we need to use the ClusterPenalty
 		DeltaPen = ClassPenalty[CandidateClass];
 	else
 		DeltaPen = Penalty(nClustersAlive) - Penalty(nClustersAlive-1);
@@ -582,7 +581,7 @@ void KK::ConsiderDeletion()
 	//Output("cand Class %d would lose " SCALARFMT " gain is " SCALARFMT "\n", CandidateClass, Loss, DeltaPen);
 	// is it worth it?
     //06/12/12 fixing bug introduced which considered DeltaPen twice!
-	if (UseClusterPenalty)
+	if (UseDistributional) //For the distributional algorithm we need to use the ClusterPenalty
     {
         if (Loss<0)
         {
@@ -724,7 +723,7 @@ int KK::TrySplits()
             K3.MStep();
             K3.EStep();
             Output("About to compute K3 class penalties");
-            if (UseClusterPenalty) K3.ComputeClassPenalties(); //SNK Fixed bug: Need to compute the cluster penalty properly
+            if (UseDistributional) K3.ComputeClassPenalties(); //SNK Fixed bug: Need to compute the cluster penalty properly, cluster penalty is only used in UseDistributional mode
             NewScore = K3.ComputeScore();
             Output("\n Splitting cluster %d changes total score from " SCALARFMT " to " SCALARFMT "\n", c, Score, NewScore);
 
@@ -751,7 +750,7 @@ scalar KK::ComputeScore()
    // int debugadd;
 
     scalar penalty = (scalar)0;
-    if(UseClusterPenalty)
+    if(UseDistributional)  // For distributional algorithm we require the cluster penalty
 		for(int c=0; c<MaxPossibleClusters; c++)
 			penalty += ClassPenalty[c];
     else
@@ -799,7 +798,7 @@ void KK::StartingConditionsRandom()
 // Initialise starting conditions by selecting unique masks at random
 void KK::StartingConditionsFromMasks()
 {
-    int nClusters2start; //SNK To replace nStartingClusters within this function only
+    int nClusters2start; //SNK To replace nStartingClusters within this variable only
     
     //if (Debug)
     //    Output("StartingConditionsFromMasks: ");
@@ -894,10 +893,10 @@ void KK::StartingConditionsFromMasks()
 				Class[p] = closest_index+1;
 			}
 		}
-		// print some debugging info
+		// print some info
 		Output("Assigned %d initial classes from %d unique masks.\n",
 				nClusters2start, num_masks);
-		// DEBUGGING: dump initial random classes to a file
+		// Dump initial random classes to a file - knowledge of maskstart configuration may be useful
 		// TODO: remove this for final version - SNK: actually it is a nice idea to keep this
 		char fname[STRLEN];
 		FILE *fp;
@@ -1036,6 +1035,8 @@ scalar KK::CEM(char *CluFile, int Recurse, int InitRand,
         // try splitting
         if ((Recurse && SplitEvery>0) && (Iter%SplitEvery==SplitEvery-1 || (nChanged==0 && LastStepFull)))
         {
+            SaveTempOutput(); //SNK Saves a temporary output clu file before each split
+            Output("Writing temp clu file \n");
             DidSplit = TrySplits();
         } else DidSplit = 0;
 
@@ -1050,6 +1051,7 @@ scalar KK::CEM(char *CluFile, int Recurse, int InitRand,
 // first make a subset of the data, to SubPoints points
 // then run CEM on this
 // then use these clusters to do a CEM on the full data
+// It calls CEM whenever there is no initialization clu file (i.e. the most common usage)
 scalar KK::Cluster(char *StartCluFile=NULL)
 {
     if (Debug)

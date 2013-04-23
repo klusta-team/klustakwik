@@ -13,38 +13,40 @@
 void KK::LoadData(char *FileBase, int ElecNo, char *UseFeatures)
 {
 	char fname[STRLEN];
-	char fnamemask[STRLEN];
+	//char fnamemask[STRLEN];
 	char fnamefmask[STRLEN];
 	char line[STRLEN];
 	int p, i, j;
 	int nFeatures, nmaskFeatures; // not the same as nDims! we don't use all features.
 	FILE *fp;
-	FILE *fpmask;
+	//FILE *fpmask;
 	FILE *fpfmask;
 	int status;
-	int maskstatus;
+	//int maskstatus;
 	scalar val;
-	int maskval;
+    //int maskval;
 	int UseLen;
 	scalar max, min;
-	bool usemasks = (UseDistributional && !UseFloatMasks);
+	//bool usemasks = (UseDistributional && !UseFloatMasks);
 
 	// open file
 	sprintf(fname, "%s.fet.%d", FileBase, ElecNo);
 	fp = fopen_safe(fname, "r");
-	if(usemasks)
-	{
-		sprintf(fnamemask,"%s.mask.%d", FileBase, ElecNo);
-		fpmask = fopen_safe(fnamemask, "r");
-	} else
-	{
-		fpmask = NULL;
-	}
-	if(UseFloatMasks)
+	//if(usemasks)
+	//{
+	//	sprintf(fnamemask,"%s.mask.%d", FileBase, ElecNo);
+	//	fpmask = fopen_safe(fnamemask, "r");
+	//} else
+	//{
+	//	fpmask = NULL;
+	//}
+	
+    if(UseDistributional)// replaces if(UseFloatMasks)
 	{
 		sprintf(fnamefmask,"%s.fmask.%d", FileBase, ElecNo);
 		fpfmask = fopen_safe(fnamefmask, "r");
-	} else
+	}
+    else
 	{
 		fpfmask = NULL;
 	}
@@ -88,39 +90,39 @@ void KK::LoadData(char *FileBase, int ElecNo, char *UseFeatures)
 		}
 	}
 
-	if(usemasks)
-	{
-		// rewind file
-		fseek(fpmask, 0, SEEK_SET);
+	//if(usemasks)
+	//{
+//		// rewind file
+//		fseek(fpmask, 0, SEEK_SET);
 
-		// read in number of features
-		fscanf(fpmask, "%d", &nmaskFeatures);
+//		// read in number of features
+//		fscanf(fpmask, "%d", &nmaskFeatures);
 
-		if (nFeatures != nmaskFeatures)
-			Error("Error: Mask file and Fet file incompatible");
+//		if (nFeatures != nmaskFeatures)
+//			Error("Error: Mask file and Fet file incompatible");
 
-		// load masks
-		for (p=0; p<nPoints; p++) {
-			j=0;
-			for(i=0; i<nFeatures; i++) {
-				maskstatus = fscanf(fpmask, "%d", &maskval);
-				if (maskstatus==EOF) Error("Error reading mask file");
+//		// load masks
+//		for (p=0; p<nPoints; p++) {
+//			j=0;
+//			for(i=0; i<nFeatures; i++) {
+//				maskstatus = fscanf(fpmask, "%d", &maskval);
+//				if (maskstatus==EOF) Error("Error reading mask file");
 
-				if (i<UseLen && UseFeatures[i]=='1') {
-					Masks[p*nDims + j] = maskval;
-					j++;
-				}
-			}
-		}
-	}
-	else
-	{
-		for(p=0; p<nPoints; p++)
-			for(i=0; i<nDims; i++)
-				Masks[p*nDims+i] = 1;
-	}
+//				if (i<UseLen && UseFeatures[i]=='1') {
+//					Masks[p*nDims + j] = maskval;
+//					j++;
+//				}
+//			}
+//		}
+//	}
+//	else  //Case for Classical KlustaKwik
+//	{
+//		for(p=0; p<nPoints; p++)
+//			for(i=0; i<nDims; i++)
+//				Masks[p*nDims+i] = 1;
+//	}
 
-	if(UseFloatMasks)
+	if(UseDistributional) //replaces if(UseFloatMasks)
 	{
 		// rewind file
 		fseek(fpfmask, 0, SEEK_SET);
@@ -148,17 +150,19 @@ void KK::LoadData(char *FileBase, int ElecNo, char *UseFeatures)
 			}
 		}
 	}
-	else if(UseDistributional)
-	{
-		for(p=0; p<nPoints; p++)
-			for(i=0; i<nDims; i++)
-			{
-				FloatMasks[p*nDims+i] = (scalar)Masks[p*nDims+i];
-			}
-	}
+	//else if(UseDistributional)
+	//{
+	//	for(p=0; p<nPoints; p++)
+	//		for(i=0; i<nDims; i++)
+	//		{
+	//			FloatMasks[p*nDims+i] = (scalar)Masks[p*nDims+i];
+	//		}
+	//}
+    
 
-	if(UseDistributional && UseFloatMasks)
-		for(p=0; p<nPoints; p++)
+	if(UseDistributional)
+    {
+        for(p=0; p<nPoints; p++)
 			for(i=0; i<nDims; i++)
 			{
 				if(FloatMasks[p*nDims+i]==(scalar)1) //changed so that this gives the connected component masks
@@ -166,11 +170,18 @@ void KK::LoadData(char *FileBase, int ElecNo, char *UseFeatures)
 				else
 					Masks[p*nDims+i] = 0;
 			}
+    }
+    else  //Case for Classical EM KlustaKwik
+    {
+        for(p=0; p<nPoints; p++)
+            for(i=0; i<nDims; i++)
+                Masks[p*nDims+i] = 1;
+    }
 
 	fclose(fp);
-	if(usemasks)
-		fclose(fpmask);
-	if(UseFloatMasks)
+	//if(usemasks)
+	//	fclose(fpmask);
+	if(UseDistributional)
 		fclose(fpfmask);
 
 	// normalize data so that range is 0 to 1: This is useful in case of v. large inputs
@@ -188,7 +199,8 @@ void KK::LoadData(char *FileBase, int ElecNo, char *UseFeatures)
 		for(p=0; p<nPoints; p++) Data[p*nDims+i] = (Data[p*nDims+i] - min) / (max-min);
 	}
 
-	Output("-----------------------------------------\n Loaded %d data points of dimension %d.\n", nPoints, nDims);
+	Output("----------------------------------------------------------------------------------\n Loaded %d data points of dimension %d.\n", nPoints, nDims);
+    Output(" MEMO: A lower score indicates a better clustering \n ");
 }
 
 // write output to .clu file - with 1 added to cluster numbers, and empties removed.

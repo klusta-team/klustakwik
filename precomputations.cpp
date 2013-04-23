@@ -16,7 +16,7 @@ using namespace std;
 // the class.
 void KK::DoInitialPrecomputations()
 {
-	if(UseClusterPenalty)
+	if(UseDistributional)
 	{
 		// Precompute the indices of the unmasked dimensions for each point
 		ComputeUnmasked();
@@ -27,9 +27,6 @@ void KK::DoInitialPrecomputations()
 		ComputeSortedUnmaskedChangePoints();
         // Compute the sum of the masks/float masks for each point (used for computing the cluster penalty)
         PointMaskDimension(); 
-	}
-	if(UseDistributional)
-	{
 		// Precompute the noise means and variances
 		ComputeNoiseMeansAndVariances();
 	    ComputeCorrectionTermsAndReplaceData();
@@ -42,7 +39,7 @@ void KK::DoInitialPrecomputations()
 
 void KK::DoPrecomputations()
 {
-	if(UseClusterPenalty)
+	if(UseDistributional)
 	{
 		// Precompute the indices of the unmasked dimensions for each point
 		ComputeUnmasked();
@@ -51,10 +48,6 @@ void KK::DoPrecomputations()
 		ComputeSortIndices();
 		// Now compute the points at which the mask changes in sorted order
 		ComputeSortedUnmaskedChangePoints();
-	}
-
-	if(UseDistributional)
-	{
 		ComputeCorrectionTermsAndReplaceData();
 	}
 }
