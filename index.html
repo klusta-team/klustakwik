@@ -34,11 +34,11 @@
 
 <h2>0) Introduction</h2>
 
-<hr><p>The new masked version of KlustaKwik, currently KlustaKwik3.0.2, differs from previous versions in its use of a maskfile (either binary in the form of a .mask file  or floats between 0 and 1, .fmask file) in addition to the usual features file (.fet file). </p>
+<hr><p>The new masked version of KlustaKwik, currently KlustaKwik3.0.2, differs from previous versions in its use of an fmaskfile (floats between 0 and 1, .fmask file) in addition to the usual features file (.fet file). </p>
 
 <p>It is designed to be used in conjunction with SpikeDetekt for clustering spike waveforms recorded on large dense probes. </p>
 
-<p><em>Unmasked</em> channels are channels on which spiking activity has been found to occur by the program SpikeDetekt, whereas <em>masked</em> channels contain only noise.The .mask file or the .fmask file is a text file, every line of which is a vector giving the positions of the unmasked channels. In the .mask file, <strong>1</strong> denotes <em>unmasked</em> and <strong>0</strong> denotes <em>masked</em>. The .fmask file in contrast permits values between 0 and 1.</p>
+<p><em>Unmasked</em> channels are channels on which spiking activity has been found to occur by the program SpikeDetekt, whereas <em>masked</em> channels contain only noise. The .fmask file is a text file, every line of which is a vector giving the positions of the unmasked channels. In the .fmask file, <strong>1</strong> denotes <em>unmasked</em> and <strong>0</strong> denotes <em>masked</em>, values between 0 and 1 are also permitted at the boundaries of detected spikes.</p>
 
 <h2>1) Parameters</h2>
 
@@ -48,7 +48,7 @@
 
 Arguments (with default values): 
 
-FileBase  electrode
+FileBase    electrode
 ElecNo  1
 MinClusters 20
 MaxClusters 30
@@ -72,15 +72,10 @@ PenaltyKLogN    1.000000
 Subset  1
 PriorPoint  1
 SaveSorted  0
-UseMaskedEStep  0
-UseMaskedMStep  0
-UseClusterPenalty   0
 SaveCovarianceMeans 0
 UseMaskedInitialConditions  0
 AssignToFirstClosestMask    0
 UseDistributional   0
-UseDistributionalEStep  1
-UseFloatMasks   0
 help    0
 </code></pre>
 
@@ -97,12 +92,10 @@ help    0
 <p>AIC is recommended for larger probes.</p>
 
 <ul>
-<li><strong>UseDistributional, UseDistributionalEStep and UseClusterPenalty</strong></li>
-</ul><p>These enables the use of the new `distributional Expectation-Maximization' algorithm. Set these all to 1. </p>
+<li><strong>UseDistributional</strong></li>
+</ul><p>This enables the use of the new `distributional Expectation-Maximization' algorithm. Set this to 1. </p>
 
-<ul>
-<li><strong>UseFloatMasks</strong></li>
-</ul><p>It has been observed that using soft masks of the form. e.g.:</p>
+<p>It has been observed that using soft masks of the form. e.g.:</p>
 
 <p>0 0 0 0.3 0.3 0.3 1 1 1 1 1 1 0.4 0.4 0.4 0 0 0 0 0 0 </p>
 
@@ -110,7 +103,7 @@ help    0
 
 <p>0 0 0 0 0 0 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 </p>
 
-<p>Set this to 1 to enable masks to take floating point values. </p>
+<p>So your .fmask file will work better if it contains floats.</p>
 
 <ul>
 <li>
@@ -134,17 +127,17 @@ help    0
 
 <hr><p>A typical command to run the masked version of KlustaKwik therefore looks as follows in a linux terminal:</p>
 
-<pre><code>[yourterminal]$./KlustaKwik yourfetfilename shanknumber -UseDistributional 1 -UseDistributionalEStep 1 -UseMaskedMStep 0 -UseMaskedEStep 0 -FullStepEvery 1 -SplitEvery 40 -UseMaskedInitialConditions 1 -AssignToFirstClosestMask 1 -UseClusterPenalty 1 -UseFloatMasks 0 -RandomSeed 123 -MaxIter 10000 -MaxPossibleClusters 500 -MinClusters 130 -MaxClusters 130 -PenaltyK 1 -PenaltyKLogN 0 -UseFeatures 111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111110
+<pre><code>[yourterminal]$./KlustaKwik yourfetfilename shanknumber -UseDistributional 1 -FullStepEvery 1 -SplitEvery 40 -UseMaskedInitialConditions 1 -AssignToFirstClosestMask 1 -RandomSeed 123 -PriorPoint 1 -MaxIter 10000 -MaxPossibleClusters 500 -MinClusters 130 -MaxClusters 130 -PenaltyK 1 -PenaltyKLogN 0 -UseFeatures 111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111110
 </code></pre>
 
-<p>e.g. if your .fet file is called <strong>recording.fet.4</strong> (and your other files are <strong>recording.mask.4</strong>, <strong>recording.fmask.4</strong>)  for the fourth shank, then the command looks like:</p>
+<p>e.g. if your .fet file is called <strong>recording.fet.4</strong> (and your other files are <strong>recording.mask.4</strong>, <strong>recording.fmask.4</strong>)  for the fourth shank, then the command looks something like:</p>
 
-<pre><code>[yourterminal]$./KlustaKwik recording 4 -UseDistributional 1 -UseDistributionalEStep 1 -UseMaskedMStep 0 -UseMaskedEStep 0 -FullStepEvery 1 -SplitEvery 40 -UseMaskedInitialConditions 1 -AssignToFirstClosestMask 1 -UseClusterPenalty 1 -UseFloatMasks 0 -RandomSeed 123 -MaxIter 10000 -MaxPossibleClusters 500 -MinClusters 130 -MaxClusters 130 -PenaltyK 1 -PenaltyKLogN 0 -UseFeatures 111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111110
+<pre><code>[yourterminal]$./KlustaKwik recording 4 -UseDistributional 1  -FullStepEvery 1 -SplitEvery 40 -UseMaskedInitialConditions 1 -AssignToFirstClosestMask 1 -RandomSeed 123 -PriorPoint 1 -MaxIter 10000 -MaxPossibleClusters 500 -MinClusters 130 -MaxClusters 130 -PenaltyK 1 -PenaltyKLogN 0 -UseFeatures 111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111110
 </code></pre>
 
 <p>You may consider writing a script to generate such a complicated command.</p>
 
-<p><strong>We apologize for the current somewhat complicated set-up. Everything will be simplified once beta testing has been completed.</strong></p>
+<p><strong>We apologize for the current somewhat complicated set-up. Everything will be simplified once beta testing has been completed - slightly simplified on 23/04/13.</strong></p>
       </section>
       <footer>
         <p>This project is maintained by <a href="https://github.com/klusta-team">klusta-team</a></p>
