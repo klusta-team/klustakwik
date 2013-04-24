@@ -54,7 +54,8 @@ The current release of masked KlustaKwik has an enormous range of parameters whi
     UseDistributional	0
     help	0
 
-The above defaults cause KlustaKwik to run exactly as previous versions, but 10 times faster. The only difference is that the parameter PenaltyMix has been replaced with two parameters, PenaltyK and PenaltyKLogN.
+The above defaults cause KlustaKwik (classical EM algorithm) to run exactly as previous versions, but 10 times faster.
+The only difference is that the parameter PenaltyMix has been replaced with two parameters, PenaltyK and PenaltyKLogN.
 
 + **Penalties**
 
@@ -64,9 +65,9 @@ PenaltyMix 1 corresponds to (PenaltyK 0, PenaltyKLogN 1)(Bayesian Information Cr
 
 PenaltyMix 0 corresponds to (PenaltyK 1, PenaltyKLogN 0) (Akaike Information Criterion)
 
-The parameters PenaltyK and PenaltyKLogN can be given positive values. The higher the values, the fewer clusters you obtain. Higher penalties discourage splitting.
+The parameters PenaltyK and PenaltyKLogN can be given positive values. The higher the values, the fewer clusters you obtain. Higher penalties discourage cluster splitting.
 
-AIC is recommended for larger probes.
+AIC is recommended for larger probes. Evidence suggests anything between AIC and BIC gives reasonable results. 
 
 + **UseDistributional**
 
@@ -88,15 +89,23 @@ The quality of clustering obtained from EM-type algorithms is sensitive to the i
 
 (If you do not know the number of distinct masks, run KlustaKwik, with arbitrary values of MinClusters and MaxClusters, read the first line giving the number of distinct masks, and then prematurely terminate the program).
 
+Starting with the total number of distinct masks is not usually necessary and prohibitive in terms of memory usage for large datasets. Therefore the options 
+**-UseMaskedInitialConditions 1 -AssignToFirstClosestMask 1** used together enable a fixed number of starting clusters (determined by MinClusters and MaxClusters) by 
+randomly selecting a fixed number of distinct derived binary masks and assigning points according to their their nearest mask according to Hamming distance.
+e.g. the derived binary mask of 
+
+0 0 0 0.3 0.3 0.3 1 1 1 1 1 1 0.4 0.4 0.4 0 0 0 0 0 0
+is
+0 0 0 0 0 0 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 
+
 **SplitEvery** is an integer which is the number of iterations after which KlustaKwik attempts to split existing clusters. When using masked initializations, to save time due to excessive splitting, set **SplitEvery** to a large number, close to the number of distinct masks. 
 
 + **UseFeatures**
 
 Make sure to include a **1** for every feature you would like to include and a **0** for every feature you want to leave out (i.e. features corresponding to bad channels that you don't want).
 
-+ ***Warning: Ignore UseMaskedEStep and UseMaskedMStep***
-
-They should be set to 0 (as is the default). They are obsolete.
++ **PriorPoint**
+Please set this to 1 at all times when using Masked KlustaKwik.
 
 2) Command line input
 ----------------------
