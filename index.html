@@ -34,15 +34,21 @@
 
 <h2>0) Introduction</h2>
 
-<hr><p>The new masked version of KlustaKwik, currently KlustaKwik3.0.2, differs from previous versions in its use of an fmaskfile (floats between 0 and 1, .fmask file) in addition to the usual features file (.fet file). </p>
+<hr><p>The new masked version of KlustaKwik, currently KlustaKwik3.0.2, differs from previous versions in its use of an
+fmaskfile (floats between 0 and 1, .fmask file) in addition to the usual features file (.fet file). </p>
 
 <p>It is designed to be used in conjunction with SpikeDetekt for clustering spike waveforms recorded on large dense probes. </p>
 
-<p><em>Unmasked</em> channels are channels on which spiking activity has been found to occur by the program SpikeDetekt, whereas <em>masked</em> channels contain only noise. The .fmask file is a text file, every line of which is a vector giving the positions of the unmasked channels. In the .fmask file, <strong>1</strong> denotes <em>unmasked</em> and <strong>0</strong> denotes <em>masked</em>, values between 0 and 1 are also permitted at the boundaries of detected spikes.</p>
+<p><em>Unmasked</em> channels are channels on which spiking activity has been found to occur by the program SpikeDetekt,
+whereas <em>masked</em> channels contain only noise. The .fmask file is a text file, every line of which is a vector
+giving the positions of the unmasked channels. In the .fmask file, <strong>1</strong> denotes <em>unmasked</em> and <strong>0</strong> denotes
+<em>masked</em>, values between 0 and 1 are also permitted at the boundaries of detected spikes.</p>
 
 <h2>1) Parameters</h2>
 
-<hr><p>The current release of masked KlustaKwik has an enormous range of parameters which can be adjusted according to the user's needs. Many unnecessary parameters will soon be phased out, but in the interim to help beta-testers, we will describe a few of the relevant ones.</p>
+<hr><p>The current release of masked KlustaKwik has an enormous range of parameters which can be adjusted
+according to the user's needs. Many unnecessary parameters will soon be phased out, but in the interim
+to help beta-testers, we will describe a few of the relevant ones.</p>
 
 <pre><code>Usage: MaskedKlustaKwik FileBase ElecNo [Arguments]
 
@@ -79,17 +85,19 @@ UseDistributional   0
 help    0
 </code></pre>
 
-<p>The above defaults cause KlustaKwik to run exactly as previous versions, but 10 times faster. The only difference is that the parameter PenaltyMix has been replaced with two parameters, PenaltyK and PenaltyKLogN.</p>
+<p>The above defaults cause KlustaKwik (classical EM algorithm) to run exactly as previous versions, but 10 times faster.
+The only difference is that the parameter PenaltyMix has been replaced with two parameters, PenaltyK and PenaltyKLogN.</p>
 
 <ul>
 <li><strong>Penalties</strong></li>
-</ul><p>PenaltyMix 1 corresponds to (PenaltyK 0, PenaltyKLogN 1)(Bayesian Information Criterion)</p>
+</ul><p>PenaltyMix 1 corresponds to (PenaltyK 0, PenaltyKLogN 1) (Bayesian Information Criterion)</p>
 
-<p>PenaltyMix 0 corresponds to (PenaltyK 1, PenaltyKLogN 0) (Akaike Information Criterion)</p>
+<p>PenaltyMix 0 corresponds to (PenaltyK 1, PenaltyKLogN ) (Akaike Information Criterion)</p>
 
-<p>The parameters PenaltyK and PenaltyKLogN can be given positive values. The higher the values, the fewer clusters you obtain. Higher penalties discourage splitting.</p>
+<p>The parameters PenaltyK and PenaltyKLogN can only be given positive values.
+The higher the values, the fewer clusters you obtain. Higher penalties discourage cluster splitting.</p>
 
-<p>AIC is recommended for larger probes.</p>
+<p>AIC is recommended for larger probes. Evidence suggests anything between AIC and BIC gives reasonable results. </p>
 
 <ul>
 <li><strong>UseDistributional</strong></li>
@@ -113,17 +121,31 @@ help    0
 
 <p>(If you do not know the number of distinct masks, run KlustaKwik, with arbitrary values of MinClusters and MaxClusters, read the first line giving the number of distinct masks, and then prematurely terminate the program).</p>
 
-<p><strong>SplitEvery</strong> is an integer which is the number of iterations after which KlustaKwik attempts to split existing clusters. When using masked initializations, to save time due to excessive splitting, set <strong>SplitEvery</strong> to a large number, close to the number of distinct masks. </p>
+<p>Starting with the total number of distinct masks is not usually necessary and prohibitive in terms of memory usage for large datasets. Therefore the options 
+<strong>-UseMaskedInitialConditions 1 -AssignToFirstClosestMask 1</strong> used together enable a fixed number of starting clusters (determined by MinClusters and MaxClusters) by 
+randomly selecting a fixed number of distinct derived binary masks and assigning points according to their their nearest mask according to Hamming distance.
+e.g. the derived binary mask of </p>
+
+<p>0 0 0 0.3 0.3 0.3 1 1 1 1 1 1 0.4 0.4 0.4 0 0 0 0 0 0</p>
+
+<p>is</p>
+
+<p>0 0 0 0 0 0 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0. </p>
+
+<p><strong>SplitEvery</strong> is an integer which is the number of iterations after which KlustaKwik attempts to split existing clusters.
+When using masked initializations, to save time due to excessive splitting, set <strong>SplitEvery</strong> to a large number, close
+to the number of distinct masks or the number of chosen starting masks. </p>
 
 <ul>
 <li><strong>UseFeatures</strong></li>
-</ul><p>Make sure to include a <strong>1</strong> for every feature you would like to include and a <strong>0</strong> for every feature you want to leave out (i.e. features corresponding to bad channels that you don't want).</p>
+</ul><p>Make sure to include a <strong>1</strong> for every feature you would like to include and a <strong>0</strong> for every
+feature you want to leave out (i.e. features that corresponding to bad channels that you don't want).</p>
 
 <ul>
-<li><strong><em>Warning: Ignore UseMaskedEStep and UseMaskedMStep</em></strong></li>
-</ul><p>They should be set to 0 (as is the default). They are obsolete.</p>
-
-<h2>2) Command line input</h2>
+<li>
+<strong>PriorPoint</strong>
+Please set this to 1 at all times when using Masked KlustaKwik.</li>
+</ul><h2>2) Command line input</h2>
 
 <hr><p>A typical command to run the masked version of KlustaKwik therefore looks as follows in a linux terminal:</p>
 
