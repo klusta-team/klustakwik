@@ -67,11 +67,12 @@ The only difference is that the parameter PenaltyMix has been replaced with two 
 
  
 
-PenaltyMix 1 corresponds to (PenaltyK 0, PenaltyKLogN 1)(Bayesian Information Criterion)
+PenaltyMix 1 corresponds to (**PenaltyK 0, PenaltyKLogN 1**)(**Bayesian Information Criterion**)
 
-PenaltyMix 0 corresponds to (PenaltyK 1, PenaltyKLogN 0) (Akaike Information Criterion)
+PenaltyMix 0 corresponds to (**PenaltyK 1, PenaltyKLogN 0**) (**Akaike Information Criterion**)
 
-The parameters PenaltyK and PenaltyKLogN can be given positive values. The higher the values, the fewer clusters you obtain. Higher penalties discourage cluster splitting.
+The parameters PenaltyK and PenaltyKLogN can only be given positive values.
+The higher the values, the fewer clusters you obtain. Higher penalties discourage cluster splitting.
 
 AIC is recommended for larger probes. Evidence suggests anything between AIC and BIC gives reasonable results. 
 
@@ -104,7 +105,7 @@ e.g. the derived binary mask of
 
 is
 
-0 0 0 0 0 0 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 
+0 0 0 0 0 0 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0. 
 
 **SplitEvery** is an integer which is the number of iterations after which KlustaKwik attempts to split existing clusters.
 When using masked initializations, to save time due to excessive splitting, set **SplitEvery** to a large number, close
