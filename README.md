@@ -67,9 +67,9 @@ The only difference is that the parameter PenaltyMix has been replaced with two 
 
  
 
-PenaltyMix 1 corresponds to (**PenaltyK 0, PenaltyKLogN 1**)(**Bayesian Information Criterion**)
+PenaltyMix 1 corresponds to (**PenaltyK 0, PenaltyKLogN 1**) (**Bayesian Information Criterion**)
 
-PenaltyMix 0 corresponds to (**PenaltyK 1, PenaltyKLogN 0**) (**Akaike Information Criterion**)
+PenaltyMix 0 corresponds to (**PenaltyK 1, PenaltyKLogN **) (**Akaike Information Criterion**)
 
 The parameters PenaltyK and PenaltyKLogN can only be given positive values.
 The higher the values, the fewer clusters you obtain. Higher penalties discourage cluster splitting.
