@@ -8,17 +8,23 @@ Documentation for Masked KlustaKwik
 ------------------------
 ------------------------
 
-The new masked version of KlustaKwik, currently KlustaKwik3.0.2, differs from previous versions in its use of an fmaskfile (floats between 0 and 1, .fmask file) in addition to the usual features file (.fet file). 
+The new masked version of KlustaKwik, currently KlustaKwik3.0.2, differs from previous versions in its use of an
+fmaskfile (floats between 0 and 1, .fmask file) in addition to the usual features file (.fet file). 
 
 It is designed to be used in conjunction with SpikeDetekt for clustering spike waveforms recorded on large dense probes. 
 
-*Unmasked* channels are channels on which spiking activity has been found to occur by the program SpikeDetekt, whereas *masked* channels contain only noise. The .fmask file is a text file, every line of which is a vector giving the positions of the unmasked channels. In the .fmask file, **1** denotes *unmasked* and **0** denotes *masked*, values between 0 and 1 are also permitted at the boundaries of detected spikes.
+*Unmasked* channels are channels on which spiking activity has been found to occur by the program SpikeDetekt,
+whereas *masked* channels contain only noise. The .fmask file is a text file, every line of which is a vector
+giving the positions of the unmasked channels. In the .fmask file, **1** denotes *unmasked* and **0** denotes
+*masked*, values between 0 and 1 are also permitted at the boundaries of detected spikes.
 
 1) Parameters
 -------------------
 -------------------
 
-The current release of masked KlustaKwik has an enormous range of parameters which can be adjusted according to the user's needs. Many unnecessary parameters will soon be phased out, but in the interim to help beta-testers, we will describe a few of the relevant ones.
+The current release of masked KlustaKwik has an enormous range of parameters which can be adjusted
+according to the user's needs. Many unnecessary parameters will soon be phased out, but in the interim
+to help beta-testers, we will describe a few of the relevant ones.
 
     Usage: MaskedKlustaKwik FileBase ElecNo [Arguments]
 
@@ -95,14 +101,19 @@ randomly selecting a fixed number of distinct derived binary masks and assigning
 e.g. the derived binary mask of 
 
 0 0 0 0.3 0.3 0.3 1 1 1 1 1 1 0.4 0.4 0.4 0 0 0 0 0 0
+
 is
+
 0 0 0 0 0 0 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 
 
-**SplitEvery** is an integer which is the number of iterations after which KlustaKwik attempts to split existing clusters. When using masked initializations, to save time due to excessive splitting, set **SplitEvery** to a large number, close to the number of distinct masks. 
+**SplitEvery** is an integer which is the number of iterations after which KlustaKwik attempts to split existing clusters.
+When using masked initializations, to save time due to excessive splitting, set **SplitEvery** to a large number, close
+to the number of distinct masks or the number of chosen starting masks. 
 
 + **UseFeatures**
 
-Make sure to include a **1** for every feature you would like to include and a **0** for every feature you want to leave out (i.e. features corresponding to bad channels that you don't want).
+Make sure to include a **1** for every feature you would like to include and a **0** for every
+feature you want to leave out (i.e. features that corresponding to bad channels that you don't want).
 
 + **PriorPoint**
 Please set this to 1 at all times when using Masked KlustaKwik.
