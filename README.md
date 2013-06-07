@@ -1,25 +1,28 @@
 KlustaKwik
 ==========
 
-Documentation for Masked KlustaKwik
+Documentation for KlustaKwik and Masked KlustaKwik
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 0) Introduction
 ------------------------
 ------------------------
 
-The new masked version of KlustaKwik, currently KlustaKwik3.0.2, differs from previous versions in its use of an
-fmaskfile (floats between 0 and 1, .fmask file) in addition to the usual features file (.fet file). 
+KlustaKwik is an implementation of a hard Expectation-Maximization algorithm for the purposes of clustering, a major application of which is the spike-sorting of neurophysiological data. Older versions of the code can be found here:
+[Sourceforge](http://sourceforge.net/projects/klustakwik/).
 
-It is designed to be used in conjunction with SpikeDetekt for clustering spike waveforms recorded on large dense probes. 
+Masked KlustaKwik is a new algorithm designed to be used in conjunction with [SpikeDetekt](http://klusta-team.github.io/spikedetekt) for clustering spike waveforms recorded on large dense probes with high-channel counts.  
 
-*Unmasked* channels are channels on which spiking activity has been found to occur by the program SpikeDetekt,
+The new algorithm takes advantage of the fact that spikes tend to occur only on a subset of the features, with the remainder of the channels containging only multi-unit noise. The information of the relevant channels for each spike is encoded in an additional .fmask file which is output from SpikeDetekt (along with the usual .fet features file). The vectors in the .fmask file are the same size as those in the .fet file, but are restricted to lie between 0 and 1. *Unmasked* channels are channels on which spiking activity has been found to occur by the program SpikeDetekt,
 whereas *masked* channels contain only noise. The .fmask file is a text file, every line of which is a vector
 giving the positions of the unmasked channels. In the .fmask file, **1** denotes *unmasked* and **0** denotes
 *masked*, values between 0 and 1 are also permitted at the boundaries of detected spikes.
 
 Essential input files
 ---------------------
+
+In terms of input files new masked version of KlustaKwik, currently KlustaKwik3.0.2, differs from previous versions in its use of an .fmask file (consisting of vectors of floats between 0 and 1) in addition to the usual features file (.fet file). 
+
 For raw data recorded on a probe with 4 shanks would be the following files which
 are output from SpikeDetekt:
 
