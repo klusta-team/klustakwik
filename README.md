@@ -158,7 +158,13 @@ You may consider writing a script to generate such a complicated command.
 
 **Filebase** - Name of your .fet and .mask file, e.g. if your feature file is called mydata.fet.1, then Filebase is *mydata*.
 
+**ElecNo** - Shank number of your probe.
 
+**MinClusters** - The minimum number of starting clusters.
+
+**MaxClusters** - The maximum number of starting clusters.
+
+**MaxPossibleClusters** - The largest permitted number of clusters.
 
 
 
