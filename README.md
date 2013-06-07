@@ -18,6 +18,25 @@ whereas *masked* channels contain only noise. The .fmask file is a text file, ev
 giving the positions of the unmasked channels. In the .fmask file, **1** denotes *unmasked* and **0** denotes
 *masked*, values between 0 and 1 are also permitted at the boundaries of detected spikes.
 
+Essential input files
+---------------------
+For raw data recorded on a probe with 4 shanks would be the following files which
+are output from SpikeDetekt:
+
+    mydata.fet.1
+    mydata.fmask.1
+
+    mydata.fet.2
+    mydata.fmask.2
+
+    mydata.fet.3
+    mydata.fmask.3
+    
+    mydata.fet.4
+    mydata.fmask.4
+
+
+
 1) Parameters
 -------------------
 -------------------
@@ -135,7 +154,9 @@ You may consider writing a script to generate such a complicated command.
 
 **We apologize for the current somewhat complicated set-up. Everything will be simplified once beta testing has been completed - slightly simplified on 23/04/13.**
 
+3) Glossary of Parameters
 
+**Filebase** - Name of your .fet and .mask file, e.g. if your feature file is called mydata.fet.1, then Filebase is *mydata*.
 
 
 
