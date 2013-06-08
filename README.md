@@ -105,7 +105,7 @@ AIC is recommended for larger probes. Evidence suggests anything between AIC and
 
 + **UseDistributional**
 
-This enables the use of the new `distributional Expectation-Maximization' algorithm. Set this to 1. 
+This enables the use of the new `masked Expectation-Maximization' algorithm. Set this to 1. 
 
 It has been observed that using soft masks of the form. e.g.:
 
@@ -149,6 +149,8 @@ Please set this to 1 at all times when using Masked KlustaKwik.
 
 
 4) Glossary of Parameters
+-------------------------
+-------------------------
 
 **Filebase** - Name of your .fet and .mask file, e.g. if your feature file is called mydata.fet.1, then Filebase is *mydata*.
 
@@ -159,6 +161,7 @@ Please set this to 1 at all times when using Masked KlustaKwik.
 **MaxClusters** - The maximum number of starting clusters.
 
 **MaxPossibleClusters** - The largest permitted number of clusters.
+
 
 
 
