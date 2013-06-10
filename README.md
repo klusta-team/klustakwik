@@ -121,7 +121,7 @@ leads to improved clusterings than using binary masks:
 
 So your .fmask file will work better if it contains floats.
 
-+ **UseFeatures** (*default* 
++ **UseFeatures** (*default* 11111111111100001)
 
 
 Given a .fet file containing vectors of a set length, you may chose which features are used for the automatic clustering process and omit others. 
@@ -140,6 +140,7 @@ If you want to include all the PCA's but not time you need the following string:
 
     111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111110
 
+The default option is historical and was useful for tetrodes in the Buzsaki lab.
 
 
 + **UseMaskedInitialConditions**, **AssignToFirstClosestMask** and **SplitEvery**
@@ -159,14 +160,14 @@ is
 
 0 0 0 0 0 0 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0. 
 
-**SplitEvery** is an integer which is the number of iterations after which KlustaKwik attempts to split existing clusters.
+**SplitEvery** (*default* 40)
+is an integer which is the number of iterations after which KlustaKwik attempts to split existing clusters.
 When using masked initializations, to save time due to excessive splitting, set **SplitEvery** to a large number, close
 to the number of distinct masks or the number of chosen starting masks. 
 
 
 
-+ **PriorPoint**
-Please set this to 1 at all times when using Masked KlustaKwik.
+
 
 
 
@@ -183,6 +184,8 @@ Please set this to 1 at all times when using Masked KlustaKwik.
 **MaxClusters** - The maximum number of starting clusters.
 
 **MaxPossibleClusters** - The largest permitted number of clusters.
+
+**PriorPoint** Please set this to 1 at all times when using Masked KlustaKwik.
 
 
 
