@@ -140,11 +140,11 @@ This enables the use of the new `masked Expectation-Maximization' algorithm. To 
 
 It has been observed that using soft masks of the form. e.g.:
 
-0 0 0 0.3 0.3 0.3 1 1 1 1 1 1 0.4 0.4 0.4 0 0 0 0 0 0 
+    0 0 0 0.3 0.3 0.3 1 1 1 1 1 1 0.4 0.4 0.4 0 0 0 0 0 0 
 
 leads to improved clusterings than using binary masks:
 
-0 0 0 0 0 0 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 
+    0 0 0 0 0 0 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 
 
 So your .fmask file will work better if it contains floats.
 
@@ -181,11 +181,11 @@ Starting with the total number of distinct masks is not usually necessary and pr
 randomly selecting a fixed number of distinct derived binary masks and assigning points according to their their nearest mask according to Hamming distance.
 e.g. the derived binary mask of 
 
-0 0 0 0.3 0.3 0.3 1 1 1 1 1 1 0.4 0.4 0.4 0 0 0 0 0 0
+    0 0 0 0.3 0.3 0.3 1 1 1 1 1 1 0.4 0.4 0.4 0 0 0 0 0 0
 
 is
 
-0 0 0 0 0 0 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0. 
+    0 0 0 0 0 0 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0. 
 
 **SplitEvery** (*default* 40)
 is an integer which is the number of iterations after which KlustaKwik attempts to split existing clusters.
