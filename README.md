@@ -53,7 +53,7 @@ You may consider writing a script to generate such a complicated command. An exa
     
     os.system(
         	'./KlustaKwik'
-		    ' '+filebase+' 1 -UseFeatures '+'1'*(num_features-1)+'0'+' '
+		    ' '+filebase+' 4 -UseFeatures '+'1'*(num_features-1)+'0'+' '
     		'-MinClusters 200 '
             '-MaxClusters 200 '
     		'-MaxPossibleClusters 500 '
@@ -212,7 +212,9 @@ to the number of distinct masks or the number of chosen starting masks.
 
 **MaxPossibleClusters** - The largest permitted number of clusters.
 
-**PriorPoint** Please set this to 1 at all times when using Masked KlustaKwik.
+**PriorPoint** (*default* 1) It is recommended that this is not changed.
+
+
 
 
 
