@@ -1,7 +1,7 @@
 KlustaKwik
 ==========
 
-0) Introduction
+1) Introduction
 ------------------------
 ------------------------
 
@@ -9,7 +9,11 @@ KlustaKwik is a program for cluster analysis by fitting a mixture of Gaussians. 
 
 For spike sorting, KlustaKwik is designed to be used in conjunction with [SpikeDetekt](http://klusta-team.github.io/spikedetekt) for spike detection, and [KlustaViewa](http://klusta-team.github.io/klustaviewa) for manual verification and adjustment of clustering results.
 
-1) Usage
+2) Installation
+
+KlustaKwik is written in C++, and provided as source code. A makefile is provided. It is a plain-text program that runs from the command line, so compilation should be straightforward.
+
+3) Usage
 ---------------------
 
 KlustaKwik 3.0 is backward compatible with previous versions. To use it in "classic" mode, just run the same command you would have for version 2.x (as documented on the sourceforge page linked above). It will produce the same results, but should run about 10 times faster. In this mode, KlustaKwik takes a single input file (mydata.fet.n) containing feature vectors, and produces an output file (mydata.clu.n) containing cluster numbers. It also produces a log file (mydata.klg.n).
@@ -22,7 +26,7 @@ The suffix .n allows you to keep track of data recorded on a probe with mutliple
     mydata.fmask.n
 
 
-2) Command line input
+4) Command line input
 ----------------------
 ----------------------
 
@@ -61,7 +65,7 @@ You will probably want to write a script to generate such these commands. An exa
 
 You would then edit the parameters filebase, shank_num, and num_features as required. 
 
-3) Input Files
+5) Input Files
 --------------
 --------------
 
@@ -75,7 +79,7 @@ The first line of the .fet file is a single number specifying the number of feat
 
 The .fmask file has a similar format, but with each line giving a vector of floats between 0 and 1. The .fmast file also does not have the first line specifying the number of features. *SHABNAM IS THIS CORRECT?*
 
-4) Parameters
+6) Parameters
 -------------------
 -------------------
 
@@ -145,7 +149,7 @@ When using masked initializations, to save time due to excessive splitting, set 
 to the number of distinct masks or the number of chosen starting masks. 
 
 
-4) Full Glossary of Parameters
+7) Full Glossary of Parameters
 -------------------------
 -------------------------
 **UseDistributional (default 0)** - Set this to 1 to use in "masked" mode.
