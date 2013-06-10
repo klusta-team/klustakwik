@@ -213,7 +213,33 @@ Various debugging options for developers:
 
 **ChangedThresh f**  (default 0.05) All log-likelihoods are recalculated if the fraction of instances changing class exceeds f (see DistThresh).
  
+8) Output Files
+---------------
+---------------
 
+Regardless of the parameters chosen to run KlustaKwik, the two following plain text files will always be produced.
+
+	mydata.clu.n (main output file)
+	mydata.klg.n (a log file)
+
+The .clu file will be a file with with S+1 lines, where S is the number of spikes detected. The first line will give the total number of clusters found. Each subsequent line will give the cluster label corresponding to each spike.e.g. if the start of your .clu file looks like this:
+
+	101
+	15
+	3
+	4
+	79
+	51
+	29
+	4
+        .
+        .
+
+This will mean there are 101 clusters in total. That the 1st is in cluster 15, the 2nd in cluster 3 and the 3rd and 7th spike both in cluster 4, etc. until the end of the file.
+
+If you are uncertain whether or not you have run KlustaKwik having inputted the correct parameters	
+	
+	
 
 
 
