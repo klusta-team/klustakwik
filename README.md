@@ -201,6 +201,7 @@ to the number of distinct masks or the number of chosen starting masks.
 4) Glossary of Parameters
 -------------------------
 -------------------------
+**UseDistributional (default 0)** - Set this to 1 to use in "masked" mode.
 
 **Filebase** - Name of your .fet and .mask file, e.g. if your feature file is called mydata.fet.1, then Filebase is *mydata*.
 
@@ -214,7 +215,9 @@ to the number of distinct masks or the number of chosen starting masks.
 
 **MaxPossibleClusters n** (*default* 100) - The largest permitted number of clusters, so cluster splitting can produce no more than n clusters.
 
-**PriorPoint** (*default* 1) It is recommended that this is not changed.
+**UseMaskedInitialConditions	0** - Initialises using distinct derived binary masks.
+
+**AssignToFirstClosestMask	0** - If starting with a number of clusters fewer than the number of distinct derived bianry masks, it will assign the rest of the points to the cluster with the nearest mask.
 
 **help** - Prints a short message and then the default parameter values.
 
@@ -223,30 +226,31 @@ to the number of distinct masks or the number of chosen starting masks.
 
 **StartCluFile** STRING   (default "") Initializes according to the specified cluster file.  If it can't find a better cluster assignment, it will output this.
 
- **DistThresh** d    (default 6.907755) Time-saving parameter. If a point has log likelihood more than d worse for a given class than for the best class, the log likelihood for that class is not recalculated.  This saves an awful lot of time.
-
- 
 **FullStepEvery** n (default 10) All log-likelihoods are recalculated every n steps (see DistThresh)
-
- 
-
-**ChangedThresh** f (default 0.05) All log-likelihoods are recalculated if the fraction of instances changing class exceeds f (see DistThresh)
-
- 
 
 **MaxIter** n       (default 500) Maximum number of iterations. ie. it won't try more than n iterations from any starting point.
 
- 
+
+Various debugging options for developers:
+-----------------------------------------
 
 **Log**             (default 1) Produces .klg log file (default is yes, to switch off do -Log 0)
 
 **Screen**          (default 1) Produces parameters and progress information on the console. Set to 0 to suppress output in batches.
 
+**SaveSorted** (default 0)	Saves a .clu file with masks sorted lexicographically.
+    
+**SaveCovarianceMeans**	(default 0) Saves means and covariance matrices. Stops computation at each iteration. Manual input required for continuation.
+
 **Debug**           (default 0) Miscellaneous debugging information (not recommended)
 
 **DistDump**        (default 0) Outputs a ridiculous amount of debugging information (definately not recommended).
 
+**PriorPoint** (default 0) Helps normalize covaraince matrices.
 
+**DistThresh** d    (default 6.907755) Time-saving parameter. If a point has log likelihood more than d worse for a given class than for the best class, the log likelihood for that class is not recalculated.  This saves an awful lot of time.
+
+**ChangedThresh** f (default 0.05) All log-likelihoods are recalculated if the fraction of instances changing class exceeds f (see DistThresh)
  
 
 
