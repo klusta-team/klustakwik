@@ -35,7 +35,7 @@ The suffix .n allows you to keep track of data recorded on a probe with mutliple
 
 KlustaKwik runs from the command line, and takes a large number of options. We plan to rationalize these, but in the meantime you have to run fairly long command strings to run it in masked mode.
 
-If you wanted to cluster the 4th shank from a file called "recording" in masked mode, you would run something like this:
+The first two arguments are the filebase and shank number, after which come optional parameters. For example If you wanted to cluster the 4th shank from a file called "recording" in masked mode, you would run something like this:
 
     [yourterminal]$./KlustaKwik recording 4 -UseDistributional 1 -UseMaskedInitialConditions 1 -AssignToFirstClosestMask 1 -MaxPossibleClusters 500 -MinClusters 130 -MaxClusters 130 -PenaltyK 1 -PenaltyKLogN 0 -UseFeatures 111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111110
 
