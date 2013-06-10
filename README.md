@@ -206,15 +206,25 @@ to the number of distinct masks or the number of chosen starting masks.
 
 **ElecNo** - Shank number of your probe.
 
-**MinClusters** - The minimum number of starting clusters.
+**MinClusters n** (*default* 20)  - The minimum number of starting clusters. Random initial assignment when the *-UseMaskedInitialConditions* is not being used. The intial assignment will have no less than n clusters.  The final number may be different, since clusters can be split or deleted during the course of the algorithm
 
-**MaxClusters** - The maximum number of starting clusters.
+**MaxClusters n** (*default* 30)- The maximum number of starting clusters. Random initial assignment when the *-UseMaskedInitialConditions* is not being used.
+ 
+**nStarts n**       (*default* 1) The algorithm will be started n times for each inital cluster count between MinClusters and MaxClusters.
 
-**MaxPossibleClusters** - The largest permitted number of clusters.
+**MaxPossibleClusters n** (*default* 100) - The largest permitted number of clusters, so cluster splitting can produce no more than n clusters.
 
 **PriorPoint** (*default* 1) It is recommended that this is not changed.
 
+**help** - Prints a short message and then the default parameter values.
 
+**RandomSeed n**    (*default* 1) Specifies a seed for the random number generator
+
+
+ 
+
+
+ 
 
 
 
