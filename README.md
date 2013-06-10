@@ -17,7 +17,7 @@ KlustaKwik is written in C++, and provided as source code. A makefile is provide
 
 On Linux and Mac OS X simply unzip the source folder, open a command line terminal in the unzipped folder and type:
 
-	make
+	[yourterminal]$make
 	
 This will create the executable: KlustaKwik.
 
