@@ -19,6 +19,8 @@ giving the positions of the unmasked channels. In the .fmask file, **1** denotes
 **masked**, values between 0 and 1 are also permitted at the boundaries of detected spikes.
 
 1) Installation 
+----------------
+----------------
 Download and unzip/tar the KlustaKwik folder.
 
 2) Essential input files
