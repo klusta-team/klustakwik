@@ -224,25 +224,56 @@ When using masked initializations, to save time due to excessive splitting, set 
 to the number of distinct masks or the number of chosen starting masks. </p>
 
 <h2>
-<a name="4-glossary-of-parameters" class="anchor" href="#4-glossary-of-parameters"><span class="octicon octicon-link"></span></a>4) Glossary of Parameters</h2>
+<a name="4-full-glossary-of-parameters" class="anchor" href="#4-full-glossary-of-parameters"><span class="octicon octicon-link"></span></a>4) Full Glossary of Parameters</h2>
 
-<hr><p><strong>Filebase</strong> - Name of your .fet and .mask file, e.g. if your feature file is called mydata.fet.1, then Filebase is <em>mydata</em>.</p>
+<hr><p><strong>UseDistributional (default 0)</strong> - Set this to 1 to use in "masked" mode.</p>
+
+<p><strong>Filebase</strong> - Name of your .fet and .mask file, e.g. if your feature file is called mydata.fet.1, then Filebase is <em>mydata</em>.</p>
 
 <p><strong>ElecNo</strong> - Shank number of your probe.</p>
 
-<p><strong>MinClusters n</strong> (*default* 20)  - The minimum number of starting clusters. Random initial assignment when the <em>-UseMaskedInitialConditions</em> is not being used. The intial assignment will have no less than n clusters.  The final number may be different, since clusters can be split or deleted during the course of the algorithm</p>
+<p><strong>MinClusters n</strong> (default 20)  - The minimum number of starting clusters. Random initial assignment when the <em>-UseMaskedInitialConditions</em> is not being used. The intial assignment will have no less than n clusters.  The final number may be different, since clusters can be split or deleted during the course of the algorithm</p>
 
-<p><strong>MaxClusters n</strong> (*default* 30)- The maximum number of starting clusters. Random initial assignment when the <em>-UseMaskedInitialConditions</em> is not being used.</p>
+<p><strong>MaxClusters n</strong> (default 30)- The maximum number of starting clusters. Random initial assignment when the <em>-UseMaskedInitialConditions</em> is not being used.</p>
 
-<p><strong>nStarts n</strong>       (*default* 1) The algorithm will be started n times for each inital cluster count between MinClusters and MaxClusters.</p>
+<p><strong>nStarts n</strong>       (default 1) The algorithm will be started n times for each inital cluster count between MinClusters and MaxClusters.</p>
 
-<p><strong>MaxPossibleClusters n</strong> (*default* 100) - The largest permitted number of clusters, so cluster splitting can produce no more than n clusters.</p>
+<p><strong>MaxPossibleClusters n</strong> (default 100) - The largest permitted number of clusters, so cluster splitting can produce no more than n clusters.</p>
 
-<p><strong>PriorPoint</strong> (*default* 1) It is recommended that this is not changed.</p>
+<p><strong>UseMaskedInitialConditions    (default 0)</strong> - Initialises using distinct derived binary masks. Use together with <strong>AssignToFirstClosestMask</strong> below. See previous section for explanation.</p>
+
+<p><strong>AssignToFirstClosestMask  (default 0)</strong> - If starting with a number of clusters fewer than the number of distinct derived bianry masks, it will assign the rest of the points to the cluster with the nearest mask.</p>
 
 <p><strong>help</strong> - Prints a short message and then the default parameter values.</p>
 
-<p><strong>RandomSeed n</strong>    (*default* 1) Specifies a seed for the random number generator</p>
+<p><strong>RandomSeed n</strong>    (default 1) Specifies a seed for the random number generator</p>
+
+<p><strong>StartCluFile</strong> STRING   (default " ") Initializes according to the specified cluster file.  If it can't find a better cluster assignment, it will output this.</p>
+
+<p><strong>FullStepEvery</strong> n (default 10) All log-likelihoods are recalculated every n steps (see DistThresh)</p>
+
+<p><strong>MaxIter</strong> n       (default 500) Maximum number of iterations. ie. it won't try more than n iterations from any starting point.</p>
+
+<h2>
+<a name="various-debugging-options-for-developers" class="anchor" href="#various-debugging-options-for-developers"><span class="octicon octicon-link"></span></a>Various debugging options for developers:</h2>
+
+<p><strong>Log</strong>             (default 1) Produces .klg log file (default is yes, to switch off do -Log 0)</p>
+
+<p><strong>Screen</strong>          (default 1) Produces parameters and progress information on the console. Set to 0 to suppress output in batches.</p>
+
+<p><strong>SaveSorted</strong> (default 0)  Saves a .clu file with masks sorted lexicographically.</p>
+
+<p><strong>SaveCovarianceMeans</strong> (default 0) Saves means and covariance matrices. Stops computation at each iteration. Manual input required for continuation.</p>
+
+<p><strong>Debug</strong>           (default 0) Miscellaneous debugging information (not recommended)</p>
+
+<p><strong>DistDump</strong>        (default 0) Outputs a ridiculous amount of debugging information (definately not recommended).</p>
+
+<p><strong>PriorPoint</strong> (default 0) Helps normalize covaraince matrices.</p>
+
+<p><strong>DistThresh d</strong>     (default 6.907755) Time-saving parameter. If a point has log likelihood more than d worse for a given class than for the best class, the log likelihood for that class is not recalculated.  This saves an awful lot of time.</p>
+
+<p><strong>ChangedThresh f</strong>  (default 0.05) All log-likelihoods are recalculated if the fraction of instances changing class exceeds f (see DistThresh)</p>
       </section>
       <footer>
         <p>This project is maintained by <a href="https://github.com/klusta-team">klusta-team</a></p>
