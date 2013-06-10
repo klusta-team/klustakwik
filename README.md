@@ -163,9 +163,9 @@ to the number of distinct masks or the number of chosen starting masks.
 
 **MinClusters n** (default 20)  - The minimum number of starting clusters. It will give a random initial assignment when the **-UseMaskedInitialConditions** is not being used; otherwise it will assign according to mask. The intial assignment will have no less than n clusters.  The final number may be different, since clusters can be split or deleted during the course of the algorithm
 
-**MaxClusters n** (default 30)- The maximum number of starting clusters. It will give a random initial assignment when the **-UseMaskedInitialConditions** is not being used; otherwise it assignment will be determined by masks. Note: It ought to be set lower than **MaxPossibleClusters**.
+**MaxClusters n** (default 30) - The maximum number of starting clusters. It will give a random initial assignment when the **-UseMaskedInitialConditions** is not being used; otherwise it assignment will be determined by masks. Note: It ought to be set lower than **MaxPossibleClusters**.
  
-**nStarts n**       (default 1) The algorithm will be started n times for each inital cluster count between MinClusters and MaxClusters.
+**nStarts n** (default 1) -  The algorithm will be started n times for each inital cluster count between MinClusters and MaxClusters.
 
 **MaxPossibleClusters n** (default 100) - The largest permitted number of clusters, so cluster splitting can produce no more than n clusters. Note: It ought to be set higher than **MaxClusters**.
 
@@ -179,7 +179,7 @@ to the number of distinct masks or the number of chosen starting masks.
 
 **StartCluFile** STRING   (default " ") Initializes according to the specified cluster file.  If it can't find a better cluster assignment, it will output this.
 
-**FullStepEvery** n (default 10) All log-likelihoods are recalculated every n steps (see DistThresh)
+**FullStepEvery** n (default 10) All log-likelihoods are recalculated every n steps (see DistThresh).
 
 **SplitEvery** n    (default 40) Test to see if any clusters should be split every n steps. 0 completely suppresses splitting altogether.
 
@@ -189,7 +189,7 @@ to the number of distinct masks or the number of chosen starting masks.
 Various debugging options for developers:
 -----------------------------------------
 
-**Log**             (default 1) Produces .klg log file (default is yes, to switch off do -Log 0)
+**Log**             (default 1) Produces .klg log file (default is yes, to switch off do -Log 0).
 
 **Screen**          (default 1) Produces parameters and progress information on the console. Set to 0 to suppress output in batches.
 
@@ -197,15 +197,15 @@ Various debugging options for developers:
     
 **SaveCovarianceMeans**	(default 0) Saves means and covariance matrices. Stops computation at each iteration. Manual input required for continuation.
 
-**Debug**           (default 0) Miscellaneous debugging information (not recommended)
+**Debug**           (default 0) Miscellaneous debugging information (not recommended).
 
 **DistDump**        (default 0) Outputs a ridiculous amount of debugging information (definately not recommended).
 
-**PriorPoint** (default 0) Helps normalize covaraince matrices.
+**PriorPoint** (default 1) Helps normalize covaraince matrices.
 
 **DistThresh d**     (default 6.907755) Time-saving parameter. If a point has log likelihood more than d worse for a given class than for the best class, the log likelihood for that class is not recalculated.  This saves an awful lot of time.
 
-**ChangedThresh f**  (default 0.05) All log-likelihoods are recalculated if the fraction of instances changing class exceeds f (see DistThresh)
+**ChangedThresh f**  (default 0.05) All log-likelihoods are recalculated if the fraction of instances changing class exceeds f (see DistThresh).
  
 
 
