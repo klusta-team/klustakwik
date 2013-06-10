@@ -28,23 +28,84 @@
         </ul>
       </header>
       <section>
-        <h1>KlustaKwik</h1>
+        <h1>
+<a name="klustakwik" class="anchor" href="#klustakwik"><span class="octicon octicon-link"></span></a>KlustaKwik</h1>
 
-<h2>Documentation for Masked KlustaKwik</h2>
+<h2>
+<a name="documentation-for-klustakwik-and-masked-klustakwik" class="anchor" href="#documentation-for-klustakwik-and-masked-klustakwik"><span class="octicon octicon-link"></span></a>Documentation for KlustaKwik and Masked KlustaKwik</h2>
 
-<h2>0) Introduction</h2>
+<h2>
+<a name="0-introduction" class="anchor" href="#0-introduction"><span class="octicon octicon-link"></span></a>0) Introduction</h2>
 
-<hr><p>The new masked version of KlustaKwik, currently KlustaKwik3.0.2, differs from previous versions in its use of an
-fmaskfile (floats between 0 and 1, .fmask file) in addition to the usual features file (.fet file). </p>
+<hr><p>KlustaKwik is an implementation of a hard Expectation-Maximization algorithm for the purposes of clustering, a major application of which is the spike-sorting of neurophysiological data. Older versions of the code can be found here:
+<a href="http://sourceforge.net/projects/klustakwik/">Sourceforge</a>.</p>
 
-<p>It is designed to be used in conjunction with SpikeDetekt for clustering spike waveforms recorded on large dense probes. </p>
+<p>Masked KlustaKwik is a new algorithm designed to be used in conjunction with <a href="http://klusta-team.github.io/spikedetekt">SpikeDetekt</a> for clustering spike waveforms recorded on large dense probes with high-channel counts, and <a href="http://klusta-team.github.io/klustaviewa">KlustaViewa</a> for manual verification and adjustment of clustering results.</p>
 
-<p><em>Unmasked</em> channels are channels on which spiking activity has been found to occur by the program SpikeDetekt,
+<p>The new algorithm takes advantage of the fact that spikes tend to occur only on a subset of the features, with the remainder of the channels containing only multi-unit noise. The information of the relevant channels for each spike is encoded in an additional .fmask file which is output from SpikeDetekt, along with the usual .fet features file. The vectors in the .fmask file are the same size as those in the .fet file, but are restricted to lie between 0 and 1. <em>Unmasked</em> channels are channels on which spiking activity has been found to occur by the program SpikeDetekt,
 whereas <em>masked</em> channels contain only noise. The .fmask file is a text file, every line of which is a vector
 giving the positions of the unmasked channels. In the .fmask file, <strong>1</strong> denotes <em>unmasked</em> and <strong>0</strong> denotes
 <em>masked</em>, values between 0 and 1 are also permitted at the boundaries of detected spikes.</p>
 
-<h2>1) Parameters</h2>
+<h2>
+<a name="1-essential-input-files" class="anchor" href="#1-essential-input-files"><span class="octicon octicon-link"></span></a>1) Essential input files</h2>
+
+<p>KlustaKwik 3.0 is backward compatible with previous versions. To use it in "classic" mode, just run the same command you would have for version 2.x (as documented on the sourceforge page linked above). It will produce the same results, but should run about 10 times faster. In this mode, KlustaKwik takes a single input file (mydata.fet.n) containing feature vectors, and produces an output file (mydata.clu.n) containing cluster numbers. It also produces a log file (mydata.klg.n).</p>
+
+<p>To use in "masked" mode, you need to provide also a file with mask information (mydata.fmask.n). This text file is produced by SpikeDetekt, and contains a set of floating-point vectors between 0 and 1 indicating the weight with which different features should be used in clustering each point.  </p>
+
+<p>The suffix .n allows you to keep track of data recorded on a probe with mutliple shanks. Thus, for shank n, the relevant files would be the following  output from SpikeDetekt:</p>
+
+<pre><code>mydata.fet.n
+mydata.fmask.n
+</code></pre>
+
+<h2>
+<a name="2-command-line-input" class="anchor" href="#2-command-line-input"><span class="octicon octicon-link"></span></a>2) Command line input</h2>
+
+<hr><p>A typical command to run the masked version of KlustaKwik therefore looks as follows in a linux terminal:</p>
+
+<pre><code>[yourterminal]$./KlustaKwik yourfetfilename shanknumber -UseDistributional 1 -UseMaskedInitialConditions 1 -AssignToFirstClosestMask 1 -MaxPossibleClusters 500 -MinClusters 130 -MaxClusters 130 -PenaltyK 1 -PenaltyKLogN 0 -UseFeatures 111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111110
+</code></pre>
+
+<p>e.g. if your .fet file is called <strong>recording.fet.4</strong> (and your other files are <strong>recording.mask.4</strong>, <strong>recording.fmask.4</strong>)  for the fourth shank, then the command looks something like:</p>
+
+<pre><code>[yourterminal]$./KlustaKwik recording 4 -UseDistributional 1 -UseMaskedInitialConditions 1 -AssignToFirstClosestMask 1 -MaxPossibleClusters 500 -MinClusters 130 -MaxClusters 130 -PenaltyK 1 -PenaltyKLogN 0 -UseFeatures 111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111110
+</code></pre>
+
+<p>You may consider writing a script to generate such a complicated command. An example Python script could read as follows:</p>
+
+<pre><code>import os, sys
+
+filebase = 'recording'
+num_features = 97
+#Number of features (including time)
+# Replace './KlustaKwik' with the path on your system pointing to the executible KlustaKwik
+
+os.system(
+        './KlustaKwik'
+        ' '+filebase+' 4 -UseFeatures '+'1'*(num_features-1)+'0'+' '
+        '-MinClusters 200 '
+        '-MaxClusters 200 '
+        '-MaxPossibleClusters 500 '
+        '-PenaltyK 1.0 '
+        '-PenaltyKLogN 0.0 '
+        '-PriorPoint 1 '
+        '-Debug 0 '
+        '-RandomSeed 654 '
+        '-SaveSorted 0 '
+        '-UseMaskedInitialConditions 1 '
+        '-AssignToFirstClosestMask  1'
+        '-UseDistributional 1 '
+        )
+</code></pre>
+
+<p>To understand the various options employed above, see the next section.</p>
+
+<p><strong>We apologize for the current somewhat complicated set-up. Everything will be simplified once beta testing has been completed - slightly simplified on 23/04/13.</strong></p>
+
+<h2>
+<a name="3-parameters" class="anchor" href="#3-parameters"><span class="octicon octicon-link"></span></a>3) Parameters</h2>
 
 <hr><p>The current release of masked KlustaKwik has an enormous range of parameters which can be adjusted
 according to the user's needs. Many unnecessary parameters will soon be phased out, but in the interim
@@ -90,7 +151,7 @@ The only difference is that the parameter PenaltyMix has been replaced with two 
 
 <ul>
 <li><strong>Penalties</strong></li>
-</ul><p>PenaltyMix 1 corresponds to (PenaltyK 0, PenaltyKLogN 1) (Bayesian Information Criterion)</p>
+</ul><p>PenaltyMix 1 corresponds to (PenaltyK 0, PenaltyKLogN 1) (Bayesian Information Criterion) <em>default</em></p>
 
 <p>PenaltyMix 0 corresponds to (PenaltyK 1, PenaltyKLogN ) (Akaike Information Criterion)</p>
 
@@ -100,8 +161,10 @@ The higher the values, the fewer clusters you obtain. Higher penalties discourag
 <p>AIC is recommended for larger probes. Evidence suggests anything between AIC and BIC gives reasonable results. </p>
 
 <ul>
-<li><strong>UseDistributional</strong></li>
-</ul><p>This enables the use of the new `distributional Expectation-Maximization' algorithm. Set this to 1. </p>
+<li>
+<strong>UseDistributional</strong> (*default* 0)</li>
+</ul><p>To use KlustaKwik in "masked" mode, set this to 1.
+This enables the use of the new `masked Expectation-Maximization' algorithm. To use the new algorithm, it is recommended that you change most of the defaults.</p>
 
 <p>It has been observed that using soft masks of the form. e.g.:</p>
 
@@ -112,6 +175,29 @@ The higher the values, the fewer clusters you obtain. Higher penalties discourag
 <p>0 0 0 0 0 0 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 </p>
 
 <p>So your .fmask file will work better if it contains floats.</p>
+
+<ul>
+<li>
+<strong>UseFeatures</strong> (*default* 11111111111100001)</li>
+</ul><p>Given a .fet file containing vectors of a set length, you may chose which features are used for the automatic clustering process and omit others. </p>
+
+<p>Your choice of which features to use is expressed in a string of 0's and 1's. Include a <strong>1</strong> for every feature you would like to include and a <strong>0</strong> for every feature you want to leave out (e.g. features that corresponding to bad channels that you don't want).</p>
+
+<p>e.g. Your .fet file looks as follows (97-dimensional data obtained from taking the first 3 principal components from each channel of a 32-channel probe, and the final feature, time):</p>
+
+<pre><code>97
+-43206 -6407 652 5181 3675 11860 -30066 -145 -3720 -33491 -15892 5840 -57344 11025 -16524 -8815 -4046 -157 -30493 -7224 507 -676 9700 -6809 -39397 -211 -5468 -22511 -352 -186 -1127 -10679 9435 -25851 -22021 4238 -26672 -17418 11085 10035 -2864 9975 -20875 -29624 13367 -14849 -8633 4408 -19751 -24882 8184 -28165 4853 2136 -21114 -10823 3004 -8716 -4686 4793 11529 -9505 8930 13056 5133 3442 -1085 -4045 4965 -63934 -3827 -6996 -46672 4384 -7775 -29050 -549 -9260 -24985 20865 -14532 -17785 -6168 862 -22615 1593 -5319 -972 -1660 10063 -106 1600 5378 1963 -4880 7357 2
+-43496 -2123 1697 7471 2085 15302 -30109 2679 -2230 -34578 -13000 6082 -56265 17120 -14871 -9465 -2789 -1098 -31967 -3309 -255 -74 10289 -6540 -39518 3964 -4349 -22094 1344 1581 -1050 -11070 9237 -28378 -19400 2499 -27143 -15752 11980 10508 -3931 10804 -22956 -28054 11357 -15002 -8109 5675 -22333 -22982 6313 -26356 7494 4534 -21650 -8983 2692 -8909 -4412 5892 10953 -10840 8443 14319 3268 5287 -236 -4808 6393 -64397 2215 -5170 -45979 8712 -5203 -29763 2625 -9344 -22857 23174 -11572 -17982 -5042 1361 -22808 4433 -5423 1133 -3507 14082 1741 292 7829 2157 -5736 8542 2
+-33069 18324 -563 -108726 -20512 -11860 -30497 10828 20051 -31983 -2309 24404 -11377 22760 14372 -27932 -2754 7252 -9373 43163 -5022 -48048 22884 -11330 -15395 36739 28855 -14419 13872 -976 -45777 305 5922 -4145 9977 5397 -9010 -3391 -13322 7835 278 30982 -47770 -15958 -364 -22770 1765 3022 -1997 8759 13377 -42757 -19253 27619 6931 -4810 1240 -14390 -39503 -9258 2612 -25492 -7973 -16064 -13039 -3647 -17640 -11906 11890 2259 -8161 -12922 -23660 -28462 7323 -18757 -25355 -6518 -15544 -26716 12220 3591 -9433 -32399 -5565 -36616 -7977 18442 -10641 -28989 -14625 -404 -1207 6840 -17422 -3009 41
+2903 -6480 -8171 -6906 -14576 10433 29882 -4122 -7722 6632 29771 9732 -5294 -3917 50886 -7037 2175 4469 11817 -4083 -7448 -7708 3939 3240 -14890 2721 4889 -11259 20546 11612 -36244 -5598 27674 9815 -4252 -16080 -13403 6912 11855 8481 11759 -24013 -41589 -36261 11447 -32228 2745 -16386 -9704 4388 -20931 3564 32431 -9779 -5692 26247 -11884 -1589 37336 12236 3088 32036 -18553 14636 18875 1886 22541 10968 -14971 8588 23946 -23505 -26785 70034 -29746 -28573 50845 -24927 -166980 114185 -57570 -83298 67056 -39670 -103696 90495 -36092 -52810 31849 -5378 -6437 3499 -34861 -11266 -8738 24618 84
+</code></pre>
+
+<p>If you want to include all the PCA's but not time you need the following string:</p>
+
+<pre><code>111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111110
+</code></pre>
+
+<p>The default option is historical and was useful for tetrodes in the Buzsaki lab.</p>
 
 <ul>
 <li>
@@ -132,34 +218,31 @@ e.g. the derived binary mask of </p>
 
 <p>0 0 0 0 0 0 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0. </p>
 
-<p><strong>SplitEvery</strong> is an integer which is the number of iterations after which KlustaKwik attempts to split existing clusters.
+<p><strong>SplitEvery</strong> (*default* 40)
+is an integer which is the number of iterations after which KlustaKwik attempts to split existing clusters.
 When using masked initializations, to save time due to excessive splitting, set <strong>SplitEvery</strong> to a large number, close
 to the number of distinct masks or the number of chosen starting masks. </p>
 
-<ul>
-<li><strong>UseFeatures</strong></li>
-</ul><p>Make sure to include a <strong>1</strong> for every feature you would like to include and a <strong>0</strong> for every
-feature you want to leave out (i.e. features that corresponding to bad channels that you don't want).</p>
+<h2>
+<a name="4-glossary-of-parameters" class="anchor" href="#4-glossary-of-parameters"><span class="octicon octicon-link"></span></a>4) Glossary of Parameters</h2>
 
-<ul>
-<li>
-<strong>PriorPoint</strong>
-Please set this to 1 at all times when using Masked KlustaKwik.</li>
-</ul><h2>2) Command line input</h2>
+<hr><p><strong>Filebase</strong> - Name of your .fet and .mask file, e.g. if your feature file is called mydata.fet.1, then Filebase is <em>mydata</em>.</p>
 
-<hr><p>A typical command to run the masked version of KlustaKwik therefore looks as follows in a linux terminal:</p>
+<p><strong>ElecNo</strong> - Shank number of your probe.</p>
 
-<pre><code>[yourterminal]$./KlustaKwik yourfetfilename shanknumber -UseDistributional 1 -FullStepEvery 1 -SplitEvery 40 -UseMaskedInitialConditions 1 -AssignToFirstClosestMask 1 -RandomSeed 123 -PriorPoint 1 -MaxIter 10000 -MaxPossibleClusters 500 -MinClusters 130 -MaxClusters 130 -PenaltyK 1 -PenaltyKLogN 0 -UseFeatures 111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111110
-</code></pre>
+<p><strong>MinClusters n</strong> (*default* 20)  - The minimum number of starting clusters. Random initial assignment when the <em>-UseMaskedInitialConditions</em> is not being used. The intial assignment will have no less than n clusters.  The final number may be different, since clusters can be split or deleted during the course of the algorithm</p>
 
-<p>e.g. if your .fet file is called <strong>recording.fet.4</strong> (and your other files are <strong>recording.mask.4</strong>, <strong>recording.fmask.4</strong>)  for the fourth shank, then the command looks something like:</p>
+<p><strong>MaxClusters n</strong> (*default* 30)- The maximum number of starting clusters. Random initial assignment when the <em>-UseMaskedInitialConditions</em> is not being used.</p>
 
-<pre><code>[yourterminal]$./KlustaKwik recording 4 -UseDistributional 1  -FullStepEvery 1 -SplitEvery 40 -UseMaskedInitialConditions 1 -AssignToFirstClosestMask 1 -RandomSeed 123 -PriorPoint 1 -MaxIter 10000 -MaxPossibleClusters 500 -MinClusters 130 -MaxClusters 130 -PenaltyK 1 -PenaltyKLogN 0 -UseFeatures 111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111110
-</code></pre>
+<p><strong>nStarts n</strong>       (*default* 1) The algorithm will be started n times for each inital cluster count between MinClusters and MaxClusters.</p>
 
-<p>You may consider writing a script to generate such a complicated command.</p>
+<p><strong>MaxPossibleClusters n</strong> (*default* 100) - The largest permitted number of clusters, so cluster splitting can produce no more than n clusters.</p>
 
-<p><strong>We apologize for the current somewhat complicated set-up. Everything will be simplified once beta testing has been completed - slightly simplified on 23/04/13.</strong></p>
+<p><strong>PriorPoint</strong> (*default* 1) It is recommended that this is not changed.</p>
+
+<p><strong>help</strong> - Prints a short message and then the default parameter values.</p>
+
+<p><strong>RandomSeed n</strong>    (*default* 1) Specifies a seed for the random number generator</p>
       </section>
       <footer>
         <p>This project is maintained by <a href="https://github.com/klusta-team">klusta-team</a></p>
