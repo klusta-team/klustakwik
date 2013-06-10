@@ -13,7 +13,13 @@ For spike sorting, KlustaKwik is designed to be used in conjunction with [SpikeD
 ---------------------
 ---------------------
 
-KlustaKwik is written in C++, and provided as source code. A makefile is provided. It is a plain-text program that runs from the command line, so compilation should be straightforward.
+KlustaKwik is written in C++, and provided as source code. A makefile is provided. It is a plain-text program that runs from the command line, so compilation should be straightforward. 
+
+On Linux and Mac OS X simply unzip the source folder, open a command line terminal in the unzipped folder and type:
+
+	make
+	
+This will create the executable: KlustaKwik.
 
 3) Usage
 ---------------------
