@@ -80,7 +80,7 @@ The first line of the .fet file is a single number specifying the number of feat
     -33069 18324 -563 -108726 -20512 -11860 -30497 10828 20051 -31983 -2309 24404 -11377 22760 14372 -27932 -2754 7252 -9373 43163 -5022 -48048 22884 -11330 -15395 36739 28855 -14419 13872 -976 -45777 305 5922 -4145 9977 5397 -9010 -3391 -13322 7835 278 30982 -47770 -15958 -364 -22770 1765 3022 -1997 8759 13377 -42757 -19253 27619 6931 -4810 1240 -14390 -39503 -9258 2612 -25492 -7973 -16064 -13039 -3647 -17640 -11906 11890 2259 -8161 -12922 -23660 -28462 7323 -18757 -25355 -6518 -15544 -26716 12220 3591 -9433 -32399 -5565 -36616 -7977 18442 -10641 -28989 -14625 -404 -1207 6840 -17422 -3009 41
     2903 -6480 -8171 -6906 -14576 10433 29882 -4122 -7722 6632 29771 9732 -5294 -3917 50886 -7037 2175 4469 11817 -4083 -7448 -7708 3939 3240 -14890 2721 4889 -11259 20546 11612 -36244 -5598 27674 9815 -4252 -16080 -13403 6912 11855 8481 11759 -24013 -41589 -36261 11447 -32228 2745 -16386 -9704 4388 -20931 3564 32431 -9779 -5692 26247 -11884 -1589 37336 12236 3088 32036 -18553 14636 18875 1886 22541 10968 -14971 8588 23946 -23505 -26785 70034 -29746 -28573 50845 -24927 -166980 114185 -57570 -83298 67056 -39670 -103696 90495 -36092 -52810 31849 -5378 -6437 3499 -34861 -11266 -8738 24618 84
 
-The .fmask file has a similar format, but with each line giving a vector of floats between 0 and 1. The .fmast file also does not have the first line specifying the number of features. *SHABNAM IS THIS CORRECT?*
+The .fmask file has a similar format, but with each line giving a vector of floats between 0 and 1. The .fmask file also has the first line specifying the number of features. 
 
 6) Parameters
 -------------------
@@ -119,7 +119,7 @@ There are a large number of parameters that control how KlustaKwik works. The de
     help	0
 
 
-The most important parameter are: 
+The most important parameters are: 
 
 + **UseFeatures** 
 
@@ -163,19 +163,19 @@ to the number of distinct masks or the number of chosen starting masks.
 
 **MinClusters n** (default 20)  - The minimum number of starting clusters. It will give a random initial assignment when the **-UseMaskedInitialConditions** is not being used; otherwise it will assign according to mask. The intial assignment will have no less than n clusters.  The final number may be different, since clusters can be split or deleted during the course of the algorithm
 
-**MaxClusters n** (default 30)- The maximum number of starting clusters. It will give a random initial assignment when the **-UseMaskedInitialConditions** is not being used; otherwise it assignment will be determined by masks.
+**MaxClusters n** (default 30)- The maximum number of starting clusters. It will give a random initial assignment when the **-UseMaskedInitialConditions** is not being used; otherwise it assignment will be determined by masks. Note: It ought to be set lower than **MaxPossibleClusters**.
  
 **nStarts n**       (default 1) The algorithm will be started n times for each inital cluster count between MinClusters and MaxClusters.
 
-**MaxPossibleClusters n** (default 100) - The largest permitted number of clusters, so cluster splitting can produce no more than n clusters.
+**MaxPossibleClusters n** (default 100) - The largest permitted number of clusters, so cluster splitting can produce no more than n clusters. Note: It ought to be set higher than **MaxClusters**.
 
 **UseMaskedInitialConditions	(default 0)** - Initialises using distinct derived binary masks. Use together with **AssignToFirstClosestMask** below. See previous section for explanation.
 
-**AssignToFirstClosestMask	(default 0)** - If starting with a number of clusters fewer than the number of distinct derived bianry masks, it will assign the rest of the points to the cluster with the nearest mask.
+**AssignToFirstClosestMask	(default 0)** - If starting with a number of clusters fewer than the number of distinct derived binary masks, it will assign the rest of the points to the cluster with the nearest mask.
 
 **help** - Prints a short message and then the default parameter values.
 
-**RandomSeed n**    (default 1) Specifies a seed for the random number generator
+**RandomSeed n**    (default 1) Specifies a seed for the random number generator.
 
 **StartCluFile** STRING   (default " ") Initializes according to the specified cluster file.  If it can't find a better cluster assignment, it will output this.
 
