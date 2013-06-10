@@ -42,7 +42,34 @@ e.g. if your .fet file is called **recording.fet.4** (and your other files are *
 
     [yourterminal]$./KlustaKwik recording 4 -UseDistributional 1 -UseMaskedInitialConditions 1 -AssignToFirstClosestMask 1 -MaxPossibleClusters 500 -MinClusters 130 -MaxClusters 130 -PenaltyK 1 -PenaltyKLogN 0 -UseFeatures 111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111110
 
-You may consider writing a script to generate such a complicated command. To understand the various options employed above, see the next section.
+You may consider writing a script to generate such a complicated command. An example Python script could read as follows:
+
+    import os, sys
+
+    filebase = 'recording'
+    num_features = 97
+    #Number of features (including time)
+    # Replace './KlustaKwik' with the path on your system pointing to the executible KlustaKwik
+    
+    os.system(
+        	'./KlustaKwik'
+		    ' '+filebase+' 1 -UseFeatures '+'1'*(num_features-1)+'0'+' '
+    		'-MinClusters 200 '
+            '-MaxClusters 200 '
+    		'-MaxPossibleClusters 500 '
+    		'-PenaltyK 1.0 '
+            '-PenaltyKLogN 0.0 '
+    		'-PriorPoint 1 '
+    		'-Debug 0 '
+    		'-RandomSeed 654 '
+    		'-SaveSorted 0 '
+    		'-UseMaskedInitialConditions 1 '
+            '-AssignToFirstClosestMask	1'
+    		'-UseDistributional 1 '
+    		)
+
+
+To understand the various options employed above, see the next section.
 
 **We apologize for the current somewhat complicated set-up. Everything will be simplified once beta testing has been completed - slightly simplified on 23/04/13.**
 
