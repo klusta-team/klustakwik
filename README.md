@@ -232,8 +232,8 @@ The .clu file will be a file with with S+1 lines, where S is the number of spike
 	51
 	29
 	4
-        .
-        .
+	.
+	.
 
 This will mean there are 101 clusters in total. That the 1st is in cluster 15, the 2nd in cluster 3 and the 3rd and 7th spike both in cluster 4, etc. until the end of the file.
 
