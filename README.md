@@ -18,7 +18,10 @@ whereas *masked* channels contain only noise. The .fmask file is a text file, ev
 giving the positions of the unmasked channels. In the .fmask file, **1** denotes **unmasked** and **0** denotes
 **masked**, values between 0 and 1 are also permitted at the boundaries of detected spikes.
 
-1) Essential input files
+1) Installation 
+Download and unzip/tar the KlustaKwik folder.
+
+2) Essential input files
 ---------------------
 
 KlustaKwik 3.0 is backward compatible with previous versions. To use it in "classic" mode, just run the same command you would have for version 2.x (as documented on the sourceforge page linked above). It will produce the same results, but should run about 10 times faster. In this mode, KlustaKwik takes a single input file (mydata.fet.n) containing feature vectors, and produces an output file (mydata.clu.n) containing cluster numbers. It also produces a log file (mydata.klg.n).
@@ -30,7 +33,7 @@ The suffix .n allows you to keep track of data recorded on a probe with mutliple
     mydata.fet.n
     mydata.fmask.n
 
-2) Command line input
+3) Command line input
 ----------------------
 ----------------------
 
@@ -74,7 +77,7 @@ To understand the various options employed above, see the next section.
 **We apologize for the current somewhat complicated set-up. Everything will be simplified once beta testing has been completed - slightly simplified on 23/04/13.**
 
 
-3) Parameters
+4) Parameters
 -------------------
 -------------------
 
@@ -193,7 +196,7 @@ When using masked initializations, to save time due to excessive splitting, set 
 to the number of distinct masks or the number of chosen starting masks. 
 
 
-4) Full Glossary of Parameters
+5) Full Glossary of Parameters
 -------------------------
 -------------------------
 **UseDistributional (default 0)** - Set this to 1 to use in "masked" mode.
