@@ -193,12 +193,7 @@ When using masked initializations, to save time due to excessive splitting, set 
 to the number of distinct masks or the number of chosen starting masks. 
 
 
-
-
-
-
-
-4) Glossary of Parameters
+4) Full Glossary of Parameters
 -------------------------
 -------------------------
 **UseDistributional (default 0)** - Set this to 1 to use in "masked" mode.
@@ -207,24 +202,23 @@ to the number of distinct masks or the number of chosen starting masks.
 
 **ElecNo** - Shank number of your probe.
 
-**MinClusters n** (*default* 20)  - The minimum number of starting clusters. Random initial assignment when the *-UseMaskedInitialConditions* is not being used. The intial assignment will have no less than n clusters.  The final number may be different, since clusters can be split or deleted during the course of the algorithm
+**MinClusters n** (default 20)  - The minimum number of starting clusters. Random initial assignment when the *-UseMaskedInitialConditions* is not being used. The intial assignment will have no less than n clusters.  The final number may be different, since clusters can be split or deleted during the course of the algorithm
 
-**MaxClusters n** (*default* 30)- The maximum number of starting clusters. Random initial assignment when the *-UseMaskedInitialConditions* is not being used.
+**MaxClusters n** (default 30)- The maximum number of starting clusters. Random initial assignment when the *-UseMaskedInitialConditions* is not being used.
  
-**nStarts n**       (*default* 1) The algorithm will be started n times for each inital cluster count between MinClusters and MaxClusters.
+**nStarts n**       (default 1) The algorithm will be started n times for each inital cluster count between MinClusters and MaxClusters.
 
-**MaxPossibleClusters n** (*default* 100) - The largest permitted number of clusters, so cluster splitting can produce no more than n clusters.
+**MaxPossibleClusters n** (default 100) - The largest permitted number of clusters, so cluster splitting can produce no more than n clusters.
 
-**UseMaskedInitialConditions	0** - Initialises using distinct derived binary masks.
+**UseMaskedInitialConditions	(default 0)** - Initialises using distinct derived binary masks. Use together with **AssignToFirstClosestMask** below. See previous section for explanation.
 
-**AssignToFirstClosestMask	0** - If starting with a number of clusters fewer than the number of distinct derived bianry masks, it will assign the rest of the points to the cluster with the nearest mask.
+**AssignToFirstClosestMask	(default 0)** - If starting with a number of clusters fewer than the number of distinct derived bianry masks, it will assign the rest of the points to the cluster with the nearest mask.
 
 **help** - Prints a short message and then the default parameter values.
 
-**RandomSeed n**    (*default* 1) Specifies a seed for the random number generator
+**RandomSeed n**    (default 1) Specifies a seed for the random number generator
 
-
-**StartCluFile** STRING   (default "") Initializes according to the specified cluster file.  If it can't find a better cluster assignment, it will output this.
+**StartCluFile** STRING   (default " ") Initializes according to the specified cluster file.  If it can't find a better cluster assignment, it will output this.
 
 **FullStepEvery** n (default 10) All log-likelihoods are recalculated every n steps (see DistThresh)
 
@@ -248,9 +242,9 @@ Various debugging options for developers:
 
 **PriorPoint** (default 0) Helps normalize covaraince matrices.
 
-**DistThresh** d    (default 6.907755) Time-saving parameter. If a point has log likelihood more than d worse for a given class than for the best class, the log likelihood for that class is not recalculated.  This saves an awful lot of time.
+**DistThresh d**     (default 6.907755) Time-saving parameter. If a point has log likelihood more than d worse for a given class than for the best class, the log likelihood for that class is not recalculated.  This saves an awful lot of time.
 
-**ChangedThresh** f (default 0.05) All log-likelihoods are recalculated if the fraction of instances changing class exceeds f (see DistThresh)
+**ChangedThresh f**  (default 0.05) All log-likelihoods are recalculated if the fraction of instances changing class exceeds f (see DistThresh)
  
 
 
