@@ -221,7 +221,30 @@ to the number of distinct masks or the number of chosen starting masks.
 **RandomSeed n**    (*default* 1) Specifies a seed for the random number generator
 
 
+**StartCluFile** STRING   (default "") Initializes according to the specified cluster file.  If it can't find a better cluster assignment, it will output this.
+
+ **DistThresh** d    (default 6.907755) Time-saving parameter. If a point has log likelihood more than d worse for a given class than for the best class, the log likelihood for that class is not recalculated.  This saves an awful lot of time.
+
  
+**FullStepEvery** n (default 10) All log-likelihoods are recalculated every n steps (see DistThresh)
+
+ 
+
+**ChangedThresh** f (default 0.05) All log-likelihoods are recalculated if the fraction of instances changing class exceeds f (see DistThresh)
+
+ 
+
+**MaxIter** n       (default 500) Maximum number of iterations. ie. it won't try more than n iterations from any starting point.
+
+ 
+
+**Log**             (default 1) Produces .klg log file (default is yes, to switch off do -Log 0)
+
+**Screen**          (default 1) Produces parameters and progress information on the console. Set to 0 to suppress output in batches.
+
+**Debug**           (default 0) Miscellaneous debugging information (not recommended)
+
+**DistDump**        (default 0) Outputs a ridiculous amount of debugging information (definately not recommended).
 
 
  
