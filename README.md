@@ -15,8 +15,8 @@ Masked KlustaKwik is a new algorithm designed to be used in conjunction with [Sp
 
 The new algorithm takes advantage of the fact that spikes tend to occur only on a subset of the features, with the remainder of the channels containing only multi-unit noise. The information of the relevant channels for each spike is encoded in an additional .fmask file which is output from SpikeDetekt, along with the usual .fet features file. The vectors in the .fmask file are the same size as those in the .fet file, but are restricted to lie between 0 and 1. *Unmasked* channels are channels on which spiking activity has been found to occur by the program SpikeDetekt,
 whereas *masked* channels contain only noise. The .fmask file is a text file, every line of which is a vector
-giving the positions of the unmasked channels. In the .fmask file, **1** denotes *unmasked* and **0** denotes
-*masked*, values between 0 and 1 are also permitted at the boundaries of detected spikes.
+giving the positions of the unmasked channels. In the .fmask file, **1** denotes **unmasked** and **0** denotes
+**masked**, values between 0 and 1 are also permitted at the boundaries of detected spikes.
 
 1) Essential input files
 ---------------------
