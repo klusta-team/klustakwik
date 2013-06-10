@@ -222,7 +222,7 @@ to the number of distinct masks or the number of chosen starting masks.
 
 **FullStepEvery** n (default 10) All log-likelihoods are recalculated every n steps (see DistThresh)
 
-**SplitEvery** n    (default 40) Test to see if any clusters should be split every n steps. 0 means don't split ever.
+**SplitEvery** n    (default 40) Test to see if any clusters should be split every n steps. 0 completely suppresses splitting altogether.
 
 **MaxIter** n       (default 500) Maximum number of iterations. ie. it won't try more than n iterations from any starting point.
 
