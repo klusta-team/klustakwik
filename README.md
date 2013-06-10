@@ -8,57 +8,45 @@ Documentation for KlustaKwik and Masked KlustaKwik
 ------------------------
 ------------------------
 
-KlustaKwik is an implementation of a hard Expectation-Maximization algorithm for the purposes of clustering, a major application of which is the spike-sorting of neurophysiological data. Older versions of the code can be found here:
-[Sourceforge](http://sourceforge.net/projects/klustakwik/).
+KlustaKwik is a program for cluster analysis by fitting a mixture of Gaussians. It was designed for the specific problem of spike sorting of multi-electrode arrays, but can be used for any application. Technically, KlustaKwik works by implementing a hard EM algorithm with unconstrained covariance matrices. It also uses a number of tricks to greatly speed up execution. It has recently been updated to deal with high-dimensional data as required for spike sorting from large, dense electrode arrays. An older version of the code, which cannot deal with high-density arrays, can be found [here](http://sourceforge.net/projects/klustakwik/). But don't use that version, use this one. Even for plain tetrode data, the new version is fully backward compatible, and is also much faster.
 
-Masked KlustaKwik is a new algorithm designed to be used in conjunction with [SpikeDetekt](http://klusta-team.github.io/spikedetekt) for clustering spike waveforms recorded on large dense probes with high-channel counts, and [KlustaViewa](http://klusta-team.github.io/klustaviewa) for manual verification and adjustment of clustering results.
+For spike sorting, KlustaKwik is designed to be used in conjunction with [SpikeDetekt](http://klusta-team.github.io/spikedetekt) for spike detection, and [KlustaViewa](http://klusta-team.github.io/klustaviewa) for manual verification and adjustment of clustering results.
 
-The new algorithm takes advantage of the fact that spikes tend to occur only on a subset of the features, with the remainder of the channels containing only multi-unit noise. The information of the relevant channels for each spike is encoded in an additional .fmask file which is output from SpikeDetekt, along with the usual .fet features file. The vectors in the .fmask file are the same size as those in the .fet file, but are restricted to lie between 0 and 1. *Unmasked* channels are channels on which spiking activity has been found to occur by the program SpikeDetekt,
-whereas *masked* channels contain only noise. The .fmask file is a text file, every line of which is a vector
-giving the positions of the unmasked channels. In the .fmask file, **1** denotes **unmasked** and **0** denotes
-**masked**, values between 0 and 1 are also permitted at the boundaries of detected spikes.
-
-1) Installation 
-----------------
-----------------
-Download and unzip/tar the KlustaKwik folder.
-
-2) Essential input files
+1) Usage
 ---------------------
 
 KlustaKwik 3.0 is backward compatible with previous versions. To use it in "classic" mode, just run the same command you would have for version 2.x (as documented on the sourceforge page linked above). It will produce the same results, but should run about 10 times faster. In this mode, KlustaKwik takes a single input file (mydata.fet.n) containing feature vectors, and produces an output file (mydata.clu.n) containing cluster numbers. It also produces a log file (mydata.klg.n).
 
-To use in "masked" mode, you need to provide also a file with mask information (mydata.fmask.n). This text file is produced by SpikeDetekt, and contains a set of floating-point vectors between 0 and 1 indicating the weight with which different features should be used in clustering each point.  
+To deal with high channel count arrays, KlustaKwik should be run in "masked" mode. In this mode, the algorithm takes advantage of the fact that any spike occurs on only a subset of channels, with the remainder containing only multi-unit noise. The information of which channels are relevant for each spike is encoded in an additional .fmask file which is output from SpikeDetekt, along with the usual .fet features file.  *Unmasked* channels are channels on which spiking activity has been found to occur by the program SpikeDetekt, whereas *masked* channels contain only noise. The .fmask file is a text file, every line of which is a vector of length the number of features, in which **1** denotes **unmasked** and **0** denotes **masked**, and values between 0 and 1 indicate partial masking.
 
-The suffix .n allows you to keep track of data recorded on a probe with mutliple shanks. Thus, for shank n, the relevant files would be the following  output from SpikeDetekt:
+The suffix .n allows you to keep track of data recorded on a probe with mutliple shanks. Thus, for shank n, the relevant files would be the following output from SpikeDetekt:
 
     mydata.fet.n
     mydata.fmask.n
 
-3) Command line input
+2) Command line input
 ----------------------
 ----------------------
 
-A typical command to run the masked version of KlustaKwik therefore looks as follows in a linux terminal:
+KlustaKwik runs from the command line, and takes a large number of options. We plan to rationalize these, but in the meantime you have to run fairly long command strings to run it in masked mode.
 
-    [yourterminal]$./KlustaKwik yourfetfilename shanknumber -UseDistributional 1 -UseMaskedInitialConditions 1 -AssignToFirstClosestMask 1 -MaxPossibleClusters 500 -MinClusters 130 -MaxClusters 130 -PenaltyK 1 -PenaltyKLogN 0 -UseFeatures 111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111110
-    
-e.g. if your .fet file is called **recording.fet.4** (and your other files are **recording.mask.4**, **recording.fmask.4**)  for the fourth shank, then the command looks something like:
+If you wanted to cluster the 4th shank from a file called "recording" in masked mode, you would run something like this:
 
     [yourterminal]$./KlustaKwik recording 4 -UseDistributional 1 -UseMaskedInitialConditions 1 -AssignToFirstClosestMask 1 -MaxPossibleClusters 500 -MinClusters 130 -MaxClusters 130 -PenaltyK 1 -PenaltyKLogN 0 -UseFeatures 111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111110
 
-You may consider writing a script to generate such a complicated command. An example Python script could read as follows:
+You will probably want to write a script to generate such these commands. An example Python script could read as follows:
 
     import os, sys
 
     filebase = 'recording'
+    shank_num = '4'
     num_features = 97
     #Number of features (including time)
     # Replace './KlustaKwik' with the path on your system pointing to the executible KlustaKwik
     
     os.system(
         	'./KlustaKwik'
-		    ' '+filebase+' 4 -UseFeatures '+'1'*(num_features-1)+'0'+' '
+		    ' '+filebase+' '+shank_num+' -UseFeatures '+'1'*(num_features-1)+'0'+' '
     		'-MinClusters 200 '
             '-MaxClusters 200 '
     		'-MaxPossibleClusters 500 '
@@ -73,23 +61,13 @@ You may consider writing a script to generate such a complicated command. An exa
     		'-UseDistributional 1 '
     		)
 
+You would then edit the parameters filebase, shank_num, and num_features as required. 
 
-To understand the various options employed above, see the next section.
-
-**We apologize for the current somewhat complicated set-up. Everything will be simplified once beta testing has been completed - slightly simplified on 23/04/13.**
-
-
-4) Parameters
+3) Parameters
 -------------------
 -------------------
 
-The current release of masked KlustaKwik has an enormous range of parameters which can be adjusted
-according to the user's needs. Many unnecessary parameters will soon be phased out, but in the interim
-to help beta-testers, we will describe a few of the relevant ones.
-
-    Usage: MaskedKlustaKwik FileBase ElecNo [Arguments]
-
-    Arguments (with default values): 
+There are a large number of parameters that control how KlustaKwik works. 
 
     FileBase    electrode
     ElecNo	1
@@ -198,7 +176,7 @@ When using masked initializations, to save time due to excessive splitting, set 
 to the number of distinct masks or the number of chosen starting masks. 
 
 
-5) Full Glossary of Parameters
+4) Full Glossary of Parameters
 -------------------------
 -------------------------
 **UseDistributional (default 0)** - Set this to 1 to use in "masked" mode.
