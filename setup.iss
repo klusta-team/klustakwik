@@ -3,7 +3,7 @@
 
 #define MyAppName "KlustaKwik"
 #define MyAppVersion "3.0"
-#define MyAppPublisher "KlustaTeam"
+#define MyAppPublisher "Klusta-Team"
 #define MyAppURL "https://github.com/klusta-team/klustakwik"
 #define MyAppExeName "klustakwik.exe"
 
