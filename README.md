@@ -21,6 +21,8 @@ On Linux and Mac OS X simply unzip the source folder, open a command line termin
 	
 This will create the executable: KlustaKwik.
 
+KlustaKwik can be compiled on Windows using either [MinGW](http://www.mingw.org/) or Microsoft Visual C++: in the latter case, you may need to add `_USE_MATH_DEFINES` in preprocessor definitions.
+
 3) Usage
 ---------------------
 ---------------------
