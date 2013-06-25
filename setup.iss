@@ -23,10 +23,11 @@ DefaultDirName={pf}\{#MyAppName}
 DisableDirPage=yes
 DefaultGroupName={#MyAppName}
 DisableProgramGroupPage=yes
-OutputBaseFilename=setup
 Compression=lzma
 SolidCompression=yes
-ChangesEnvironment=yes
+ChangesEnvironment=yes        
+OutputBaseFilename=klustakwik-setup
+OutputDir=.
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
