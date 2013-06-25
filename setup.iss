@@ -39,22 +39,17 @@ Source: "x64\Release\klustakwik.exe"; DestDir: "{app}"; Flags: ignoreversion
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
 
-[Registry]
-Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; ValueType: expandsz; ValueName: "Path"; ValueData: "{olddata};{app}"; Check: NeedsAddPath('{app}')
-    
+[Tasks]
+Name: modifypath; Description: &Add application directory to your environmental path;
+
 [Code]
-function NeedsAddPath(Param: string): boolean;
-var
-  OrigPath: string;
-begin
-  if not RegQueryStringValue(HKEY_LOCAL_MACHINE,
-    'SYSTEM\CurrentControlSet\Control\Session Manager\Environment',
-    'Path', OrigPath)
-  then begin
-    Result := True;
-    exit;
-  end;
-  // look for the path with leading and trailing semicolon
-  // Pos() returns 0 if not found
-  Result := Pos(';' + Param + ';', ';' + OrigPath + ';') = 0;
-end;
+const
+			ModPathName = 'modifypath';
+			ModPathType = 'user';
+
+		function ModPathDir(): TArrayOfString;
+		begin
+			setArrayLength(Result, 1);
+			Result[0] := ExpandConstant('{app}');
+		end;
+		#include "modpath.iss"
