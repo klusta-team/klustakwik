@@ -13,7 +13,7 @@ For spike sorting, KlustaKwik is designed to be used in conjunction with [SpikeD
 ---------------------
 ---------------------
 
-[Windows 64 bits users can download an installer](klustakwik.rossant.net/klustakwik-setup.exe).
+[Windows 64 bits users can download an installer](http://klustakwik.rossant.net/klustakwik-setup.exe).
 
 KlustaKwik is written in C++, and provided as source code. A makefile is provided. It is a plain-text program that runs from the command line, so compilation should be straightforward. 
 
