@@ -794,7 +794,7 @@ void KK::StartingConditionsRandom()
     for(int c=0; c<MaxPossibleClusters; c++)
         ClassAlive[c] = (c<nStartingClusters);
 
-    if(SplitInfo == 1) Output("\t Assigned %d initial classes randomly.\n", nStartingClusters);
+    if(SplitInfo == 1) Output("\tSP: Assigned %d initial classes randomly.\n", nStartingClusters);
 }
 
 // Initialise starting conditions by selecting unique masks at random
@@ -986,7 +986,7 @@ scalar KK::CEM(char *CluFile, int Recurse, int InitRand,
         //Write start of output to klg file
         if(Verbose>=1)
         {
-            if(Recurse==0) Output("\t\t");
+            if(Recurse==0) Output("\t\tSP:");
             if ((Recurse!=0)||(SplitInfo==1&&Recurse==0))
                 Output("Iteration %d%c (" SCALARFMT " sec): %d clusters ",
                         Iter, FullStep ? 'F' : 'Q',timesofar, nClustersAlive);
