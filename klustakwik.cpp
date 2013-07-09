@@ -9,6 +9,8 @@ FILE *Distfp;
 int global_numiterations = 0;
 scalar iteration_metric2 = (scalar)0;
 scalar iteration_metric3 = (scalar)0;
+clock_t Clock0;
+scalar timesofar;
 
 // Sets storage for KK class.  Needs to have nDims and nPoints defined
 void KK::AllocateArrays() {
@@ -71,8 +73,8 @@ scalar KK::Penalty(int n)
 		return 0;
 	nParams = (nDims*(nDims+1)/2 + nDims + 1)*(n-1); // each has cov, mean, &p 
 
-	scalar p = penaltyK*(scalar)(nParams*2) // AIC
-			+penaltyKLogN*((scalar)nParams*(scalar)log((scalar)nPoints)/2); // BIC
+	scalar p = penaltyK*(scalar)(nParams) // AIC units (Spurious factor of 2 removed from AIC units on 09.07.13)
+			+penaltyKLogN*((scalar)nParams*(scalar)log((scalar)nPoints)/2); // BIC units
 	return p;
 }
 
@@ -722,10 +724,10 @@ int KK::TrySplits()
 
             K3.MStep();
             K3.EStep();
-            Output("About to compute K3 class penalties");
+            //Output("About to compute K3 class penalties");
             if (UseDistributional) K3.ComputeClassPenalties(); //SNK Fixed bug: Need to compute the cluster penalty properly, cluster penalty is only used in UseDistributional mode
             NewScore = K3.ComputeScore();
-            Output("\n Splitting cluster %d changes total score from " SCALARFMT " to " SCALARFMT "\n", c, Score, NewScore);
+            Output("\nSplitting cluster %d changes total score from " SCALARFMT " to " SCALARFMT "\n", c, Score, NewScore);
 
             if (NewScore<Score)
             {
@@ -792,7 +794,7 @@ void KK::StartingConditionsRandom()
 	for(int c=0; c<MaxPossibleClusters; c++)
 		ClassAlive[c] = (c<nStartingClusters);
 
-	Output("Assigned %d initial classes randomly.\n", nStartingClusters);
+	if(SplitInfo == 1) Output("\t Assigned %d initial classes randomly.\n", nStartingClusters);
 }
 
 // Initialise starting conditions by selecting unique masks at random
@@ -977,13 +979,17 @@ scalar KK::CEM(char *CluFile, int Recurse, int InitRand,
 		nChanged = 0;
 		for(p=0; p<nPoints; p++) nChanged += (OldClass[p] != Class[p]);
 
+        //Compute elapsed time
+        timesofar = (clock()-Clock0)/(scalar) CLOCKS_PER_SEC;
+        //Output("\nTime so far" SCALARFMT " seconds.\n", timesofar);
         
         //Write start of output to klg file
         if(Verbose>=1)
         {
-            if(Recurse==0) Output("\t");
-            Output(" Iteration %d%c: %d clusters ",
-                   Iter, FullStep ? 'F' : 'Q', nClustersAlive);
+            if(Recurse==0) Output("\t\t");
+            if ((Recurse!=0)||(SplitInfo==1&&Recurse==0))
+                Output("Iteration %d%c (" SCALARFMT " sec): %d clusters ",
+                        Iter, FullStep ? 'F' : 'Q',timesofar, nClustersAlive);
         }
         
 		// Calculate score
@@ -1008,6 +1014,7 @@ scalar KK::CEM(char *CluFile, int Recurse, int InitRand,
 	    global_numiterations++;
 	    iteration_metric2 += (scalar)(nDims*nDims)*(scalar)(nPoints);
 	    iteration_metric3 += (scalar)(nDims*nDims)*(scalar)(nDims*nPoints);
+        
 
 		if (Debug)
         {
@@ -1033,7 +1040,10 @@ scalar KK::CEM(char *CluFile, int Recurse, int InitRand,
 		}
 
         // try splitting
-        if ((Recurse && SplitEvery>0) && (Iter%SplitEvery==SplitEvery-1 || (nChanged==0 && LastStepFull)))
+        //int mod = (abs(Iter-SplitFirst))%SplitEvery;
+        //Output("\n Iter mod SplitEvery = %d\n",mod);
+        //Output("Iter-SplitFirst %d \n",Iter-SplitFirst);
+        if ((Recurse && SplitEvery>0) && ( Iter==SplitFirst  ||( Iter>=SplitFirst+1 && (Iter-SplitFirst)%SplitEvery==SplitEvery-1 )  || (nChanged==0 && LastStepFull) ) )
         {
             SaveTempOutput(); //SNK Saves a temporary output clu file before each split
             Output("Writing temp clu file \n");
@@ -1063,7 +1073,7 @@ scalar KK::Cluster(char *StartCluFile=NULL)
     
 	if (Subset<=1)
 	{ // don't subset
-		Output("--- Clustering full data set of %d points ---\n", nPoints);
+		Output("------ Clustering full data set of %d points ------\n", nPoints);
 		return CEM(NULL, 1, 1);
 	}
 
@@ -1077,7 +1087,7 @@ scalar KK::Cluster(char *StartCluFile=NULL)
 	KK KKSub = KK(*this, SubsetIndices);
 
 	// run CEM algorithm on KKSub
-	Output("--- Running on subset of %d points ---\n", sPoints);
+	Output("------ Running on subset of %d points ------\n", sPoints);
 	KKSub.CEM(NULL, 1, 1);
 
 	// now copy cluster shapes from KKSub to main KK
@@ -1089,7 +1099,7 @@ scalar KK::Cluster(char *StartCluFile=NULL)
 	AliveIndex = KKSub.AliveIndex;
 
 	// Run E and C steps on full data set
-	Output("--- Evaluating fit on full set of %d points ---\n", nPoints);
+	Output("------ Evaluating fit on full set of %d points ------\n", nPoints);
 	EStep();
 	CStep();
 
@@ -1197,7 +1207,9 @@ int main(int argc, char **argv)
 	int p, i;
 	SetupParams(argc, argv); // This function is defined in parameters.cpp
 	
-	clock_t Clock0 = clock();
+	//clock_t Clock0 = clock();
+    Clock0 = clock();
+    
 
 	// The main KK object, loads the data and does some precomputations
 	KK K1(FileBase, ElecNo, UseFeatures, PenaltyK, PenaltyKLogN, PriorPoint);
@@ -1213,8 +1225,13 @@ int main(int argc, char **argv)
     // start with provided file, if required
     if (*StartCluFile)
     {
-        Output("Starting from cluster file %s\n", StartCluFile);
-        BestScore = K1.CEM(StartCluFile, 1, 1);
+        Output("\nStarting from cluster file %s\n", StartCluFile);
+        
+        scalar iterationtime =clock();
+        BestScore = K1.CEM(StartCluFile, 1, 1);  //Main computation
+        iterationtime = (clock()-iterationtime)/(scalar) CLOCKS_PER_SEC;
+        Output("Time taken for this iteration:" SCALARFMT " seconds.\n", iterationtime);
+        
 		Output(" %d->%d Clusters: Score " SCALARFMT "\n\n", K1.nStartingClusters, K1.nClustersAlive, BestScore);
 		for(p=0; p<K1.nPoints; p++)
             K1.BestClass[p] = K1.Class[p];
@@ -1226,8 +1243,11 @@ int main(int argc, char **argv)
         for(i=0; i<nStarts; i++)
         {
             // do CEM iteration
-            Output("Starting from %d clusters...\n", K1.nStartingClusters);
-		    Score = K1.Cluster();
+            Output("\nStarting from %d clusters...\n", K1.nStartingClusters);
+            scalar iterationtime =clock();
+		    Score = K1.Cluster(); //Main computation
+            iterationtime = (clock()-iterationtime)/(scalar) CLOCKS_PER_SEC;
+            Output("Time taken for this iteration:" SCALARFMT " seconds.\n", iterationtime);
 
 		    Output(" %d->%d Clusters: Score " SCALARFMT ", best is " SCALARFMT "\n", K1.nStartingClusters, K1.nClustersAlive, Score, BestScore);
             if (Score < BestScore)
@@ -1245,16 +1265,18 @@ int main(int argc, char **argv)
 
 	scalar tottime = (clock()-Clock0)/(scalar) CLOCKS_PER_SEC;
 
-	Output("Main iterations: %d (time per=" SCALARFMT "ms)\n",
+	Output("Main iterations: %d (time per iteration =" SCALARFMT " ms)\n",
 			K1.numiterations,
 			1e3*tottime/K1.numiterations);
-	Output("Total iterations: %d (time per=" SCALARFMT "ms)\n",
+	Output("Total iterations: %d (time per iteration =" SCALARFMT " ms)\n",
 			global_numiterations,
 			1e3*tottime/global_numiterations);
-	Output("Iterations metric 2: " SCALARFMT " (time per=" SCALARFMT "ns)\n",
+    Output("\nDef. Iteration metric 2:\nIteration_metric2 += (scalar)(nDims*nDims)*(scalar)(nPoints)\n");
+	Output("Iterations metric 2: " SCALARFMT " (time per metric unit =" SCALARFMT "ns)\n",
 			iteration_metric2,
 			1e9*tottime/iteration_metric2);
-	Output("Iterations metric 3: " SCALARFMT " (time per=" SCALARFMT "ps)\n",
+     Output("\nDef. Iteration metric 3:\nIteration_metric3 += (scalar)(nDims*nDims)*(scalar)(nDims*nPoints)\n");
+	Output("Iterations metric 3: " SCALARFMT " (time per metric unit=" SCALARFMT "ps)\n",
 			iteration_metric3,
 			1e12*tottime/iteration_metric3);
 	Output("\nThat took " SCALARFMT " seconds.\n", tottime);

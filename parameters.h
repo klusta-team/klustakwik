@@ -51,6 +51,8 @@ enum type_t {FLOAT = 'f', INT = 'd',  BOOLEAN = 'b', STRING = 's'};
 	  INT_PARAM,     RandomSeed,          int RandomSeed,            1        )\
 	F("Whether or not to run in debug mode (prints lots of detail). 0 = None, 1 = Partial info, 2=Full Info",          \
 	  INT_PARAM, Debug,                   char Debug,                0        )\
+    F("Whether or not give spilt iteration info. 0 = Partial split info, 1 = Full split info",          \
+	  INT_PARAM, SplitInfo,                   char SplitInfo,        0        )\
 	F("Whether or not to print information as the program runs.",              \
 	  INT_PARAM,     Verbose,             int Verbose,               1        )\
 	F("String of 0s and 1s indicating which features to use.",                 \
@@ -71,8 +73,10 @@ enum type_t {FLOAT = 'f', INT = 'd',  BOOLEAN = 'b', STRING = 's'};
 	  INT_PARAM,     MaxIter,             int MaxIter,               500      )\
 	F("An intermediate cluster file to use as a starting point.",              \
 	  STRING_PARAM,  StartCluFile,        char StartCluFile[STRLEN], ""       )\
-	F("Allow cluster splitting after this many iterations.",                   \
+	F("Allow cluster splitting after this many iterations after initial split.",                   \
 	  INT_PARAM,     SplitEvery,          int SplitEvery,            40       )\
+        F("Allow first cluster splitting after this many iterations.",                   \
+	  INT_PARAM,     SplitFirst,          int SplitFirst,            40       )\
 	F("Coefficient of 2*num_params to use in penalty (1 for AIC).",            \
 	  FLOAT_PARAM,   PenaltyK,            scalar PenaltyK,           0.0      )\
 	F("Coefficient of num_params*log(num_points)/2 to use in penalty (1 for BIC).",\
