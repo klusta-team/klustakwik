@@ -16,28 +16,28 @@ FILE *logfp;
 
 // Write to screen and log file
 void Output(char *fmt, ...) {
-	va_list arg;
-	char str[STRLEN];
+    va_list arg;
+    char str[STRLEN];
 
-	if (!Screen && !Log) return;
-	va_start(arg, fmt);
-	vsnprintf(str,STRLEN,fmt,arg);
-	va_end(arg);
+    if (!Screen && !Log) return;
+    va_start(arg, fmt);
+    vsnprintf(str,STRLEN,fmt,arg);
+    va_end(arg);
 
-	if (Screen) printf("%s", str);
-	if (Log) fprintf(logfp, "%s", str);
+    if (Screen) printf("%s", str);
+    if (Log) fprintf(logfp, "%s", str);
 }
 
 // Print an error message and abort
 void Error(char *fmt, ...) {
-	va_list arg;
-	char str[STRLEN];
+    va_list arg;
+    char str[STRLEN];
 
-	if (!Screen && !Log) return;
-	va_start(arg, fmt);
-	vsnprintf(str,STRLEN,fmt,arg);
-	va_end(arg);
+    if (!Screen && !Log) return;
+    va_start(arg, fmt);
+    vsnprintf(str,STRLEN,fmt,arg);
+    va_end(arg);
 
-	if (Screen) fprintf(stderr, "%s", str);
-	if (Log) fprintf(logfp, "%s", str);
+    if (Screen) fprintf(stderr, "%s", str);
+    if (Log) fprintf(logfp, "%s", str);
 }

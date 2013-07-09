@@ -23,45 +23,45 @@ using namespace std;
 // returns 0 if OK, returns 1 if matrix is not positive definite
 int Cholesky(SafeArray<scalar> &In, SafeArray<scalar> &Out, int D)
 {
-	int i, j, k;
-	scalar sum;
+    int i, j, k;
+    scalar sum;
 
-	// empty output array
-	for (i=0; i<D*D; i++) Out[i] = 0;
+    // empty output array
+    for (i=0; i<D*D; i++) Out[i] = 0;
 
-	// main bit
-	for (i=0; i<D; i++) {
-		for (j=i; j<D; j++) {	// j>=i
-			sum = In[i*D + j];
+    // main bit
+    for (i=0; i<D; i++) {
+        for (j=i; j<D; j++) {    // j>=i
+            sum = In[i*D + j];
 
-			for (k=i-1; k>=0; k--) sum -= Out[i*D + k] * Out[j*D + k]; // i,j >= k
-			if (i==j) {
-				if (sum <=0) return(1); // Cholesky decomposition has failed
-				Out[i*D + i] = (scalar)sqrt(sum);
-			}
-			else {
-				Out[j*D + i] = sum/Out[i*D + i];
-			}
-		}
-	}
+            for (k=i-1; k>=0; k--) sum -= Out[i*D + k] * Out[j*D + k]; // i,j >= k
+            if (i==j) {
+                if (sum <=0) return(1); // Cholesky decomposition has failed
+                Out[i*D + i] = (scalar)sqrt(sum);
+            }
+            else {
+                Out[j*D + i] = sum/Out[i*D + i];
+            }
+        }
+    }
 
-	return 0; // for sucess
+    return 0; // for sucess
 }
 
 // Solve a set of linear equations M*Out = x.
 // Where M is lower triangular (M[i*D + j] >0 if j>=i);
 // D is number of dimensions
 void TriSolve(SafeArray<scalar> &M, SafeArray<scalar> &x,
-				SafeArray<scalar> &Out, int D)
+                SafeArray<scalar> &Out, int D)
 {
-	for(int i=0; i<D; i++)
-	{
-		scalar *MiD = &M[i*D];
-		scalar sum = x[i];
-		for(int j=0; j<i; j++) // j<i
-			//sum += M[i*D + j] * Out[j];
-			sum += MiD[j] * Out[j];
-		//Out[i] = - sum / M[i*D + i];
-		Out[i] = - sum / MiD[i];
-	}
+    for(int i=0; i<D; i++)
+    {
+        scalar *MiD = &M[i*D];
+        scalar sum = x[i];
+        for(int j=0; j<i; j++) // j<i
+            //sum += M[i*D + j] * Out[j];
+            sum += MiD[j] * Out[j];
+        //Out[i] = - sum / M[i*D + i];
+        Out[i] = - sum / MiD[i];
+    }
 }

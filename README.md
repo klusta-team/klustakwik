@@ -19,8 +19,8 @@ KlustaKwik is written in C++, and provided as source code. A makefile is provide
 
 On Linux and Mac OS X simply unzip the source folder, open a command line terminal in the unzipped folder and type:
 
-	[yourterminal]$make
-	
+    [yourterminal]$make
+    
 This will create the executable: KlustaKwik.
 
 KlustaKwik can be compiled on Windows using either [MinGW](http://www.mingw.org/) or Microsoft Visual C++: in the latter case, you may need to add `_USE_MATH_DEFINES` in preprocessor definitions.
@@ -60,21 +60,21 @@ You will probably want to write a script to generate such these commands. An exa
     # Replace './KlustaKwik' with the path on your system pointing to the executible KlustaKwik
     
     os.system(
-        	'./KlustaKwik'
-		    ' '+filebase+' '+shank_num+' -UseFeatures '+'1'*(num_features-1)+'0'+' '
-    		'-MinClusters 200 '
+            './KlustaKwik'
+            ' '+filebase+' '+shank_num+' -UseFeatures '+'1'*(num_features-1)+'0'+' '
+            '-MinClusters 200 '
             '-MaxClusters 200 '
-    		'-MaxPossibleClusters 500 '
-    		'-PenaltyK 1.0 '
+            '-MaxPossibleClusters 500 '
+            '-PenaltyK 1.0 '
             '-PenaltyKLogN 0.0 '
-    		'-PriorPoint 1 '
-    		'-Debug 0 '
-    		'-RandomSeed 654 '
-    		'-SaveSorted 0 '
-    		'-UseMaskedInitialConditions 1 '
-            '-AssignToFirstClosestMask	1'
-    		'-UseDistributional 1 '
-    		)
+            '-PriorPoint 1 '
+            '-Debug 0 '
+            '-RandomSeed 654 '
+            '-SaveSorted 0 '
+            '-UseMaskedInitialConditions 1 '
+            '-AssignToFirstClosestMask    1'
+            '-UseDistributional 1 '
+            )
 
 You would then edit the parameters filebase, shank_num, and num_features as required. 
 
@@ -99,34 +99,34 @@ The .fmask file has a similar format, but with each line giving a vector of floa
 There are a large number of parameters that control how KlustaKwik works. The defaults, which cause it to run in classic mode, are:
 
     FileBase    electrode
-    ElecNo	1
-    MinClusters	20
-    MaxClusters	30
-    MaxPossibleClusters	100
-    nStarts	1
-    RandomSeed	1
-    Debug	0
-    Verbose	1
-    UseFeatures	11111111111100001
-    DistDump	0
-    DistThresh	6.907755
-    FullStepEvery	20
-    ChangedThresh	0.050000
-    Log	1
-    Screen	1
-    MaxIter	500
-    StartCluFile	
-    SplitEvery	40
-    PenaltyK	0.000000
-    PenaltyKLogN	1.000000
-    Subset	1
-    PriorPoint	1
-    SaveSorted	0
-    SaveCovarianceMeans	0
-    UseMaskedInitialConditions	0
-    AssignToFirstClosestMask	0
-    UseDistributional	0
-    help	0
+    ElecNo    1
+    MinClusters    20
+    MaxClusters    30
+    MaxPossibleClusters    100
+    nStarts    1
+    RandomSeed    1
+    Debug    0
+    Verbose    1
+    UseFeatures    11111111111100001
+    DistDump    0
+    DistThresh    6.907755
+    FullStepEvery    20
+    ChangedThresh    0.050000
+    Log    1
+    Screen    1
+    MaxIter    500
+    StartCluFile    
+    SplitEvery    40
+    PenaltyK    0.000000
+    PenaltyKLogN    1.000000
+    Subset    1
+    PriorPoint    1
+    SaveSorted    0
+    SaveCovarianceMeans    0
+    UseMaskedInitialConditions    0
+    AssignToFirstClosestMask    0
+    UseDistributional    0
+    help    0
 
 
 The most important parameters are: 
@@ -179,9 +179,9 @@ to the number of distinct masks or the number of chosen starting masks.
 
 **MaxPossibleClusters n** (default 100) - The largest permitted number of clusters, so cluster splitting can produce no more than n clusters. Note: It ought to be set higher than **MaxClusters**.
 
-**UseMaskedInitialConditions	(default 0)** - Initialises using distinct derived binary masks. Use together with **AssignToFirstClosestMask** below. See previous section for explanation.
+**UseMaskedInitialConditions    (default 0)** - Initialises using distinct derived binary masks. Use together with **AssignToFirstClosestMask** below. See previous section for explanation.
 
-**AssignToFirstClosestMask	(default 0)** - If starting with a number of clusters fewer than the number of distinct derived binary masks, it will assign the rest of the points to the cluster with the nearest mask.
+**AssignToFirstClosestMask    (default 0)** - If starting with a number of clusters fewer than the number of distinct derived binary masks, it will assign the rest of the points to the cluster with the nearest mask.
 
 **help** - Prints a short message and then the default parameter values.
 
@@ -203,9 +203,9 @@ Various debugging options for developers:
 
 **Screen**          (default 1) Produces parameters and progress information on the console. Set to 0 to suppress output in batches.
 
-**SaveSorted** (default 0)	Saves a .clu file with masks sorted lexicographically.
+**SaveSorted** (default 0)    Saves a .clu file with masks sorted lexicographically.
     
-**SaveCovarianceMeans**	(default 0) Saves means and covariance matrices. Stops computation at each iteration. Manual input required for continuation.
+**SaveCovarianceMeans**    (default 0) Saves means and covariance matrices. Stops computation at each iteration. Manual input required for continuation.
 
 **Debug**           (default 0) Miscellaneous debugging information (not recommended).
 
@@ -223,29 +223,29 @@ Various debugging options for developers:
 
 Regardless of the parameters chosen to run KlustaKwik, the two following plain text files will always be produced.
 
-	mydata.clu.n (main output file)
-	mydata.klg.n (a log file)
+    mydata.clu.n (main output file)
+    mydata.klg.n (a log file)
 
 The .clu file will be a file with with S+1 lines, where S is the number of spikes detected. The first line will give the total number of clusters found. Each subsequent line will give the cluster label corresponding to each spike.e.g. if the start of your .clu file looks like this:
 
-	101
-	15
-	3
-	4
-	79
-	51
-	29
-	4
-	.
-	.
+    101
+    15
+    3
+    4
+    79
+    51
+    29
+    4
+    .
+    .
 
 This will mean there are 101 clusters in total. That the 1st is in cluster 15, the 2nd in cluster 3 and the 3rd and 7th spike both in cluster 4, etc. until the end of the file.
 
 If you are uncertain whether or not you have run KlustaKwik having inputted the correct parameters simply open the .klg file (it is produced as soon as you run the program) and all parameter values will be listed. 
 
 
-	
-	
+    
+    
 
 
 

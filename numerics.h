@@ -61,52 +61,52 @@ template <class T>
 class SafeArray
 {
 private:
-	T* base;
-	size_t length;
-	const char *name;
+    T* base;
+    size_t length;
+    const char *name;
 public:
-	// Initialise from a pointer - not safe, the char *name is used for debugging
-	//SafeArray(T* base, size_t length, char *name) : base(base), length(length), name(name) {};
-	// Initialise from a vector, with an optional offset
-	SafeArray(vector<T> &vec, const char *vecname);
-	SafeArray(vector<T> &vec, size_t offset, const char *vecname);
-	inline T& operator[](const int i) const;
-	// TODO: add an .at() method which always does bounds checking
+    // Initialise from a pointer - not safe, the char *name is used for debugging
+    //SafeArray(T* base, size_t length, char *name) : base(base), length(length), name(name) {};
+    // Initialise from a vector, with an optional offset
+    SafeArray(vector<T> &vec, const char *vecname);
+    SafeArray(vector<T> &vec, size_t offset, const char *vecname);
+    inline T& operator[](const int i) const;
+    // TODO: add an .at() method which always does bounds checking
 };
 
 template <class T>
 SafeArray<T>::SafeArray(vector<T> &vec, const char *vecname)
 {
-	name = vecname;
-	base = &vec[0];
-	length = vec.size();
+    name = vecname;
+    base = &vec[0];
+    length = vec.size();
 }
 
 template <class T>
 SafeArray<T>::SafeArray(vector<T> &vec, size_t offset, const char *vecname)
 {
-	name = vecname;
-	if(offset<0 || offset>vec.size())
-	{
-		Error("Cannot create SafeArray with offset %d from vector of "
-			  "size %d (%s)\n", (int)offset, (int)vec.size(), name);
-		abort();
-	}
-	base = &vec[offset];
-	length = vec.size()-offset;
+    name = vecname;
+    if(offset<0 || offset>vec.size())
+    {
+        Error("Cannot create SafeArray with offset %d from vector of "
+              "size %d (%s)\n", (int)offset, (int)vec.size(), name);
+        abort();
+    }
+    base = &vec[offset];
+    length = vec.size()-offset;
 }
 
 template <class T>
 inline T& SafeArray<T>::operator[](const int i) const
 {
 #ifdef SAFEARRAY_BOUNDSCHECKING
-	if(i<0 || i>=(int)length)
-	{
-		cerr << "Array index " << i << " out of bounds (" << name << ")" << endl;
-		abort();
-	}
+    if(i<0 || i>=(int)length)
+    {
+        cerr << "Array index " << i << " out of bounds (" << name << ")" << endl;
+        abort();
+    }
 #endif
-	return base[i];
+    return base[i];
 }
 
 #endif /* NUMERICS_H_ */
