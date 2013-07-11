@@ -137,7 +137,7 @@ The most important parameters are:
 
 + **UseFeatures** 
 
-After this you can either have an empty string denoting 'input all features in the .fet file' 
+After this you can either have an empty string denoting 'input all features in the .fet file' (default)
 
 OR
 
@@ -162,7 +162,7 @@ This enables the use of the new `masked Expectation-Maximization' algorithm. To 
 
 + **MaskStarts** (*default* 500)
 
-NEW! Now you can start with a set number of clusters derived from the mask vectors. This overrides MinClusters and MaxClusters below. 
+NEW! Now you can start with a set number of clusters derived from the mask vectors. This overrides MinClusters and MaxClusters below. Also *UseMaskedInitialCondition* and *AssignToFirstClosestMask* are no longer needed and should only be used by expert users/developers.
 
 **SplitFirst** (*default* 20)
 is an integer which is the number of iterations after which KlustaKwik *first* attempts to split existing clusters.
