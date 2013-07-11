@@ -62,17 +62,12 @@ You will probably want to write a script to generate such these commands. An exa
     os.system(
             './KlustaKwik'
             ' '+filebase+' '+shank_num+' -UseFeatures '+'1'*(num_features-1)+'0'+' '
-            '-MinClusters 200 '
-            '-MaxClusters 200 '
+            '-Maskstarts 300 '
             '-MaxPossibleClusters 500 '
             '-PenaltyK 1.0 '
             '-PenaltyKLogN 0.0 '
-            '-PriorPoint 1 '
-            '-Debug 0 '
-            '-RandomSeed 654 '
-            '-SaveSorted 0 '
-            '-UseMaskedInitialConditions 1 '
-            '-AssignToFirstClosestMask    1'
+            '-SplitFirst 20 '
+            '-SplitEvery 100'
             '-UseDistributional 1 '
             )
 
