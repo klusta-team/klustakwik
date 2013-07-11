@@ -75,12 +75,12 @@ enum type_t {FLOAT = 'f', INT = 'd',  BOOLEAN = 'b', STRING = 's'};
       STRING_PARAM,  StartCluFile,        char StartCluFile[STRLEN], ""       )\
     F("Allow cluster splitting after this many iterations after initial split.",                   \
       INT_PARAM,     SplitEvery,          int SplitEvery,            40       )\
-        F("Allow first cluster splitting after this many iterations.",                   \
+    F("Allow first cluster splitting after this many iterations.",             \
       INT_PARAM,     SplitFirst,          int SplitFirst,            40       )\
-    F("Coefficient of 2*num_params to use in penalty (1 for AIC).",            \
+    F("Coefficient of num_params to use in penalty (1 for AIC).",              \
       FLOAT_PARAM,   PenaltyK,            scalar PenaltyK,           0.0      )\
     F("Coefficient of num_params*log(num_points)/2 to use in penalty (1 for BIC).",\
-      FLOAT_PARAM,   PenaltyKLogN,         scalar PenaltyKLogN,      1.0      )\
+      FLOAT_PARAM,   PenaltyKLogN,        scalar PenaltyKLogN,       1.0      )\
     F("Do clustering on 1/Subset points, and then generalise to whole set.",   \
       INT_PARAM,     Subset,              int Subset,                1        )\
     F("Number of 'PriorPoints'",                                               \

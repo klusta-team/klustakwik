@@ -400,7 +400,7 @@ void KK::EStep()
             // If Cholesky returns 1, it means the matrix is not positive definite.
             // So kill the class.
             // Cholesky is defined in linalg.cpp
-            Output("Unmasked E-step: Deleting class %d: covariance matrix is singular \n", c);
+            Output("Unmasked E-step: Deleting class %d (%d points): covariance matrix is singular \n", c, nPoints);
             ClassAlive[c] = 0;
             continue;
         }
@@ -587,7 +587,7 @@ void KK::ConsiderDeletion()
     {
         if (Loss<0)
         {
-            Output("Deleting Class %d. Lose " SCALARFMT " but Gain " SCALARFMT "\n", CandidateClass, DeletionLoss[CandidateClass], DeltaPen);
+            Output("Deleting Class %d (%d points): Lose " SCALARFMT " but Gain " SCALARFMT "\n", CandidateClass, nPoints, DeletionLoss[CandidateClass], DeltaPen);
             // set it to dead
             ClassAlive[CandidateClass] = 0;
             
@@ -601,7 +601,7 @@ void KK::ConsiderDeletion()
     {
         if (Loss<DeltaPen)
         {
-            Output("Deleting Class %d. Lose " SCALARFMT " but Gain " SCALARFMT "\n", CandidateClass, DeletionLoss[CandidateClass], DeltaPen);
+            Output("Deleting Class %d (%d points): Lose " SCALARFMT " but Gain " SCALARFMT "\n", CandidateClass, nPoints, DeletionLoss[CandidateClass], DeltaPen);
             // set it to dead
             ClassAlive[CandidateClass] = 0;
 

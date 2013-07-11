@@ -62,14 +62,26 @@ void KK::LoadData(char *FileBase, int ElecNo, char *UseFeatures)
 
     // read in number of features
     fscanf(fp, "%d", &nFeatures);
+    Output("Number of features read in: %d \n ",nFeatures);
 
     // calculate number of dimensions
-    UseLen = strlen(UseFeatures);
-    nDims=0;
-    for(i=0; i<nFeatures; i++) {
-        nDims += (i<UseLen && UseFeatures[i]=='1');
+    if (UseFeatures[0] == '2')
+    {
+        nDims = nFeatures;
+        UseLen = nFeatures;
+        Output("nDims = %d ,UseLen = %d ",nDims,UseLen);
+      //  UseFeatures =
     }
-
+    else
+    {
+        UseLen = strlen(UseFeatures);
+        nDims=0;
+        for(i=0; i<nFeatures; i++)
+        {
+            nDims += (i<UseLen && UseFeatures[i]=='1');
+        }
+        Output("nDims = %d ,UseLen = %d ",nDims,UseLen);
+    }
     AllocateArrays();
 
     // load data
@@ -82,10 +94,25 @@ void KK::LoadData(char *FileBase, int ElecNo, char *UseFeatures)
             val = (scalar)readfloatval;
             if (status==EOF) Error("Error reading feature file");
 
-            if (i<UseLen && UseFeatures[i]=='1') {
-                Data[p*nDims + j] = val;
-    //            printf("Data = " SCALARFMT "",Data[p*nDims+j]);
+            if (UseFeatures[0] == '2') //when we want all the features
+            {
+                if(i<UseLen ) //To Do: implement DropLastNFeatures
+                {
+                    //        Output("j = %d, i = %d \n",i,j);
+                    Data[p*nDims + j] = val;
+                    //        printf("Data = " SCALARFMT "",Data[p*nDims+j]);
                 j++;
+                }
+            }
+            else  // When we want the subset specified by the binary string UseFeatures, e.g. 111000111010101
+            {
+                if(i<UseLen && UseFeatures[i]=='1' ) 
+                {
+                    //     Output("j = %d, i = %d \n",i,j);
+                    Data[p*nDims + j] = val;
+                   //            printf("Data = " SCALARFMT "",Data[p*nDims+j]);
+                    j++;
+                }
             }
         }
     }
@@ -143,10 +170,29 @@ void KK::LoadData(char *FileBase, int ElecNo, char *UseFeatures)
                 if (status==EOF) Error("Error reading fmask file");
                 val = (scalar)readfloatval;
 
-                if (i<UseLen && UseFeatures[i]=='1') {
-                    FloatMasks[p*nDims + j] = val;
-                    j++;
+                if (UseFeatures[0] == '2')
+                {
+                    if(i<UseLen )
+                    {
+                      //                                  Output("j = %d, i = %d \n",i,j);
+                        FloatMasks[p*nDims + j] = val;
+                     //                                   printf("Data = " SCALARFMT "",Data[p*nDims+j]);
+                        j++;
+                    }
                 }
+                else  // When we want all the features
+                {
+                    if(i<UseLen && UseFeatures[i]=='1'  ) //To Do: implement DropLastNFeatures
+                    {
+                        FloatMasks[p*nDims + j] = val;
+                      //                                 printf("Data = " SCALARFMT "",Data[p*nDims+j]);
+                        j++;
+                    }
+                }
+               // if (i<UseLen && UseFeatures[i]=='1') {
+               //     FloatMasks[p*nDims + j] = val;
+               //     j++;
+               // }
             }
         }
     }
