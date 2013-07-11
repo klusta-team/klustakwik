@@ -41,6 +41,16 @@ void KK::LoadData(char *FileBase, int ElecNo, char *UseFeatures)
     //    fpmask = NULL;
     //}
     
+    if((MaskStarts > 0)&& UseDistributional)
+    {
+        Output("-------------------------------------------------------------------------");
+        Output("\nUsing Distributional EM with Maskstarts\n");
+        MinClusters = MaskStarts;
+        MaxClusters = MaskStarts;
+        Output("NOTE: Maskstarts overides above values of MinClusters and MaxClusters \
+                \nMinClusters = %d \nMaxClusters = %d \n ", MinClusters,MaxClusters);
+    }
+    
     if(UseDistributional)// replaces if(UseFloatMasks)
     {
         sprintf(fnamefmask,"%s.fmask.%d", FileBase, ElecNo);
@@ -62,14 +72,14 @@ void KK::LoadData(char *FileBase, int ElecNo, char *UseFeatures)
 
     // read in number of features
     fscanf(fp, "%d", &nFeatures);
-    Output("Number of features read in: %d \n ",nFeatures);
+    if(Debug) Output("Number of features read in: %d \n ",nFeatures);
 
     // calculate number of dimensions
     if (UseFeatures[0] == 0)
     {
         nDims = nFeatures-DropLastNFeatures; // Use all but the last N Features.
         UseLen = nFeatures-DropLastNFeatures;
-        Output("nDims = %d ,UseLen = %d ",nDims,UseLen);
+       // Output("nDims = %d ,UseLen = %d ",nDims,UseLen);
       //  UseFeatures =
     }
     else
@@ -80,7 +90,7 @@ void KK::LoadData(char *FileBase, int ElecNo, char *UseFeatures)
         {
             nDims += (i<UseLen && UseFeatures[i]=='1');
         }
-        Output("nDims = %d ,UseLen = %d ",nDims,UseLen);
+      //  Output("nDims = %d ,UseLen = %d ",nDims,UseLen);
     }
     AllocateArrays();
 
@@ -100,7 +110,7 @@ void KK::LoadData(char *FileBase, int ElecNo, char *UseFeatures)
                 {
                     //        Output("j = %d, i = %d \n",i,j);
                     Data[p*nDims + j] = val;
-                    //        printf("Data = " SCALARFMT "",Data[p*nDims+j]);
+               //             printf("Data = " SCALARFMT "",Data[p*nDims+j]);
                 j++;
                 }
             }
@@ -110,7 +120,7 @@ void KK::LoadData(char *FileBase, int ElecNo, char *UseFeatures)
                 {
                     //     Output("j = %d, i = %d \n",i,j);
                     Data[p*nDims + j] = val;
-                   //            printf("Data = " SCALARFMT "",Data[p*nDims+j]);
+                //               printf("Data = " SCALARFMT "",Data[p*nDims+j]);
                     j++;
                 }
             }
@@ -245,8 +255,8 @@ void KK::LoadData(char *FileBase, int ElecNo, char *UseFeatures)
         for(p=0; p<nPoints; p++) Data[p*nDims+i] = (Data[p*nDims+i] - min) / (max-min);
     }
 
-    Output("----------------------------------------------------------------------------------\n Loaded %d data points of dimension %d.\n", nPoints, nDims);
-    Output(" MEMO: A lower score indicates a better clustering \n ");
+    Output("----------------------------------------------------------\nLoaded %d data points of dimension %d.\n", nPoints, nDims);
+    Output("MEMO: A lower score indicates a better clustering \n ");
 }
 
 // write output to .clu file - with 1 added to cluster numbers, and empties removed.
@@ -285,7 +295,7 @@ void KK::SaveOutput()
 
     if(SaveCovarianceMeans)
         SaveCovMeans();
-    if(SaveSorted)
+    if(SaveSorted&&UseDistributional)
         SaveSortedClu();
 }
 
@@ -325,7 +335,7 @@ void KK::SaveTempOutput()
     
     if(SaveCovarianceMeans)
         SaveCovMeans();
-    if(SaveSorted)
+    if(SaveSorted&&UseDistributional)
         SaveSortedClu();
 }
 

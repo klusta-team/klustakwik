@@ -83,7 +83,11 @@ scalar KK::Penalty(int n)
 void KK::ComputeClassPenalties()
 {
     if(!((bool)UseDistributional)) // This function must only be called in Use Distributional  mode
+    {
+  //      Output("Caught in ComputeClassPenalties");
         return;
+    }
+   // Output("ComputeClassPenalties: Correct if UseDistributional only");
     for(int c=0; c<MaxPossibleClusters; c++)
         ClassPenalty[c] = (scalar)0;
     // compute sum of nParams for each
@@ -888,7 +892,7 @@ void KK::StartingConditionsFromMasks()
                     if(curdistance==distance)
                         possibilities.push_back(mi);
                 }
-                if(AssignToFirstClosestMask)
+                if((MaskStarts > 0) ||AssignToFirstClosestMask)
                     closest_index = possibilities[0];
                 else
                     closest_index = possibilities[irand(0, possibilities.size()-1)];
@@ -939,8 +943,7 @@ scalar KK::CEM(char *CluFile, int Recurse, int InitRand,
     else if (InitRand)
     {
         // initialize data to random
-        if(UseMaskedInitialConditions && (UseDistributional) && Recurse)
-        //if(UseMaskedInitialConditions && (UseMaskedMStep||UseMaskedEStep) && Recurse)
+        if((MaskStarts||UseMaskedInitialConditions) && (UseDistributional) && Recurse)
             StartingConditionsFromMasks();
         else
             StartingConditionsRandom();
@@ -1213,7 +1216,7 @@ int main(int argc, char **argv)
 
     // The main KK object, loads the data and does some precomputations
     KK K1(FileBase, ElecNo, UseFeatures, PenaltyK, PenaltyKLogN, PriorPoint);
-    if(SaveSorted)
+    if(UseDistributional && SaveSorted) //Bug fix (Classical KK would terminate here)
         K1.SaveSortedData();
 
     // Seed random number generator
