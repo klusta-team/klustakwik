@@ -99,41 +99,53 @@ The .fmask file has a similar format, but with each line giving a vector of floa
 There are a large number of parameters that control how KlustaKwik works. The defaults, which cause it to run in classic mode, are:
 
     FileBase    electrode
-    ElecNo    1
-    MinClusters    20
-    MaxClusters    30
-    MaxPossibleClusters    100
-    nStarts    1
-    RandomSeed    1
-    Debug    0
-    Verbose    1
-    UseFeatures    11111111111100001
-    DistDump    0
-    DistThresh    6.907755
-    FullStepEvery    20
-    ChangedThresh    0.050000
-    Log    1
-    Screen    1
-    MaxIter    500
-    StartCluFile    
-    SplitEvery    40
-    PenaltyK    0.000000
-    PenaltyKLogN    1.000000
-    Subset    1
-    PriorPoint    1
-    SaveSorted    0
-    SaveCovarianceMeans    0
-    UseMaskedInitialConditions    0
-    AssignToFirstClosestMask    0
-    UseDistributional    0
-    help    0
+    ElecNo	1
+    UseFeatures	
+    DropLastNFeatures	0
+    UseDistributional	0
+    MaskStarts	500
+    MinClusters	20
+    MaxClusters	30
+    MaxPossibleClusters	100
+    nStarts	1
+    StartCluFile	
+    SplitEvery	40
+    SplitFirst	40
+    PenaltyK	0.000000
+    PenaltyKLogN	1.000000
+    Subset	1
+    FullStepEvery	20
+    MaxIter	500
+    RandomSeed	1
+    Debug	0
+    SplitInfo	1   
+    Verbose	1
+    DistDump	0
+    DistThresh	6.907755
+    ChangedThresh	0.050000
+    Log	1
+    Screen	1
+    PriorPoint	1
+    SaveSorted	0
+    SaveCovarianceMeans	0
+    UseMaskedInitialConditions	0
+    AssignToFirstClosestMask	0
+    help	0
 
 
 The most important parameters are: 
 
 + **UseFeatures** 
 
-After this comes a string with 1's for features you want to use, and 0's for features you don't want to use. In classic mode, you use this option to take out bad channels. In masked mode, you should instead take bad channels out from the .probe file. The default is a historical string for tetrodes - you should always override it.
+After this you can either have an empty string denoting 'input all features in the .fet file' 
+
+OR
+
+you can specify a string with 1's for features you want to use, and 0's for features you don't want to use. In classic mode, you use this option to take out bad channels. In masked mode, you should instead take bad channels out from the .probe file. 
+
++ **DropLastNFeatures**
+
+This is an integer N when used in combination with the empty string for *UseFeatures* above, omits the last N features.
 
 + **Penalties**
 
@@ -148,6 +160,18 @@ KlustaKwik uses penalties to reduce the number of clusters fit. The parameters P
 To use KlustaKwik in "masked" mode, set this to 1.
 This enables the use of the new `masked Expectation-Maximization' algorithm. To use the new algorithm, it is recommended that you change most of the defaults.
 
++ **MaskStarts** (*default* 500)
+
+NEW! Now you can start with a set number of clusters derived from the mask vectors. This overrides MinClusters and MaxClusters below. 
+
+**SplitFirst** (*default* 20)
+is an integer which is the number of iterations after which KlustaKwik *first* attempts to split existing clusters.
+Thereafter KlustaKwik splits every *SplitEvery* iterations.
+
+**SplitEvery** (*default* 40)
+is an integer which is the number of iterations after which KlustaKwik attempts to split existing clusters.
+When using masked initializations, to save time due to excessive splitting, set **SplitEvery** to a large number, close to the number of distinct masks or the number of chosen starting masks. 
+
 + **MinClusters**, **MaxClusters**
 
 In classic mode, KlustaKwik starts from random cluster assignments, running a new random start for every integer between MinClusters and MaxClusters. 
@@ -156,10 +180,8 @@ In classic mode, KlustaKwik starts from random cluster assignments, running a ne
 
 In masked mode, a better approach is to start with clusters that are derived from the mask vectors. Set both of these options to 1 to enable masked initializations. This gives better performance and runs faster. Also set **MinClusters**= **MaxClusters** to the number of distinct clusters it will start from, and it will assign each spike to the nearest unique mask according to Hamming distance.
 
-**SplitEvery** (*default* 40)
-is an integer which is the number of iterations after which KlustaKwik attempts to split existing clusters.
-When using masked initializations, to save time due to excessive splitting, set **SplitEvery** to a large number, close
-to the number of distinct masks or the number of chosen starting masks. 
+
+
 
 
 7) Full Glossary of Parameters
