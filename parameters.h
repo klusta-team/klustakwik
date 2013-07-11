@@ -39,26 +39,26 @@ enum type_t {FLOAT = 'f', INT = 'd',  BOOLEAN = 'b', STRING = 's'};
       STRING_PARAM,  FileBase,            char FileBase[STRLEN],     "electrode")\
     F("Electrode number, files are of the form FileBase.fet.ElecNo, etc.",     \
       INT_PARAM,     ElecNo,              int ElecNo,                1        )\
-    F("String of 0s and 1s indicating which features to use. '2' indicates, use all features ",  \
+    F("String of 0s and 1s indicating which features to use. "" indicates, `use all features' ",  \
       STRING_PARAM,  UseFeatures,         char UseFeatures[STRLEN],  "")\
-    F("Drop the last N features in UseFeatures.",\
+    F("Drop the last N features in UseFeatures (works only when using "" for Usefeatures).",\
       INT_PARAM,     DropLastNFeatures,       int DropLastNFeatures,  0       )\
     F("Use distributional EM steps",                                           \
       BOOLEAN_PARAM, UseDistributional,   char UseDistributional,    false    )\
     F("Run Mask starts with this many starting clusters",                      \
       INT_PARAM,   MaskStarts,            int MaskStarts,            500      )\
     F("Minimum number of clusters to be used without splitting.",              \
-      INT_PARAM,     MinClusters,         int MinClusters,           20       )\
+      INT_PARAM,     MinClusters,         int MinClusters,           100       )\
     F("Maximum number of clusters to be used without splitting.",              \
-      INT_PARAM,     MaxClusters,         int MaxClusters,           30       )\
+      INT_PARAM,     MaxClusters,         int MaxClusters,           110       )\
     F("Maximum possible number of clusters to be used after splitting.",       \
-      INT_PARAM,     MaxPossibleClusters, int MaxPossibleClusters,   100      )\
+      INT_PARAM,     MaxPossibleClusters, int MaxPossibleClusters,   1000      )\
     F("Number of times to start count from each number of clusters.",          \
       INT_PARAM,     nStarts,             int nStarts,               1        )\
     F("An intermediate cluster file to use as a starting point.",              \
       STRING_PARAM,  StartCluFile,        char StartCluFile[STRLEN], ""       )\
     F("Allow cluster splitting after this many iterations after initial split.",\
-      INT_PARAM,     SplitEvery,          int SplitEvery,            40       )\
+      INT_PARAM,     SplitEvery,          int SplitEvery,            20       )\
     F("Allow first cluster splitting after this many iterations.",             \
       INT_PARAM,     SplitFirst,          int SplitFirst,            40       )\
     F("Coefficient of num_params to use in penalty (1 for AIC).",              \
