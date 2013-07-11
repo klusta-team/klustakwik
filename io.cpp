@@ -65,7 +65,7 @@ void KK::LoadData(char *FileBase, int ElecNo, char *UseFeatures)
     Output("Number of features read in: %d \n ",nFeatures);
 
     // calculate number of dimensions
-    if (UseFeatures[0] == '2')
+    if (UseFeatures[0] == 0)
     {
         nDims = nFeatures-DropLastNFeatures; // Use all but the last N Features.
         UseLen = nFeatures-DropLastNFeatures;
@@ -94,7 +94,7 @@ void KK::LoadData(char *FileBase, int ElecNo, char *UseFeatures)
             val = (scalar)readfloatval;
             if (status==EOF) Error("Error reading feature file");
 
-            if (UseFeatures[0] == '2') //when we want all the features
+            if (UseFeatures[0] == 0) //when we want all the features
             {
                 if(i<UseLen  ) //
                 {
@@ -170,7 +170,7 @@ void KK::LoadData(char *FileBase, int ElecNo, char *UseFeatures)
                 if (status==EOF) Error("Error reading fmask file");
                 val = (scalar)readfloatval;
 
-                if (UseFeatures[0] == '2')
+                if (UseFeatures[0] == 0)
                 {
                     if(i<UseLen )
                     {

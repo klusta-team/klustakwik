@@ -56,7 +56,7 @@ enum type_t {FLOAT = 'f', INT = 'd',  BOOLEAN = 'b', STRING = 's'};
     F("Whether or not to print information as the program runs.",              \
       INT_PARAM,     Verbose,             int Verbose,               1        )\
     F("String of 0s and 1s indicating which features to use. '2' indicates, use all features ",                 \
-      STRING_PARAM,  UseFeatures,         char UseFeatures[STRLEN],  "2")\
+      STRING_PARAM,  UseFeatures,         char UseFeatures[STRLEN],  "")\
     F("Drop the last N features in UseFeatures.",\
       INT_PARAM,     DropLastNFeatures,       int DropLastNFeatures,         0       )\
     F("???",                                                                   \
