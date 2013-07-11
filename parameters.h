@@ -55,8 +55,10 @@ enum type_t {FLOAT = 'f', INT = 'd',  BOOLEAN = 'b', STRING = 's'};
       INT_PARAM, SplitInfo,                   char SplitInfo,        0        )\
     F("Whether or not to print information as the program runs.",              \
       INT_PARAM,     Verbose,             int Verbose,               1        )\
-    F("String of 0s and 1s indicating which features to use.",                 \
-      STRING_PARAM,  UseFeatures,         char UseFeatures[STRLEN],  "11111111111100001")\
+    F("String of 0s and 1s indicating which features to use. '2' indicates, use all features ",                 \
+      STRING_PARAM,  UseFeatures,         char UseFeatures[STRLEN],  "2")\
+    F("Drop the last N features in UseFeatures.",\
+      INT_PARAM,     DropLastNFeatures,       int DropLastNFeatures,         0       )\
     F("???",                                                                   \
       INT_PARAM,     DistDump,            int DistDump,              0        )\
     F("Points this far from best do not get an E step recomputation.",         \

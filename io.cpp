@@ -67,8 +67,8 @@ void KK::LoadData(char *FileBase, int ElecNo, char *UseFeatures)
     // calculate number of dimensions
     if (UseFeatures[0] == '2')
     {
-        nDims = nFeatures;
-        UseLen = nFeatures;
+        nDims = nFeatures-DropLastNFeatures; // Use all but the last N Features.
+        UseLen = nFeatures-DropLastNFeatures;
         Output("nDims = %d ,UseLen = %d ",nDims,UseLen);
       //  UseFeatures =
     }
@@ -96,7 +96,7 @@ void KK::LoadData(char *FileBase, int ElecNo, char *UseFeatures)
 
             if (UseFeatures[0] == '2') //when we want all the features
             {
-                if(i<UseLen ) //To Do: implement DropLastNFeatures
+                if(i<UseLen  ) //
                 {
                     //        Output("j = %d, i = %d \n",i,j);
                     Data[p*nDims + j] = val;
