@@ -62,7 +62,7 @@ You will probably want to write a script to generate such these commands. An exa
     os.system(
             './KlustaKwik'
             ' '+filebase+' '+shank_num+' -UseFeatures '+'1'*(num_features-1)+'0'+' '
-            '-Maskstarts 300 '
+            '-MaskStarts 300 '
             '-MaxPossibleClusters 500 '
             '-PenaltyK 1.0 '
             '-PenaltyKLogN 0.0 '
