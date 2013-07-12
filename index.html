@@ -41,7 +41,9 @@
 <h2>
 <a name="2-installation" class="anchor" href="#2-installation"><span class="octicon octicon-link"></span></a>2) Installation</h2>
 
-<hr><p>KlustaKwik is written in C++, and provided as source code. A makefile is provided. It is a plain-text program that runs from the command line, so compilation should be straightforward. </p>
+<hr><p><a href="http://klustakwik.rossant.net/klustakwik-setup.exe">Windows 64 bits users can download an installer</a>.</p>
+
+<p>KlustaKwik is written in C++, and provided as source code. A makefile is provided. It is a plain-text program that runs from the command line, so compilation should be straightforward. </p>
 
 <p>On Linux and Mac OS X simply unzip the source folder, open a command line terminal in the unzipped folder and type:</p>
 
@@ -49,6 +51,8 @@
 </code></pre>
 
 <p>This will create the executable: KlustaKwik.</p>
+
+<p>KlustaKwik can be compiled on Windows using either <a href="http://www.mingw.org/">MinGW</a> or Microsoft Visual C++: in the latter case, you may need to add <code>_USE_MATH_DEFINES</code> in preprocessor definitions.</p>
 
 <h2>
 <a name="3-usage" class="anchor" href="#3-usage"><span class="octicon octicon-link"></span></a>3) Usage</h2>
@@ -86,17 +90,12 @@ num_features = 97
 os.system(
         './KlustaKwik'
         ' '+filebase+' '+shank_num+' -UseFeatures '+'1'*(num_features-1)+'0'+' '
-        '-MinClusters 200 '
-        '-MaxClusters 200 '
+        '-Maskstarts 300 '
         '-MaxPossibleClusters 500 '
         '-PenaltyK 1.0 '
         '-PenaltyKLogN 0.0 '
-        '-PriorPoint 1 '
-        '-Debug 0 '
-        '-RandomSeed 654 '
-        '-SaveSorted 0 '
-        '-UseMaskedInitialConditions 1 '
-        '-AssignToFirstClosestMask  1'
+        '-SplitFirst 20 '
+        '-SplitEvery 100'
         '-UseDistributional 1 '
         )
 </code></pre>
@@ -124,32 +123,36 @@ os.system(
 
 <pre><code>FileBase    electrode
 ElecNo  1
+UseFeatures 
+DropLastNFeatures   0
+UseDistributional   0
+MaskStarts  500
 MinClusters 20
 MaxClusters 30
 MaxPossibleClusters 100
 nStarts 1
-RandomSeed  1
-Debug   0
-Verbose 1
-UseFeatures 11111111111100001
-DistDump    0
-DistThresh  6.907755
-FullStepEvery   20
-ChangedThresh   0.050000
-Log 1
-Screen  1
-MaxIter 500
 StartCluFile    
 SplitEvery  40
+SplitFirst  40
 PenaltyK    0.000000
 PenaltyKLogN    1.000000
 Subset  1
+FullStepEvery   20
+MaxIter 500
+RandomSeed  1
+Debug   0
+SplitInfo   1   
+Verbose 1
+DistDump    0
+DistThresh  6.907755
+ChangedThresh   0.050000
+Log 1
+Screen  1
 PriorPoint  1
 SaveSorted  0
 SaveCovarianceMeans 0
 UseMaskedInitialConditions  0
 AssignToFirstClosestMask    0
-UseDistributional   0
 help    0
 </code></pre>
 
@@ -158,7 +161,15 @@ help    0
 <ul>
 <li>
 <strong>UseFeatures</strong> </li>
-</ul><p>After this comes a string with 1's for features you want to use, and 0's for features you don't want to use. In classic mode, you use this option to take out bad channels. In masked mode, you should instead take bad channels out from the .probe file. The default is a historical string for tetrodes - you should always override it.</p>
+</ul><p>After this you can either have an empty string denoting 'input all features in the .fet file' (default)</p>
+
+<p>OR</p>
+
+<p>you can specify a string with 1's for features you want to use, and 0's for features you don't want to use. In classic mode, you use this option to take out bad channels. In masked mode, you should instead take bad channels out from the .probe file. </p>
+
+<ul>
+<li><strong>DropLastNFeatures</strong></li>
+</ul><p>This is an integer N when used in combination with the empty string for <em>UseFeatures</em> above, omits the last N features.</p>
 
 <ul>
 <li><strong>Penalties</strong></li>
@@ -176,6 +187,19 @@ This enables the use of the new `masked Expectation-Maximization' algorithm. To 
 
 <ul>
 <li>
+<strong>MaskStarts</strong> (*default* 500)</li>
+</ul><p>NEW! Now you can start with a set number of clusters derived from the mask vectors. This overrides MinClusters and MaxClusters below. Also <em>UseMaskedInitialCondition</em> and <em>AssignToFirstClosestMask</em> are no longer needed and should only be used by expert users/developers.</p>
+
+<p><strong>SplitFirst</strong> (*default* 20)
+is an integer which is the number of iterations after which KlustaKwik <em>first</em> attempts to split existing clusters.
+Thereafter KlustaKwik splits every <em>SplitEvery</em> iterations.</p>
+
+<p><strong>SplitEvery</strong> (*default* 40)
+is an integer which is the number of iterations after which KlustaKwik attempts to split existing clusters.
+When using masked initializations, to save time due to excessive splitting, set <strong>SplitEvery</strong> to a large number, close to the number of distinct masks or the number of chosen starting masks. </p>
+
+<ul>
+<li>
 <strong>MinClusters</strong>, <strong>MaxClusters</strong>
 </li>
 </ul><p>In classic mode, KlustaKwik starts from random cluster assignments, running a new random start for every integer between MinClusters and MaxClusters. </p>
@@ -184,11 +208,6 @@ This enables the use of the new `masked Expectation-Maximization' algorithm. To 
 <li>
 <strong>UseMaskedInitialConditions</strong>, <strong>AssignToFirstClosestMask</strong> </li>
 </ul><p>In masked mode, a better approach is to start with clusters that are derived from the mask vectors. Set both of these options to 1 to enable masked initializations. This gives better performance and runs faster. Also set <strong>MinClusters</strong>= <strong>MaxClusters</strong> to the number of distinct clusters it will start from, and it will assign each spike to the nearest unique mask according to Hamming distance.</p>
-
-<p><strong>SplitEvery</strong> (*default* 40)
-is an integer which is the number of iterations after which KlustaKwik attempts to split existing clusters.
-When using masked initializations, to save time due to excessive splitting, set <strong>SplitEvery</strong> to a large number, close
-to the number of distinct masks or the number of chosen starting masks. </p>
 
 <h2>
 <a name="7-full-glossary-of-parameters" class="anchor" href="#7-full-glossary-of-parameters"><span class="octicon octicon-link"></span></a>7) Full Glossary of Parameters</h2>
@@ -209,7 +228,7 @@ to the number of distinct masks or the number of chosen starting masks. </p>
 
 <p><strong>UseMaskedInitialConditions    (default 0)</strong> - Initialises using distinct derived binary masks. Use together with <strong>AssignToFirstClosestMask</strong> below. See previous section for explanation.</p>
 
-<p><strong>AssignToFirstClosestMask  (default 0)</strong> - If starting with a number of clusters fewer than the number of distinct derived binary masks, it will assign the rest of the points to the cluster with the nearest mask.</p>
+<p><strong>AssignToFirstClosestMask    (default 0)</strong> - If starting with a number of clusters fewer than the number of distinct derived binary masks, it will assign the rest of the points to the cluster with the nearest mask.</p>
 
 <p><strong>help</strong> - Prints a short message and then the default parameter values.</p>
 
@@ -230,9 +249,9 @@ to the number of distinct masks or the number of chosen starting masks. </p>
 
 <p><strong>Screen</strong>          (default 1) Produces parameters and progress information on the console. Set to 0 to suppress output in batches.</p>
 
-<p><strong>SaveSorted</strong> (default 0)  Saves a .clu file with masks sorted lexicographically.</p>
+<p><strong>SaveSorted</strong> (default 0)    Saves a .clu file with masks sorted lexicographically.</p>
 
-<p><strong>SaveCovarianceMeans</strong> (default 0) Saves means and covariance matrices. Stops computation at each iteration. Manual input required for continuation.</p>
+<p><strong>SaveCovarianceMeans</strong>    (default 0) Saves means and covariance matrices. Stops computation at each iteration. Manual input required for continuation.</p>
 
 <p><strong>Debug</strong>           (default 0) Miscellaneous debugging information (not recommended).</p>
 
