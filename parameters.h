@@ -91,6 +91,8 @@ enum type_t {FLOAT = 'f', INT = 'd',  BOOLEAN = 'b', STRING = 's'};
       BOOLEAN_PARAM, Screen,              char Screen,               1        )\
     F("Number of 'PriorPoints'",                                               \
       INT_PARAM,   PriorPoint,            int PriorPoint,            1        )\
+    F("'NoisePoint'",                                                          \
+      INT_PARAM,   NoisePoint,            int NoisePoint,            1        )\
     F("Save FileBase.sorted.*.ElecNo data files (data in sorted order).",      \
       BOOLEAN_PARAM, SaveSorted,          char SaveSorted,           false    )\
     F("Save covariance and means",                                             \

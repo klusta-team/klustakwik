@@ -16,7 +16,7 @@ scalar timesofar;
 void KK::AllocateArrays() {
 
     nDims2 = nDims*nDims;
-    NoisePoint = 1; // Ensures that the mixture weight for the noise cluster never gets to zero
+  //  NoisePoint = 1; // Ensures that the mixture weight for the noise cluster never gets to zero
 
     // Set sizes for arrays
     Data.resize(nPoints * nDims);
@@ -184,14 +184,15 @@ void KK::MStep()
         {
             c = AliveIndex[cc];
             //Output("DistributionalMstep: PriorPoint on weights ");
+            //THIS version gets rid of priorPoint on weights.
             // add "noise point" to make sure Weight for noise cluster never gets to zero
             if(c==0)
             {
-                Weight[c] = ((scalar)nClassMembers[c]+NoisePoint) / (nPoints+NoisePoint+priorPoint*(nClustersAlive-1));
+                Weight[c] = ((scalar)nClassMembers[c]+NoisePoint) / (nPoints+NoisePoint+(nClustersAlive-1));
             }
             else
             {
-                Weight[c] = ((scalar)nClassMembers[c]+priorPoint) / (nPoints+NoisePoint+priorPoint*(nClustersAlive-1));
+                Weight[c] = ((scalar)nClassMembers[c]) / (nPoints+NoisePoint+(nClustersAlive-1));
             }
         }
     }
@@ -312,7 +313,8 @@ void KK::MStep()
                 for (i=0; i<nDims; i++)
                     {
                     //Output("Class %d: PriorPoint*NoiseVariance[%d] = %f",c,i,priorPoint*NoiseVariance[i]);
-                    Cov[c*nDims2+i*nDims+i] += priorPoint*NoiseVariance[i];
+                    // priorPoint removed for making covariance matrices
+                    Cov[c*nDims2+i*nDims+i] += NoiseVariance[i];
                     }
                 }
 
