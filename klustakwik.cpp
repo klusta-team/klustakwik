@@ -367,7 +367,7 @@ void KK::MStep()
 // also counts number of living classes
 void KK::EStep()
 {
-    int p, c, cc, i;
+    int p, c, cc,ccc, i;
     int nSkipped;
     scalar LogRootDet; // log of square root of covariance determinant
     scalar Mahal; // Mahalanobis distance of point from cluster center
@@ -390,8 +390,13 @@ void KK::EStep()
 
     // start with cluster 0 - uniform distribution over space
     // because we have normalized all dims to 0...1, density will be 1.
+    vector<int> NumberInClass(MaxPossibleClusters);  // For finding number of points in each class
     for (p=0; p<nPoints; p++)
+    {
         LogP[p*MaxPossibleClusters + 0] = (float)-log(Weight[0]);
+        int ccc = Class[p];
+        NumberInClass[ccc]++;
+    }
 
     for(cc=1; cc<nClustersAlive; cc++)
     {
@@ -404,7 +409,7 @@ void KK::EStep()
             // If Cholesky returns 1, it means the matrix is not positive definite.
             // So kill the class.
             // Cholesky is defined in linalg.cpp
-            Output("Unmasked E-step: Deleting class %d (%d points): covariance matrix is singular \n", c, nPoints);
+            Output("Unmasked E-step: Deleting class %d (%d points): covariance matrix is singular \n", c, NumberInClass[c]);
             ClassAlive[c] = 0;
             continue;
         }
@@ -544,9 +549,12 @@ void KK::ConsiderDeletion()
     }
 
     // compute losses by deleting clusters
+    vector<int> NumberInClass(MaxPossibleClusters);
     for(p=0; p<nPoints; p++)
     {
         DeletionLoss[Class[p]] += LogP[p*MaxPossibleClusters + Class2[p]] - LogP[p*MaxPossibleClusters + Class[p]];
+        int ccc = Class[p];
+        NumberInClass[ccc]++;  // For computing number of points in each class
     }
 
     // find class with smallest increase in total score
@@ -591,7 +599,7 @@ void KK::ConsiderDeletion()
     {
         if (Loss<0)
         {
-            Output("Deleting Class %d (%d points): Lose " SCALARFMT " but Gain " SCALARFMT "\n", CandidateClass, nPoints, DeletionLoss[CandidateClass], DeltaPen);
+            Output("Deleting Class %d (%d points): Lose " SCALARFMT " but Gain " SCALARFMT "\n", CandidateClass, NumberInClass[CandidateClass], DeletionLoss[CandidateClass], DeltaPen);
             // set it to dead
             ClassAlive[CandidateClass] = 0;
             
@@ -605,7 +613,7 @@ void KK::ConsiderDeletion()
     {
         if (Loss<DeltaPen)
         {
-            Output("Deleting Class %d (%d points): Lose " SCALARFMT " but Gain " SCALARFMT "\n", CandidateClass, nPoints, DeletionLoss[CandidateClass], DeltaPen);
+            Output("Deleting Class %d (%d points): Lose " SCALARFMT " but Gain " SCALARFMT "\n", CandidateClass, NumberInClass[CandidateClass], DeletionLoss[CandidateClass], DeltaPen);
             // set it to dead
             ClassAlive[CandidateClass] = 0;
 
