@@ -48,19 +48,19 @@ enum type_t {FLOAT = 'f', INT = 'd',  BOOLEAN = 'b', STRING = 's'};
     F("Run Mask starts with this many starting clusters",                      \
       INT_PARAM,   MaskStarts,            int MaskStarts,            500      )\
     F("Minimum number of clusters to be used without splitting.",              \
-      INT_PARAM,     MinClusters,         int MinClusters,           100       )\
+      INT_PARAM,     MinClusters,         int MinClusters,           100      )\
     F("Maximum number of clusters to be used without splitting.",              \
-      INT_PARAM,     MaxClusters,         int MaxClusters,           110       )\
+      INT_PARAM,     MaxClusters,         int MaxClusters,           110      )\
     F("Maximum possible number of clusters to be used after splitting.",       \
-      INT_PARAM,     MaxPossibleClusters, int MaxPossibleClusters,   1000      )\
+      INT_PARAM,     MaxPossibleClusters, int MaxPossibleClusters,   1000     )\
     F("Number of times to start count from each number of clusters.",          \
       INT_PARAM,     nStarts,             int nStarts,               1        )\
     F("An intermediate cluster file to use as a starting point.",              \
       STRING_PARAM,  StartCluFile,        char StartCluFile[STRLEN], ""       )\
     F("Allow cluster splitting after this many iterations after initial split.",\
-      INT_PARAM,     SplitEvery,          int SplitEvery,            20       )\
+      INT_PARAM,     SplitEvery,          int SplitEvery,            40       )\
     F("Allow first cluster splitting after this many iterations.",             \
-      INT_PARAM,     SplitFirst,          int SplitFirst,            40       )\
+      INT_PARAM,     SplitFirst,          int SplitFirst,            20       )\
     F("Coefficient of num_params to use in penalty (1 for AIC).",              \
       FLOAT_PARAM,   PenaltyK,            scalar PenaltyK,           0.0      )\
     F("Coefficient of num_params*log(num_points)/2 to use in penalty (1 for BIC).",\
@@ -70,7 +70,7 @@ enum type_t {FLOAT = 'f', INT = 'd',  BOOLEAN = 'b', STRING = 's'};
     F("There is a full E step recomputation at least after this many iterations.",\
       INT_PARAM,     FullStepEvery,       int FullStepEvery,         20       )\
     F("Maximum number of iterations.",                                         \
-      INT_PARAM,     MaxIter,             int MaxIter,               500      )\
+      INT_PARAM,     MaxIter,             int MaxIter,               10000    )\
     F("Specify random seed for reproducible results, or leave for random.",    \
       INT_PARAM,     RandomSeed,          int RandomSeed,            1        )\
     F("Whether or not to run in debug mode (prints lots of detail). 0 = None, 1 = Partial info, 2=Full Info",\

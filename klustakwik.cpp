@@ -1127,6 +1127,8 @@ KK::KK(char *FileBase, int ElecNo, char *UseFeatures,
     LoadData(FileBase, ElecNo, UseFeatures);
     priorPoint = PriorPoint;
     
+    //NOTE: penaltyK, penaltyKlogN, priorPoint, lower case versions of global variable PenaltyK PenaltyKLogN and PriorPoint
+    
     DoInitialPrecomputations();//Now DoPrecomputations is only invoked in the initialization
     numiterations = 0;
 }
