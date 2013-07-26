@@ -77,9 +77,9 @@ public:
     int nClustersAlive; // nClustersAlive is total number with points in, excluding noise cluster
     int nPoints;
     int priorPoint; // Prior for regularization NOTE: separate from global variabl PriorPoint (capitalization)
-    int NoisePoint; // number of fake points always in noise cluster to ensure noise weight>0
+    //int NoisePoint; // number of fake points always in noise cluster to ensure noise weight>0
     int FullStep; // Indicates that the next E-step should be a full step (no time saving)
-    scalar penaltyK, penaltyKLogN;
+    scalar penaltyK, penaltyKLogN; //Note, not the same as PenaltyK and PenaltyKLogN
     vector<scalar> Data; // Data[p*nDims + d] = Input data for point p, dimension d
     
     // We sort the points into an order where the corresponding mask changes as

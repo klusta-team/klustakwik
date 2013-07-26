@@ -16,7 +16,7 @@ scalar timesofar;
 void KK::AllocateArrays() {
 
     nDims2 = nDims*nDims;
-    NoisePoint = 1; // Ensures that the mixture weight for the noise cluster never gets to zero
+   // NoisePoint = 1; // Ensures that the mixture weight for the noise cluster never gets to zero
 
     // Set sizes for arrays
     Data.resize(nPoints * nDims);
@@ -98,7 +98,15 @@ void KK::ComputeClassPenalties()
         NumberInClass[c]++;
     //    int n = UnmaskedInd[p+1]-UnmaskedInd[p]; // num unmasked dimensions
         scalar n = UnMaskDims[p];
-        scalar nParams = n*(n+1)/2+n+1;
+        scalar nParams;
+        if(NoCovariance)
+        {
+            nParams = n+1;
+        }
+        else
+        {
+            nParams = n*(n+1)/2+n+1;
+        }
         ClassPenalty[c] += nParams;
     }
     // compute mean nParams for each cluster
@@ -178,40 +186,33 @@ void KK::MStep()
 
     // Normalize by total number of points to give class weight
     // Also check for dead classes
+    
+    int UsePriorPoint;
     if(UseDistributional)
+        //Output("DistributionalMstep: PriorPoint on weights ");
+        // add "noise point" to make sure Weight for noise cluster never gets to zero
     {
-        for (cc=0; cc<nClustersAlive; cc++)
+        UsePriorPoint = priorPoint;
+    }
+    else // For Original KlustaKwik, Classical EM
+    {
+        UsePriorPoint = 0;
+    }
+    
+   
+    for (cc=0; cc<nClustersAlive; cc++)
+    {
+        c = AliveIndex[cc];
+        if(c==0)
         {
-            c = AliveIndex[cc];
-            //Output("DistributionalMstep: PriorPoint on weights ");
-            // add "noise point" to make sure Weight for noise cluster never gets to zero
-            if(c==0)
-            {
-                Weight[c] = ((scalar)nClassMembers[c]+NoisePoint) / (nPoints+NoisePoint+priorPoint*(nClustersAlive-1));
-            }
-            else
-            {
-                Weight[c] = ((scalar)nClassMembers[c]+priorPoint) / (nPoints+NoisePoint+priorPoint*(nClustersAlive-1));
-            }
+            Weight[c] = ((scalar)nClassMembers[c]+NoisePoint) / (nPoints+NoisePoint+UsePriorPoint*(nClustersAlive-1));
+        }
+        else
+        {
+            Weight[c] = ((scalar)nClassMembers[c]+priorPoint) / (nPoints+NoisePoint+UsePriorPoint*(nClustersAlive-1));
         }
     }
-    else  // For Original KlustaKwik, Classical EM
-    {
-        for (cc=0; cc<nClustersAlive; cc++)
-        {
-            c = AliveIndex[cc];
-            // add "noise point" to make sure Weight for noise cluster never gets to zero
-            if(c==0)
-            {
-                Weight[c] = ((scalar)nClassMembers[c]+NoisePoint) / (nPoints+NoisePoint);
-            }
-            else
-            {
-                Weight[c] = ((scalar)nClassMembers[c]) / (nPoints+NoisePoint);
-            }
-        }
-
-    }
+ 
 
     Reindex();
 
@@ -246,98 +247,108 @@ void KK::MStep()
 //            for(j=i; j<nDims; j++)
 //                Cov[c*nDims2 + i*nDims + j] += Vec2Mean[i] * Vec2Mean[j];
 //    }
-    if((int)AllVector2Mean.size()<nPoints*nDims)
-        AllVector2Mean.resize(nPoints*nDims);
-    vector< vector<int> > PointsInClass(MaxPossibleClusters);
-    for(p=0; p<nPoints; p++)
+    
+    if(NoCovariance==0)
     {
-        c = Class[p];
-        PointsInClass[c].push_back(p);
-        for(i=0; i<nDims; i++)
-            AllVector2Mean[p*nDims+i] = Data[p*nDims + i] - Mean[c*nDims + i];
-    }
-    for(c=0; c<MaxPossibleClusters; c++)
-    {
-        vector<int> &PointsInThisClass = PointsInClass[c];
-        SafeArray<scalar> safeCov(Cov, c*nDims2, "safeCovMStep");
-        for(int iblock=0; iblock<nDims; iblock+=COVARIANCE_BLOCKSIZE)
-            for(int jblock=iblock; jblock<nDims; jblock+=COVARIANCE_BLOCKSIZE)
-                for(int q=0; q<(int)PointsInThisClass.size(); q++)
-                {
-                    p = PointsInThisClass[q];
-                    scalar *cv2m = &AllVector2Mean[p*nDims];
-                    for(i=iblock; i<MIN(nDims, iblock+COVARIANCE_BLOCKSIZE); i++)
-                    {
-                        scalar cv2mi = cv2m[i];
-                        int jstart;
-                        if(jblock!=iblock)
-                            jstart = jblock;
-                        else
-                            jstart = i;
-                        scalar *covptr = &safeCov[i*nDims+jstart];
-                        scalar *cv2mjptr = &cv2m[jstart];
-                        //scalar *cv2mjend = cv2m+MIN(nDims, jblock+COVARIANCE_BLOCKSIZE);
-                        //for(j=jstart; j<MIN(nDims, jblock+COVARIANCE_BLOCKSIZE); j++)
-                        //for(; cv2mjptr!=cv2mjend;)
-                        for(j=MIN(nDims, jblock+COVARIANCE_BLOCKSIZE)-jstart; j; j--)
-                            *covptr++ += cv2mi*(*cv2mjptr++);
-                    }
-                }
-    }
-
-    if(UseDistributional)
-    {
-        for(cc=0; cc<nClustersAlive; cc++)
+        if((int)AllVector2Mean.size()<nPoints*nDims)
+            AllVector2Mean.resize(nPoints*nDims);
+        vector< vector<int> > PointsInClass(MaxPossibleClusters);
+        for(p=0; p<nPoints; p++)
         {
-            c = AliveIndex[cc];
-            vector<int> &PointsInThisClass = PointsInClass[c];
+            c = Class[p];
+            PointsInClass[c].push_back(p);
             for(i=0; i<nDims; i++)
+                AllVector2Mean[p*nDims+i] = Data[p*nDims + i] - Mean[c*nDims + i];
+        }
+        for(c=0; c<MaxPossibleClusters; c++)
+        {
+            vector<int> &PointsInThisClass = PointsInClass[c];
+            SafeArray<scalar> safeCov(Cov, c*nDims2, "safeCovMStep");
+            for(int iblock=0; iblock<nDims; iblock+=COVARIANCE_BLOCKSIZE)
+                for(int jblock=iblock; jblock<nDims; jblock+=COVARIANCE_BLOCKSIZE)
+                    for(int q=0; q<(int)PointsInThisClass.size(); q++)
+                    {
+                        p = PointsInThisClass[q];
+                        scalar *cv2m = &AllVector2Mean[p*nDims];
+                        for(i=iblock; i<MIN(nDims, iblock+COVARIANCE_BLOCKSIZE); i++)
+                        {
+                            scalar cv2mi = cv2m[i];
+                            int jstart;
+                            if(jblock!=iblock)
+                                jstart = jblock;
+                            else
+                                jstart = i;
+                            scalar *covptr = &safeCov[i*nDims+jstart];
+                            scalar *cv2mjptr = &cv2m[jstart];
+                            //scalar *cv2mjend = cv2m+MIN(nDims, jblock+COVARIANCE_BLOCKSIZE);
+                            //for(j=jstart; j<MIN(nDims, jblock+COVARIANCE_BLOCKSIZE); j++)
+                            //for(; cv2mjptr!=cv2mjend;)
+                            for(j=MIN(nDims, jblock+COVARIANCE_BLOCKSIZE)-jstart; j; j--)
+                                *covptr++ += cv2mi*(*cv2mjptr++);
+                        }
+                    }
+        }
+
+        if(UseDistributional)
+        {
+            for(cc=0; cc<nClustersAlive; cc++)
             {
-                scalar ccf = 0.0; // class correction factor
-                for(int q=0; q<(int)PointsInThisClass.size(); q++)
+                c = AliveIndex[cc];
+                vector<int> &PointsInThisClass = PointsInClass[c];
+                for(i=0; i<nDims; i++)
                 {
-                    p = PointsInThisClass[q];
-                    ccf += CorrectionTerm[p*nDims+i];
+                    scalar ccf = 0.0; // class correction factor
+                    for(int q=0; q<(int)PointsInThisClass.size(); q++)
+                    {
+                        p = PointsInThisClass[q];
+                        ccf += CorrectionTerm[p*nDims+i];
+                    }
+                    //Output("Class %d Class correction factor[%d] = %f \n",c,i,ccf);
+                    Cov[c*nDims2+i*nDims+i] += ccf;
+                //    Output("Class %d Covariance diagonal[%d] = %f \n",c,i,Cov[c*nDims2+i*nDims+i] );
+                    ClassCorrectionFactor[c*nDims+i] = ccf/(scalar)(nClassMembers[c]*nClassMembers[c]);
                 }
-                //Output("Class %d Class correction factor[%d] = %f \n",c,i,ccf);
-                Cov[c*nDims2+i*nDims+i] += ccf;
-            //    Output("Class %d Covariance diagonal[%d] = %f \n",c,i,Cov[c*nDims2+i*nDims+i] );
-                ClassCorrectionFactor[c*nDims+i] = ccf/(scalar)(nClassMembers[c]*nClassMembers[c]);
             }
         }
+    }
+    
+    if(UseDistributional)
+    {
 
     // Add a diagonal matrix of Noise variances to the covariance matrix for renormalization
         for (cc=0; cc<nClustersAlive; cc++)
-                {c = AliveIndex[cc];
+            {c = AliveIndex[cc];
                 for (i=0; i<nDims; i++)
-                    {
-                    //Output("Class %d: PriorPoint*NoiseVariance[%d] = %f",c,i,priorPoint*NoiseVariance[i]);
+                {
+                //Output("Class %d: PriorPoint*NoiseVariance[%d] = %f",c,i,priorPoint*NoiseVariance[i]);
                     Cov[c*nDims2+i*nDims+i] += priorPoint*NoiseVariance[i];
-                    }
                 }
+            }
 
 
     }
 
     // and normalize
-    if(UseDistributional){
-                for (cc=0; cc<nClustersAlive; cc++)
-                {
-                    c = AliveIndex[cc];
-                    for(i=0; i<nDims; i++)
-                        for(j=i; j<nDims; j++)
-                            Cov[c*nDims2 + i*nDims + j] /= (nClassMembers[c]+priorPoint-1);
-                }
-
-        }
-    else {    //For original KlustaKwik classical EM
+    if(UseDistributional)
+    {
         for (cc=0; cc<nClustersAlive; cc++)
-                        {
-                            c = AliveIndex[cc];
-                            for(i=0; i<nDims; i++)
-                                for(j=i; j<nDims; j++)
-                                    Cov[c*nDims2 + i*nDims + j] /= (nClassMembers[c]-1);
-                        }
+        {
+            c = AliveIndex[cc];
+            for(i=0; i<nDims; i++)
+                for(j=i; j<nDims; j++)
+                Cov[c*nDims2 + i*nDims + j] /= (nClassMembers[c]+priorPoint-1);
+        }
+
+    }
+    else
+    {    //For original KlustaKwik classical EM
+        for (cc=0; cc<nClustersAlive; cc++)
+        {
+            c = AliveIndex[cc];
+            for(i=0; i<nDims; i++)
+                    for(j=i; j<nDims; j++)
+                        Cov[c*nDims2 + i*nDims + j] /= (nClassMembers[c]-1);
+        }
 
     }
 
