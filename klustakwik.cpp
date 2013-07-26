@@ -145,7 +145,7 @@ void KK::MStep()
 //        }
 //    }
 
-    if (Debug) { Output("Entering Unmasked Mstep \n");}
+    if (Debug) { Output("Entering Mstep \n");}
 
     // Accumulate total number of points in each class
     for (p=0; p<nPoints; p++) nClassMembers[Class[p]]++;
@@ -157,11 +157,11 @@ void KK::MStep()
         for (int cc=0; cc<nClustersAlive; cc++)
         {
             int c = AliveIndex[cc];
-            if (Debug){Output("DistributionalMstep: Class %d contains %d members \n", c, nClassMembers[c]);}
+            if(Debug) {Output("DistributionalMstep: Class %d contains %d members \n", c, nClassMembers[c]);}
                 if (c>0 && nClassMembers[c]<1)//nDims)
                 {
                     ClassAlive[c]=0;
-                    if (Debug) {Output("UnmaskedMstep_dist: Deleted class %d: no members\n", c);}
+                    Output("UnmaskedMstep_dist: Deleted class %d: no members\n", c);
                 }
         }
     }
@@ -170,12 +170,12 @@ void KK::MStep()
 
         for (cc=0; cc<nClustersAlive; cc++)
         {
-                c = AliveIndex[cc];
-                if (Debug) {Output("Mstep: Class %d contains %d members \n", c, nClassMembers[c]);}
+            c = AliveIndex[cc];
+            if(Debug){Output("Mstep: Class %d contains %d members \n", c, nClassMembers[c]);}
                 if (c>0 && nClassMembers[c]<=nDims)
                 {
                     ClassAlive[c]=0;
-                    if (Debug) {Output("Deleted class %d: not enough members\n", c);}
+                    Output("Deleted class %d: not enough members\n", c);
                 }
         }
     }
@@ -209,7 +209,7 @@ void KK::MStep()
         }
         else
         {
-            Weight[c] = ((scalar)nClassMembers[c]+priorPoint) / (nPoints+NoisePoint+UsePriorPoint*(nClustersAlive-1));
+            Weight[c] = ((scalar)nClassMembers[c]+UsePriorPoint) / (nPoints+NoisePoint+UsePriorPoint*(nClustersAlive-1));
         }
     }
  
@@ -328,28 +328,31 @@ void KK::MStep()
 
     }
 
-    // and normalize
-    if(UseDistributional)
+    // and normalize (but not for the case where you only have constant covariance matrices consisting of the noise)
+    if(NoCovariance==0)
     {
-        for (cc=0; cc<nClustersAlive; cc++)
+        if(UseDistributional)
         {
-            c = AliveIndex[cc];
-            for(i=0; i<nDims; i++)
-                for(j=i; j<nDims; j++)
-                Cov[c*nDims2 + i*nDims + j] /= (nClassMembers[c]+priorPoint-1);
-        }
-
-    }
-    else
-    {    //For original KlustaKwik classical EM
-        for (cc=0; cc<nClustersAlive; cc++)
-        {
-            c = AliveIndex[cc];
-            for(i=0; i<nDims; i++)
+            for (cc=0; cc<nClustersAlive; cc++)
+            {
+                c = AliveIndex[cc];
+                for(i=0; i<nDims; i++)
                     for(j=i; j<nDims; j++)
-                        Cov[c*nDims2 + i*nDims + j] /= (nClassMembers[c]-1);
-        }
+                    Cov[c*nDims2 + i*nDims + j] /= (nClassMembers[c]+priorPoint-1);
+            }
 
+        }
+        else
+        {    //For original KlustaKwik classical EM
+            for (cc=0; cc<nClustersAlive; cc++)
+            {
+                c = AliveIndex[cc];
+                for(i=0; i<nDims; i++)
+                        for(j=i; j<nDims; j++)
+                            Cov[c*nDims2 + i*nDims + j] /= (nClassMembers[c]-1);
+            }
+
+        }
     }
 
 
