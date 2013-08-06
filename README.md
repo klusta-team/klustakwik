@@ -1,19 +1,22 @@
 KlustaKwik
 ==========
 
-1) Introduction
-------------------------
-------------------------
+Introduction
+------------
 
 KlustaKwik is a program for cluster analysis by fitting a mixture of Gaussians. It was designed for the specific problem of spike sorting of multi-electrode arrays, but can be used for any application. Technically, KlustaKwik works by implementing a hard EM algorithm with unconstrained covariance matrices. It also uses a number of tricks to greatly speed up execution. It has recently been updated to deal with high-dimensional data as required for spike sorting from large, dense electrode arrays. An older version of the code, which cannot deal with high-density arrays, can be found [here](http://sourceforge.net/projects/klustakwik/). But don't use that version, use this one: even for plain tetrode data, the new version is fully backward compatible, and is also much faster.
 
 For spike sorting, KlustaKwik is designed to be used in conjunction with [SpikeDetekt](http://klusta-team.github.io/spikedetekt) for spike detection, and [KlustaViewa](http://klusta-team.github.io/klustaviewa) for manual verification and adjustment of clustering results.
 
-2) Installation
----------------------
----------------------
+Installation
+------------
 
-[Windows 64 bits users can download an installer](http://klustakwik.rossant.net/klustakwik-setup.exe).
+### Windows 64 bits
+
+  * Download and install the [KlustaKwik installer for Windows 64 bits.](http://klustakwik.rossant.net/klustakwik-setup.exe)
+  * After the installation, the command `klustakwik` will be available in the terminal.
+  
+### Other systems
 
 KlustaKwik is written in C++, and provided as source code. A makefile is provided. It is a plain-text program that runs from the command line, so compilation should be straightforward. 
 
@@ -23,11 +26,11 @@ On Linux and Mac OS X simply unzip the source folder, open a command line termin
     
 This will create the executable: KlustaKwik.
 
-KlustaKwik can be compiled on Windows using either [MinGW](http://www.mingw.org/) or Microsoft Visual C++: in the latter case, you may need to add `_USE_MATH_DEFINES` in preprocessor definitions.
+KlustaKwik can be compiled on Windows using either [MinGW](http://www.mingw.org/) or Microsoft Visual C++. With Visual C++, you may need to add `_USE_MATH_DEFINES` in preprocessor definitions, and compile it with /MT rather than /MD to avoid the DLL Hell.
 
-3) Usage
----------------------
----------------------
+
+Usage
+-----
 
 KlustaKwik 3.0 is backward compatible with previous versions. To use it in "classic" mode, just run the same command you would have for version 2.x (as documented on the sourceforge page linked above). It will produce the same results, but should run about 10 times faster. In this mode, KlustaKwik takes a single input file (mydata.fet.n) containing feature vectors, and produces an output file (mydata.clu.n) containing cluster numbers. It also produces a log file (mydata.klg.n).
 
@@ -39,9 +42,8 @@ The suffix .n allows you to keep track of data recorded on a probe with mutliple
     mydata.fmask.n
 
 
-4) Command line input
-----------------------
-----------------------
+Command line input
+------------------
 
 KlustaKwik runs from the command line, and takes a large number of options. We plan to rationalize these, but in the meantime you have to run fairly long command strings to run it in masked mode.
 
@@ -73,9 +75,9 @@ You will probably want to write a script to generate such these commands. An exa
 
 You would then edit the parameters filebase, shank_num, and num_features as required. 
 
-5) Input Files
---------------
---------------
+
+Input Files
+-----------
 
 The first line of the .fet file is a single number specifying the number of features. After this, each line contains a vector giving the feature values of one spike. For example, for 32 channels, 3 principal components per channel, and a final feature representing time, the feature file would start off like:
 
@@ -87,9 +89,9 @@ The first line of the .fet file is a single number specifying the number of feat
 
 The .fmask file has a similar format, but with each line giving a vector of floats between 0 and 1. The .fmask file also has the first line specifying the number of features. 
 
-6) Parameters
--------------------
--------------------
+
+Parameters
+----------
 
 There are a large number of parameters that control how KlustaKwik works. The defaults, which cause it to run in classic mode, are:
 
@@ -179,9 +181,9 @@ In masked mode, a better approach is to start with clusters that are derived fro
 
 
 
-7) Full Glossary of Parameters
--------------------------
--------------------------
+Full Glossary of Parameters
+---------------------------
+
 **UseDistributional (default 0)** - Set this to 1 to use in "masked" mode.
 
 **Filebase** - Name of your .fet and .mask file, e.g. if your feature file is called mydata.fet.1, then Filebase is *mydata*.
@@ -213,8 +215,8 @@ In masked mode, a better approach is to start with clusters that are derived fro
 **MaxIter** n       (default 500) Maximum number of iterations. ie. it won't try more than n iterations from any starting point.
 
 
-Various debugging options for developers:
------------------------------------------
+Various debugging options for developers
+----------------------------------------
 
 **Log**             (default 1) Produces .klg log file (default is yes, to switch off do -Log 0).
 
@@ -234,9 +236,9 @@ Various debugging options for developers:
 
 **ChangedThresh f**  (default 0.05) All log-likelihoods are recalculated if the fraction of instances changing class exceeds f (see DistThresh).
  
-8) Output Files
----------------
----------------
+
+Output Files
+------------
 
 Regardless of the parameters chosen to run KlustaKwik, the two following plain text files will always be produced.
 
