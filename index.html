@@ -32,16 +32,24 @@
 <a name="klustakwik" class="anchor" href="#klustakwik"><span class="octicon octicon-link"></span></a>KlustaKwik</h1>
 
 <h2>
-<a name="1-introduction" class="anchor" href="#1-introduction"><span class="octicon octicon-link"></span></a>1) Introduction</h2>
+<a name="introduction" class="anchor" href="#introduction"><span class="octicon octicon-link"></span></a>Introduction</h2>
 
-<hr><p>KlustaKwik is a program for cluster analysis by fitting a mixture of Gaussians. It was designed for the specific problem of spike sorting of multi-electrode arrays, but can be used for any application. Technically, KlustaKwik works by implementing a hard EM algorithm with unconstrained covariance matrices. It also uses a number of tricks to greatly speed up execution. It has recently been updated to deal with high-dimensional data as required for spike sorting from large, dense electrode arrays. An older version of the code, which cannot deal with high-density arrays, can be found <a href="http://sourceforge.net/projects/klustakwik/">here</a>. But don't use that version, use this one: even for plain tetrode data, the new version is fully backward compatible, and is also much faster.</p>
+<p>KlustaKwik is a program for cluster analysis by fitting a mixture of Gaussians. It was designed for the specific problem of spike sorting of multi-electrode arrays, but can be used for any application. Technically, KlustaKwik works by implementing a hard EM algorithm with unconstrained covariance matrices. It also uses a number of tricks to greatly speed up execution. It has recently been updated to deal with high-dimensional data as required for spike sorting from large, dense electrode arrays. An older version of the code, which cannot deal with high-density arrays, can be found <a href="http://sourceforge.net/projects/klustakwik/">here</a>. But don't use that version, use this one: even for plain tetrode data, the new version is fully backward compatible, and is also much faster.</p>
 
 <p>For spike sorting, KlustaKwik is designed to be used in conjunction with <a href="http://klusta-team.github.io/spikedetekt">SpikeDetekt</a> for spike detection, and <a href="http://klusta-team.github.io/klustaviewa">KlustaViewa</a> for manual verification and adjustment of clustering results.</p>
 
 <h2>
-<a name="2-installation" class="anchor" href="#2-installation"><span class="octicon octicon-link"></span></a>2) Installation</h2>
+<a name="installation" class="anchor" href="#installation"><span class="octicon octicon-link"></span></a>Installation</h2>
 
-<hr><p><a href="http://klustakwik.rossant.net/klustakwik-setup.exe">Windows 64 bits users can download an installer</a>.</p>
+<h3>
+<a name="windows-64-bits" class="anchor" href="#windows-64-bits"><span class="octicon octicon-link"></span></a>Windows 64 bits</h3>
+
+<ul>
+<li>Download and install the <a href="http://klustakwik.rossant.net/klustakwik-setup.exe">KlustaKwik installer for Windows 64 bits.</a>
+</li>
+<li>After the installation, the command <code>klustakwik</code> will be available in the terminal.</li>
+</ul><h3>
+<a name="other-systems" class="anchor" href="#other-systems"><span class="octicon octicon-link"></span></a>Other systems</h3>
 
 <p>KlustaKwik is written in C++, and provided as source code. A makefile is provided. It is a plain-text program that runs from the command line, so compilation should be straightforward. </p>
 
@@ -52,12 +60,12 @@
 
 <p>This will create the executable: KlustaKwik.</p>
 
-<p>KlustaKwik can be compiled on Windows using either <a href="http://www.mingw.org/">MinGW</a> or Microsoft Visual C++: in the latter case, you may need to add <code>_USE_MATH_DEFINES</code> in preprocessor definitions.</p>
+<p>KlustaKwik can be compiled on Windows using either <a href="http://www.mingw.org/">MinGW</a> or Microsoft Visual C++. With Visual C++, you may need to add <code>_USE_MATH_DEFINES</code> in preprocessor definitions, and compile it with /MT rather than /MD to avoid the DLL Hell.</p>
 
 <h2>
-<a name="3-usage" class="anchor" href="#3-usage"><span class="octicon octicon-link"></span></a>3) Usage</h2>
+<a name="usage" class="anchor" href="#usage"><span class="octicon octicon-link"></span></a>Usage</h2>
 
-<hr><p>KlustaKwik 3.0 is backward compatible with previous versions. To use it in "classic" mode, just run the same command you would have for version 2.x (as documented on the sourceforge page linked above). It will produce the same results, but should run about 10 times faster. In this mode, KlustaKwik takes a single input file (mydata.fet.n) containing feature vectors, and produces an output file (mydata.clu.n) containing cluster numbers. It also produces a log file (mydata.klg.n).</p>
+<p>KlustaKwik 3.0 is backward compatible with previous versions. To use it in "classic" mode, just run the same command you would have for version 2.x (as documented on the sourceforge page linked above). It will produce the same results, but should run about 10 times faster. In this mode, KlustaKwik takes a single input file (mydata.fet.n) containing feature vectors, and produces an output file (mydata.clu.n) containing cluster numbers. It also produces a log file (mydata.klg.n).</p>
 
 <p>To deal with high channel count arrays, KlustaKwik should be run in "masked" mode. In this mode, the algorithm takes advantage of the fact that any spike occurs on only a subset of channels, with the remainder containing only multi-unit noise. The information of which channels are relevant for each spike is encoded in an additional .fmask file which is output from SpikeDetekt, along with the usual .fet features file.  <em>Unmasked</em> channels are channels on which spiking activity has been found to occur by the program SpikeDetekt, whereas <em>masked</em> channels contain only noise. The .fmask file is a text file, every line of which is a vector of length the number of features, in which <strong>1</strong> denotes <strong>unmasked</strong> and <strong>0</strong> denotes <strong>masked</strong>, and values between 0 and 1 indicate partial masking.</p>
 
@@ -68,9 +76,9 @@ mydata.fmask.n
 </code></pre>
 
 <h2>
-<a name="4-command-line-input" class="anchor" href="#4-command-line-input"><span class="octicon octicon-link"></span></a>4) Command line input</h2>
+<a name="command-line-input" class="anchor" href="#command-line-input"><span class="octicon octicon-link"></span></a>Command line input</h2>
 
-<hr><p>KlustaKwik runs from the command line, and takes a large number of options. We plan to rationalize these, but in the meantime you have to run fairly long command strings to run it in masked mode.</p>
+<p>KlustaKwik runs from the command line, and takes a large number of options. We plan to rationalize these, but in the meantime you have to run fairly long command strings to run it in masked mode.</p>
 
 <p>The first two arguments are the filebase and shank number, after which come optional parameters. For example If you wanted to cluster the 4th shank from a file called "recording" in masked mode, you would run something like this:</p>
 
@@ -103,9 +111,9 @@ os.system(
 <p>You would then edit the parameters filebase, shank_num, and num_features as required. </p>
 
 <h2>
-<a name="5-input-files" class="anchor" href="#5-input-files"><span class="octicon octicon-link"></span></a>5) Input Files</h2>
+<a name="input-files" class="anchor" href="#input-files"><span class="octicon octicon-link"></span></a>Input Files</h2>
 
-<hr><p>The first line of the .fet file is a single number specifying the number of features. After this, each line contains a vector giving the feature values of one spike. For example, for 32 channels, 3 principal components per channel, and a final feature representing time, the feature file would start off like:</p>
+<p>The first line of the .fet file is a single number specifying the number of features. After this, each line contains a vector giving the feature values of one spike. For example, for 32 channels, 3 principal components per channel, and a final feature representing time, the feature file would start off like:</p>
 
 <pre><code>97
 -43206 -6407 652 5181 3675 11860 -30066 -145 -3720 -33491 -15892 5840 -57344 11025 -16524 -8815 -4046 -157 -30493 -7224 507 -676 9700 -6809 -39397 -211 -5468 -22511 -352 -186 -1127 -10679 9435 -25851 -22021 4238 -26672 -17418 11085 10035 -2864 9975 -20875 -29624 13367 -14849 -8633 4408 -19751 -24882 8184 -28165 4853 2136 -21114 -10823 3004 -8716 -4686 4793 11529 -9505 8930 13056 5133 3442 -1085 -4045 4965 -63934 -3827 -6996 -46672 4384 -7775 -29050 -549 -9260 -24985 20865 -14532 -17785 -6168 862 -22615 1593 -5319 -972 -1660 10063 -106 1600 5378 1963 -4880 7357 2
@@ -117,16 +125,16 @@ os.system(
 <p>The .fmask file has a similar format, but with each line giving a vector of floats between 0 and 1. The .fmask file also has the first line specifying the number of features. </p>
 
 <h2>
-<a name="6-parameters" class="anchor" href="#6-parameters"><span class="octicon octicon-link"></span></a>6) Parameters</h2>
+<a name="parameters" class="anchor" href="#parameters"><span class="octicon octicon-link"></span></a>Parameters</h2>
 
-<hr><p>There are a large number of parameters that control how KlustaKwik works. The defaults, which cause it to run in classic mode, are:</p>
+<p>There are a large number of parameters that control how KlustaKwik works. To run it in classic mode, set -UseDistributional to 0, e.g.:</p>
 
 <pre><code>FileBase    electrode
 ElecNo  1
 UseFeatures 
 DropLastNFeatures   0
 UseDistributional   0
-MaskStarts  500
+MaskStarts  0
 MinClusters 20
 MaxClusters 30
 MaxPossibleClusters 100
@@ -210,9 +218,9 @@ When using masked initializations, to save time due to excessive splitting, set 
 </ul><p>In masked mode, a better approach is to start with clusters that are derived from the mask vectors. Set both of these options to 1 to enable masked initializations. This gives better performance and runs faster. Also set <strong>MinClusters</strong>= <strong>MaxClusters</strong> to the number of distinct clusters it will start from, and it will assign each spike to the nearest unique mask according to Hamming distance.</p>
 
 <h2>
-<a name="7-full-glossary-of-parameters" class="anchor" href="#7-full-glossary-of-parameters"><span class="octicon octicon-link"></span></a>7) Full Glossary of Parameters</h2>
+<a name="full-glossary-of-parameters" class="anchor" href="#full-glossary-of-parameters"><span class="octicon octicon-link"></span></a>Full Glossary of Parameters</h2>
 
-<hr><p><strong>UseDistributional (default 0)</strong> - Set this to 1 to use in "masked" mode.</p>
+<p><strong>UseDistributional (default 0)</strong> - Set this to 1 to use in "masked" mode.</p>
 
 <p><strong>Filebase</strong> - Name of your .fet and .mask file, e.g. if your feature file is called mydata.fet.1, then Filebase is <em>mydata</em>.</p>
 
@@ -243,7 +251,7 @@ When using masked initializations, to save time due to excessive splitting, set 
 <p><strong>MaxIter</strong> n       (default 500) Maximum number of iterations. ie. it won't try more than n iterations from any starting point.</p>
 
 <h2>
-<a name="various-debugging-options-for-developers" class="anchor" href="#various-debugging-options-for-developers"><span class="octicon octicon-link"></span></a>Various debugging options for developers:</h2>
+<a name="various-debugging-options-for-developers" class="anchor" href="#various-debugging-options-for-developers"><span class="octicon octicon-link"></span></a>Various debugging options for developers</h2>
 
 <p><strong>Log</strong>             (default 1) Produces .klg log file (default is yes, to switch off do -Log 0).</p>
 
@@ -264,9 +272,9 @@ When using masked initializations, to save time due to excessive splitting, set 
 <p><strong>ChangedThresh f</strong>  (default 0.05) All log-likelihoods are recalculated if the fraction of instances changing class exceeds f (see DistThresh).</p>
 
 <h2>
-<a name="8-output-files" class="anchor" href="#8-output-files"><span class="octicon octicon-link"></span></a>8) Output Files</h2>
+<a name="output-files" class="anchor" href="#output-files"><span class="octicon octicon-link"></span></a>Output Files</h2>
 
-<hr><p>Regardless of the parameters chosen to run KlustaKwik, the two following plain text files will always be produced.</p>
+<p>Regardless of the parameters chosen to run KlustaKwik, the two following plain text files will always be produced.</p>
 
 <pre><code>mydata.clu.n (main output file)
 mydata.klg.n (a log file)
