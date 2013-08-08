@@ -93,14 +93,14 @@ The .fmask file has a similar format, but with each line giving a vector of floa
 Parameters
 ----------
 
-There are a large number of parameters that control how KlustaKwik works. The defaults, which cause it to run in classic mode, are:
+There are a large number of parameters that control how KlustaKwik works. To run it in classic mode, set -UseDistributional to 0, e.g.:
 
     FileBase    electrode
     ElecNo	1
     UseFeatures	
     DropLastNFeatures	0
     UseDistributional	0
-    MaskStarts	500
+    MaskStarts	0
     MinClusters	20
     MaxClusters	30
     MaxPossibleClusters	100
