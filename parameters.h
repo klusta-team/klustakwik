@@ -44,7 +44,7 @@ enum type_t {FLOAT = 'f', INT = 'd',  BOOLEAN = 'b', STRING = 's'};
     F("Drop the last N features in UseFeatures (works only when using "" for Usefeatures).",\
       INT_PARAM,     DropLastNFeatures,       int DropLastNFeatures,  0       )\
     F("Use distributional EM steps",                                           \
-      BOOLEAN_PARAM, UseDistributional,   char UseDistributional,    false    )\
+      BOOLEAN_PARAM, UseDistributional,   char UseDistributional,    1    )\
     F("Run Mask starts with this many starting clusters",                      \
       INT_PARAM,   MaskStarts,            int MaskStarts,            500      )\
     F("Minimum number of clusters to be used without splitting.",              \
