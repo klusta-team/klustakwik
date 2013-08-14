@@ -47,9 +47,13 @@ Command line input
 
 KlustaKwik runs from the command line, and takes a large number of options. We plan to rationalize these, but in the meantime you have to run fairly long command strings to run it in masked mode.
 
-The first two arguments are the filebase and shank number, after which come optional parameters. For example If you wanted to cluster the 4th shank from a file called "recording" in masked mode, you would run something like this:
+The first two arguments are the filebase and shank number, after which come optional parameters. For example if you wanted to cluster the 4th shank from a file called "recording" in masked mode (96-dimensional data with one time dimension that you want to omit), you would run something like this:
 
-    [yourterminal]$./KlustaKwik recording 4 -UseDistributional 1 -UseMaskedInitialConditions 1 -AssignToFirstClosestMask 1 -MaxPossibleClusters 500 -MinClusters 130 -MaxClusters 130 -PenaltyK 1 -PenaltyKLogN 0 -UseFeatures 111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111110
+    [yourterminal]$./KlustaKwik recording 4 -UseDistributional 1 -MaxPossibleClusters 500 -MaskStarts 300 -PenaltyK 1 -PenaltyKLogN 0 -DropLastNFeatures 1
+
+This command is equivalent to the more detailed command, which advanced users may still use, if they want to be more specific:
+
+    [yourterminal]$./KlustaKwik recording 4 -UseDistributional 1 -UseMaskedInitialConditions 1 -AssignToFirstClosestMask 1 -MaxPossibleClusters 500 -MinClusters 300 -MaxClusters 300 -PenaltyK 1 -PenaltyKLogN 0 -UseFeatures 111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111110
 
 You will probably want to write a script to generate such these commands. An example Python script could read as follows:
 
@@ -57,13 +61,13 @@ You will probably want to write a script to generate such these commands. An exa
 
     filebase = 'recording'
     shank_num = '4'
-    num_features = 97
     #Number of features (including time)
     # Replace './KlustaKwik' with the path on your system pointing to the executible KlustaKwik
+    # DropLastNFeatures 1 means all features except the last will be used
     
     os.system(
             './KlustaKwik'
-            ' '+filebase+' '+shank_num+' -UseFeatures '+'1'*(num_features-1)+'0'+' '
+            +'filebase ' +'shank_num' + -DropLastNFeatures 1 '
             '-MaskStarts 300 '
             '-MaxPossibleClusters 500 '
             '-PenaltyK 1.0 '
@@ -73,7 +77,7 @@ You will probably want to write a script to generate such these commands. An exa
             '-UseDistributional 1 '
             )
 
-You would then edit the parameters filebase, shank_num, and num_features as required. 
+You would then edit the parameters filebase, shank_num, etc. as required. 
 
 
 Input Files
