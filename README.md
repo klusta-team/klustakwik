@@ -266,8 +266,8 @@ This will mean there are 101 clusters in total. That the 1st is in cluster 15, t
 
 If you are uncertain whether or not you have run KlustaKwik having inputted the correct parameters simply open the .klg file (it is produced as soon as you run the program) and all parameter values will be listed. 
 
-Citation
---------
+How to cite
+-----------
 
 If you have used KlustaKwik and/or SpikeDetekt for a scientific publication, please cite our preprint on the arxiv,
 'High-dimensional cluster analysis with the Masked EM Algorithm' by Shabnam N. Kadir, Dan F.M. Goodman and Kenneth D. Harris:
