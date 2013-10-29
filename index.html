@@ -1,33 +1,36 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
+
   <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <title>Klustakwik by klusta-team</title>
+    <meta charset='utf-8' />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta name="description" content="Klustakwik : " />
 
-    <link rel="stylesheet" href="stylesheets/styles.css">
-    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-    <!--[if lt IE 9]>
-    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]-->
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>Klustakwik</title>
   </head>
+
   <body>
-    <div class="wrapper">
-      <header>
-        <h1>Klustakwik</h1>
-        <p></p>
 
-        <p class="view"><a href="https://github.com/klusta-team/klustakwik">View the Project on GitHub <small>klusta-team/klustakwik</small></a></p>
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/klusta-team/klustakwik">View on GitHub</a>
 
+          <h1 id="project_title">Klustakwik</h1>
+          <h2 id="project_tagline"></h2>
 
-        <ul>
-          <li><a href="https://github.com/klusta-team/klustakwik/zipball/master">Download <strong>ZIP File</strong></a></li>
-          <li><a href="https://github.com/klusta-team/klustakwik/tarball/master">Download <strong>TAR Ball</strong></a></li>
-          <li><a href="https://github.com/klusta-team/klustakwik">View On <strong>GitHub</strong></a></li>
-        </ul>
-      </header>
-      <section>
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/klusta-team/klustakwik/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/klusta-team/klustakwik/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
         <h1>
 <a name="klustakwik" class="anchor" href="#klustakwik"><span class="octicon octicon-link"></span></a>KlustaKwik</h1>
 
@@ -65,7 +68,7 @@
 <h2>
 <a name="usage" class="anchor" href="#usage"><span class="octicon octicon-link"></span></a>Usage</h2>
 
-<p>KlustaKwik 3.0 is backward compatible with previous versions. <em>To use it in "classic" mode</em>: use option <em>UseDistributional 0</em> (see below for details) and make sure all other options are set as for version 2.x (as documented on the sourceforge page linked above). There is one change from version 2.x, namely <em>PenaltyMix</em> has been replaced by <em>PenaltyK</em> and <em>PenaltyKlogN</em>. It will produce the same results, but should run about 10 times faster. In this mode, KlustaKwik takes a single input file (mydata.fet.n) containing feature vectors, and produces an output file (mydata.clu.n) containing cluster numbers. It also produces a log file (mydata.klg.n).</p>
+<p>KlustaKwik 3.0 is backward compatible with previous versions. <strong>To use it in "classic" mode:</strong> use option <strong>UseDistributional 0</strong> (see below for details) and make sure all other options are set as for version 2.x (as documented on the sourceforge page linked above). There is one change from version 2.x, namely <em>PenaltyMix</em> has been replaced by <em>PenaltyK</em> and <em>PenaltyKlogN</em>. It will produce the same results, but should run about 10 times faster. In this mode, KlustaKwik takes a single input file (mydata.fet.n) containing feature vectors, and produces an output file (mydata.clu.n) containing cluster numbers. It also produces a log file (mydata.klg.n).</p>
 
 <p>To deal with high channel count arrays, KlustaKwik should be run in "masked" mode. In this mode, the algorithm takes advantage of the fact that any spike occurs on only a subset of channels, with the remainder containing only multi-unit noise. The information of which channels are relevant for each spike is encoded in an additional .fmask file which is output from SpikeDetekt, along with the usual .fet features file.  <em>Unmasked</em> channels are channels on which spiking activity has been found to occur by the program SpikeDetekt, whereas <em>masked</em> channels contain only noise. The .fmask file is a text file, every line of which is a vector of length the number of features, in which <strong>1</strong> denotes <strong>unmasked</strong> and <strong>0</strong> denotes <strong>masked</strong>, and values between 0 and 1 indicate partial masking.</p>
 
@@ -311,12 +314,17 @@ mydata.klg.n (a log file)
 
 <p><a href="http://arxiv.org/abs/1309.2848">http://arxiv.org/abs/1309.2848</a></p>
       </section>
-      <footer>
-        <p>This project is maintained by <a href="https://github.com/klusta-team">klusta-team</a></p>
-        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Klustakwik maintained by <a href="https://github.com/klusta-team">klusta-team</a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
       </footer>
     </div>
-    <script src="javascripts/scale.fix.js"></script>
+
     
+
   </body>
 </html>
