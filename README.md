@@ -8,6 +8,8 @@ KlustaKwik is a program for cluster analysis by fitting a mixture of Gaussians. 
 
 For spike sorting, KlustaKwik is designed to be used in conjunction with [SpikeDetekt](http://klusta-team.github.io/spikedetekt) for spike detection, and [KlustaViewa](http://klusta-team.github.io/klustaviewa) for manual verification and adjustment of clustering results.
 
+You may subscribe to our googlegroups discussions by sending an email to:  klustaviewas+subscribe 'at' googlegroups.com
+
 Installation
 ------------
 
