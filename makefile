@@ -2,7 +2,7 @@
 # of g++ for best optimisation. When ready for release, change PROGRAM to
 # KlustaKwik for backwards compatibility
 
-PROGRAM = MaskedKlustaKwik
+PROGRAM = KlustaKwik
 OBJS = io.o linalg.o log.o parameters.o precomputations.o util.o klustakwik.o
 CC = g++
 DEBUG = -g
