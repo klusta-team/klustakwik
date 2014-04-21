@@ -156,7 +156,7 @@ KlustaKwik uses penalties to reduce the number of clusters fit. The parameters P
 
 -PenaltyK 0 -PenaltyKLogN 1 is the default, corresponding to the "Bayesian Information Criterion". This is recommended for classic mode.
 
--PenaltyK 1 -PenaltyKLogN  corresponds to "Akaike's Information Criterion". This is recommended for large probes and masked mode.
+-PenaltyK 1 -PenaltyKLogN 0  corresponds to "Akaike's Information Criterion". This is recommended for large probes and masked mode.
 
 + **UseDistributional** (*default* 0)
 
