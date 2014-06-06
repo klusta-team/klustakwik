@@ -1,6 +1,8 @@
 KlustaKwik
 ==========
 
+**Important note (06/06/2014)**: a new version of the entire suite is currently in beta test, see the [instructions here](https://github.com/klusta-team/example). The instructions below are not necessarily up-to-date.
+
 Introduction
 ------------
 
