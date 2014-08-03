@@ -223,6 +223,14 @@ Full Glossary of Parameters
 **MaxIter** n       (default 500) Maximum number of iterations. ie. it won't try more than n iterations from any starting point.
 
 
+Memory usage
+------------
+
+When processing large files, memory can become an issue. The largest array stored by KlustaKwik is of size N_points*MaxPossibleClusters. (This is the array LogP, containing the log likelihood of each spike in each cluster). If you are having memory problems, try reducing the MaxPossibleClusters parameter, or use the -Subset option, which will also make it run faster.
+
+Also please note that the current version uses integer addressing, which in most compilers means 32 bit. This means it won't run in cases where the largest array exceeds ~2GB. Fixing this issue is on the to-do list, but for now please use the workarounds described in the last paragraph.
+
+
 Various debugging options for developers
 ----------------------------------------
 
