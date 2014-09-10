@@ -28,9 +28,9 @@ enum type_t {FLOAT = 'f', INT = 'd',  BOOLEAN = 'b', STRING = 's'};
 // Definition is the standard C++ definition of the variable without the default
 // value which is given by Default. This table is used in three places, below
 // the parameters are defined with an extern so that multiple files can access
-// the same global variables, e.g. extern int ElecNo;. In parameters.cpp the
+// the same global variables, e.g. extern integer ElecNo;. In parameters.cpp the
 // variables are instantiated and given their default values, e.g.
-// int ElecNo = 1;. In parameters.cpp the parameters are read from the command
+// integer ElecNo = 1;. In parameters.cpp the parameters are read from the command
 // line, e.g. INT_PARAM(ElecNo).
 //  F(Documentation,
 //    Param type,    Name,                Definition,                Default)
@@ -38,49 +38,49 @@ enum type_t {FLOAT = 'f', INT = 'd',  BOOLEAN = 'b', STRING = 's'};
     F("Filename base, files are of the form FileBase.fet.ElecNo, etc.",        \
       STRING_PARAM,  FileBase,            char FileBase[STRLEN],     "electrode")\
     F("Electrode number, files are of the form FileBase.fet.ElecNo, etc.",     \
-      INT_PARAM,     ElecNo,              int ElecNo,                1        )\
+      INT_PARAM,     ElecNo,              integer ElecNo,                1        )\
     F("String of 0s and 1s indicating which features to use. "" indicates, `use all features' ",  \
       STRING_PARAM,  UseFeatures,         char UseFeatures[STRLEN],  "")\
     F("Drop the last N features in UseFeatures (works only when using "" for Usefeatures).",\
-      INT_PARAM,     DropLastNFeatures,       int DropLastNFeatures,  0       )\
+      INT_PARAM,     DropLastNFeatures,       integer DropLastNFeatures,  0       )\
     F("Use distributional EM steps",                                           \
       BOOLEAN_PARAM, UseDistributional,   char UseDistributional,    1    )\
     F("Run Mask starts with this many starting clusters",                      \
-      INT_PARAM,   MaskStarts,            int MaskStarts,            500      )\
+      INT_PARAM,   MaskStarts,            integer MaskStarts,            500      )\
     F("Minimum number of clusters to be used without splitting.",              \
-      INT_PARAM,     MinClusters,         int MinClusters,           100      )\
+      INT_PARAM,     MinClusters,         integer MinClusters,           100      )\
     F("Maximum number of clusters to be used without splitting.",              \
-      INT_PARAM,     MaxClusters,         int MaxClusters,           110      )\
+      INT_PARAM,     MaxClusters,         integer MaxClusters,           110      )\
     F("Maximum possible number of clusters to be used after splitting.",       \
-      INT_PARAM,     MaxPossibleClusters, int MaxPossibleClusters,   1000     )\
+      INT_PARAM,     MaxPossibleClusters, integer MaxPossibleClusters,   1000     )\
     F("Number of times to start count from each number of clusters.",          \
-      INT_PARAM,     nStarts,             int nStarts,               1        )\
+      INT_PARAM,     nStarts,             integer nStarts,               1        )\
     F("An intermediate cluster file to use as a starting point.",              \
       STRING_PARAM,  StartCluFile,        char StartCluFile[STRLEN], ""       )\
     F("Allow cluster splitting after this many iterations after initial split.",\
-      INT_PARAM,     SplitEvery,          int SplitEvery,            40       )\
+      INT_PARAM,     SplitEvery,          integer SplitEvery,            40       )\
     F("Allow first cluster splitting after this many iterations.",             \
-      INT_PARAM,     SplitFirst,          int SplitFirst,            20       )\
+      INT_PARAM,     SplitFirst,          integer SplitFirst,            20       )\
     F("Coefficient of num_params to use in penalty (1 for AIC).",              \
       FLOAT_PARAM,   PenaltyK,            scalar PenaltyK,           0.0      )\
     F("Coefficient of num_params*log(num_points)/2 to use in penalty (1 for BIC).",\
       FLOAT_PARAM,   PenaltyKLogN,        scalar PenaltyKLogN,       1.0      )\
     F("Do clustering on 1/Subset points, and then generalise to whole set.",   \
-      INT_PARAM,     Subset,              int Subset,                1        )\
+      INT_PARAM,     Subset,              integer Subset,                1        )\
     F("There is a full E step recomputation at least after this many iterations.",\
-      INT_PARAM,     FullStepEvery,       int FullStepEvery,         20       )\
+      INT_PARAM,     FullStepEvery,       integer FullStepEvery,         20       )\
     F("Maximum number of iterations.",                                         \
-      INT_PARAM,     MaxIter,             int MaxIter,               10000    )\
+      INT_PARAM,     MaxIter,             integer MaxIter,               10000    )\
     F("Specify random seed for reproducible results, or leave for random.",    \
-      INT_PARAM,     RandomSeed,          int RandomSeed,            1        )\
+      INT_PARAM,     RandomSeed,          integer RandomSeed,            1        )\
     F("Whether or not to run in debug mode (prints lots of detail). 0 = None, 1 = Partial info, 2=Full Info",\
       INT_PARAM, Debug,                   char Debug,                0        )\
     F("Whether or not give spilt iteration info. 0 = Partial split info, 1 = Full split info",\
       INT_PARAM, SplitInfo,                   char SplitInfo,        1        )\
     F("Whether or not to print information as the program runs.",              \
-      INT_PARAM,     Verbose,             int Verbose,               1        )\
+      INT_PARAM,     Verbose,             integer Verbose,               1        )\
     F("???",                                                                   \
-      INT_PARAM,     DistDump,            int DistDump,              0        )\
+      INT_PARAM,     DistDump,            integer DistDump,              0        )\
     F("Points this far from best do not get an E step recomputation.",         \
       FLOAT_PARAM,   DistThresh,          scalar DistThresh,         (scalar)log(1000))\
     F("If this fraction of points changed class last time, do a full step.",   \
@@ -90,7 +90,7 @@ enum type_t {FLOAT = 'f', INT = 'd',  BOOLEAN = 'b', STRING = 's'};
     F("Log output to screen.",                                                 \
       BOOLEAN_PARAM, Screen,              char Screen,               1        )\
     F("Number of 'PriorPoints'",                                               \
-      INT_PARAM,   PriorPoint,            int PriorPoint,            1        )\
+      INT_PARAM,   PriorPoint,            integer PriorPoint,            1        )\
     F("Save FileBase.sorted.*.ElecNo data files (data in sorted order).",      \
       BOOLEAN_PARAM, SaveSorted,          char SaveSorted,           false    )\
     F("Save covariance and means",                                             \
@@ -119,8 +119,8 @@ PARAMETERS_TABLE(EXTERN_PARAMETERS)
 
 //////////// FUNCTIONS TO READ PARAMETERS FROM COMMAND LINE ////////////////////
 
-void add_param(int t, char *name, void *addr);
-int change_param(char *name, char *value);
+void add_param(integer t, char *name, void *addr);
+integer change_param(char *name, char *value);
 void init_params(int argc, char **argv);
 void print_params(FILE *fp);
 void SetupParams(int argc, char **argv);

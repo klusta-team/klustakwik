@@ -8,24 +8,25 @@
  */
 
 #include "klustakwik.h"
+#include "numerics.h"
 
 // Loads in Fet file.  Also allocates storage for other arrays
-void KK::LoadData(char *FileBase, int ElecNo, char *UseFeatures)
+void KK::LoadData(char *FileBase, integer ElecNo, char *UseFeatures)
 {
     char fname[STRLEN];
     //char fnamemask[STRLEN];
     char fnamefmask[STRLEN];
     char line[STRLEN];
-    int p, i, j;
-    int nFeatures, nmaskFeatures; // not the same as nDims! we don't use all features.
+    integer p, i, j;
+    integer nFeatures, nmaskFeatures; // not the same as nDims! we don't use all features.
     FILE *fp;
     //FILE *fpmask;
     FILE *fpfmask;
-    int status;
-    //int maskstatus;
+    integer status;
+    //integer maskstatus;
     scalar val;
-    //int maskval;
-    int UseLen;
+    //integer maskval;
+    integer UseLen;
     scalar max, min;
     //bool usemasks = (UseDistributional && !UseFloatMasks);
 
@@ -262,13 +263,13 @@ void KK::LoadData(char *FileBase, int ElecNo, char *UseFeatures)
 // write output to .clu file - with 1 added to cluster numbers, and empties removed.
 void KK::SaveOutput()
 {
-    int c;
-    unsigned int p;
+    integer c;
+    uinteger p;
     char fname[STRLEN];
     FILE *fp;
-    int MaxClass = 0;
-    vector<int> NotEmpty(MaxPossibleClusters);
-    vector<int> NewLabel(MaxPossibleClusters);
+    integer MaxClass = 0;
+    vector<integer> NotEmpty(MaxPossibleClusters);
+    vector<integer> NewLabel(MaxPossibleClusters);
 
     // find non-empty clusters
     for(c=0;c<MaxPossibleClusters;c++) NewLabel[c] = NotEmpty[c] = 0;
@@ -302,13 +303,13 @@ void KK::SaveOutput()
 // write output to .clu file - with 1 added to cluster numbers, and empties removed.
 void KK::SaveTempOutput()
 {
-    int c;
-    unsigned int p;
+    integer c;
+    uinteger p;
     char fname[STRLEN];
     FILE *fp;
-    int MaxClass = 0;
-    vector<int> NotEmpty(MaxPossibleClusters);
-    vector<int> NewLabel(MaxPossibleClusters);
+    integer MaxClass = 0;
+    vector<integer> NotEmpty(MaxPossibleClusters);
+    vector<integer> NewLabel(MaxPossibleClusters);
     
     // find non-empty clusters
     for(c=0;c<MaxPossibleClusters;c++) NewLabel[c] = NotEmpty[c] = 0;
@@ -346,12 +347,12 @@ void KK::SaveCovMeans()
     // print covariance to file
     sprintf(fname, "%s.cov.%d", FileBase, ElecNo);
     fp = fopen_safe(fname, "w");
-    for (int cc=0; cc<nClustersAlive; cc++)
+    for (integer cc=0; cc<nClustersAlive; cc++)
     {
-        int c = AliveIndex[cc];
-        for(int i=0; i<nDims; i++)
+        integer c = AliveIndex[cc];
+        for(integer i=0; i<nDims; i++)
         {
-            for(int j=0; j<nDims; j++)
+            for(integer j=0; j<nDims; j++)
             {
                 fprintf(fp, SCALARFMT " ", Cov[c*nDims2+i*nDims+j]);
             }
@@ -363,10 +364,10 @@ void KK::SaveCovMeans()
     // print mean to file
     sprintf(fname, "%s.mean.%d", FileBase, ElecNo);
     fp = fopen_safe(fname, "w");
-    for (int cc=0; cc<nClustersAlive; cc++)
+    for (integer cc=0; cc<nClustersAlive; cc++)
     {
-        int c = AliveIndex[cc];
-        for(int i=0; i<nDims; i++)
+        integer c = AliveIndex[cc];
+        for(integer i=0; i<nDims; i++)
         {
             fprintf(fp, SCALARFMT " ", Mean[c*nDims+i]);
         }
@@ -384,10 +385,10 @@ void KK::SaveSortedData()
     sprintf(fname, "%s.sorted.fet.%d", FileBase, ElecNo);
     fp = fopen_safe(fname, "w");
     fprintf(fp, "%d\n", nDims);
-    for(int q=0; q<nPoints; q++)
+    for(integer q=0; q<nPoints; q++)
     {
-        int p = SortedIndices[q];
-        for(int i=0; i<nDims; i++)
+        integer p = SortedIndices[q];
+        for(integer i=0; i<nDims; i++)
             fprintf(fp, SCALARFMT " ", Data[p*nDims+i]);
         fprintf(fp, "\n");
     }
@@ -396,10 +397,10 @@ void KK::SaveSortedData()
     sprintf(fname, "%s.sorted.mask.%d", FileBase, ElecNo);
     fp = fopen_safe(fname, "w");
     fprintf(fp, "%d\n", nDims);
-    for(int q=0; q<nPoints; q++)
+    for(integer q=0; q<nPoints; q++)
     {
-        int p = SortedIndices[q];
-        for(int i=0; i<nDims; i++)
+        integer p = SortedIndices[q];
+        for(integer i=0; i<nDims; i++)
             fprintf(fp, "%d ", Masks[p*nDims+i]);
         fprintf(fp, "\n");
     }
@@ -411,21 +412,21 @@ void KK::SaveSortedClu()
 {
     char fname[STRLEN];
     FILE *fp;
-    vector<int> NotEmpty(MaxPossibleClusters);
-    vector<int> NewLabel(MaxPossibleClusters);
-    for(int c=0; c<MaxPossibleClusters; c++)
+    vector<integer> NotEmpty(MaxPossibleClusters);
+    vector<integer> NewLabel(MaxPossibleClusters);
+    for(integer c=0; c<MaxPossibleClusters; c++)
         NewLabel[c] = NotEmpty[c] = 0;
-    for(int q=0; q<nPoints; q++)
+    for(integer q=0; q<nPoints; q++)
         NotEmpty[Class[SortedIndices[q]]] = 1;
     NewLabel[0] = 1;
-    int MaxClass = 1;
-    for(int c=1; c<MaxPossibleClusters; c++)
+    integer MaxClass = 1;
+    for(integer c=1; c<MaxPossibleClusters; c++)
         if(NotEmpty[c])
             NewLabel[c] = ++MaxClass;
     sprintf(fname, "%s.sorted.clu.%d", FileBase, ElecNo);
     fp = fopen_safe(fname, "w");
     fprintf(fp, "%d\n", MaxClass);
-    for(int q=0; q<nPoints; q++)
+    for(integer q=0; q<nPoints; q++)
         fprintf(fp, "%d\n", NewLabel[Class[SortedIndices[q]]]);
     fclose(fp);
 }
