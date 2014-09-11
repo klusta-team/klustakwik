@@ -121,8 +121,8 @@ PARAMETERS_TABLE(EXTERN_PARAMETERS)
 
 void add_param(integer t, char *name, void *addr);
 integer change_param(char *name, char *value);
-void init_params(int argc, char **argv);
+void init_params(integer argc, char **argv);
 void print_params(FILE *fp);
-void SetupParams(int argc, char **argv);
+void SetupParams(integer argc, char **argv);
 
 #endif /* PARAMETERS_H_ */

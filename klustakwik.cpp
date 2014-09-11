@@ -3,6 +3,8 @@
 // Fast clustering using the CEM algorithm with Masks.
 
 #include "klustakwik.h"
+#define _USE_MATH_DEFINES
+#include<math.h>
 
 // GLOBAL VARIABLES
 FILE *Distfp;
@@ -1214,12 +1216,12 @@ KK::KK(const KK &Source)
 }
 
 // Main loop
-integer main(integer argc, char **argv)
+int main(int argc, char **argv)
 {
     scalar Score;
     scalar BestScore = HugeScore;
     integer p, i;
-    SetupParams(argc, argv); // This function is defined in parameters.cpp
+    SetupParams((integer)argc, argv); // This function is defined in parameters.cpp
     
     //clock_t Clock0 = clock();
     Clock0 = clock();
