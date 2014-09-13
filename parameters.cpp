@@ -8,6 +8,9 @@
  *      Author: dan
  */
 
+// Disable some Visual Studio warnings
+#define _CRT_SECURE_NO_WARNINGS
+
 #include "parameters.h"
 #include "math.h"
 #include "log.h"

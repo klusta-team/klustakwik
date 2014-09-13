@@ -7,6 +7,9 @@
  *      Author: dan
  */
 
+// Disable some Visual Studio warnings
+#define _CRT_SECURE_NO_WARNINGS
+
 #include "util.h"
 #include<stdlib.h>
 #include<stdarg.h>

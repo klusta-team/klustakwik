@@ -2,6 +2,9 @@
 //
 // Fast clustering using the CEM algorithm with Masks.
 
+// Disable some Visual Studio warnings
+#define _CRT_SECURE_NO_WARNINGS
+
 #include "klustakwik.h"
 #define _USE_MATH_DEFINES
 #include<math.h>
@@ -1233,7 +1236,7 @@ int main(int argc, char **argv)
         K1.SaveSortedData();
 
     // Seed random number generator
-    srand(RandomSeed);
+    srand((unsigned int)RandomSeed);
 
     // open distance dump file if required
     if (DistDump) Distfp = fopen("DISTDUMP", "w");
