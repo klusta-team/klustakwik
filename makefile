@@ -3,7 +3,7 @@
 # KlustaKwik for backwards compatibility
 
 PROGRAM = KlustaKwik
-OBJS = io.o linalg.o log.o parameters.o precomputations.o util.o klustakwik.o
+OBJS = io.o linalg.o log.o parameters.o precomputations.o util.o memorytracking.o klustakwik.o
 CC = g++
 DEBUG = -g
 OPTIMISATIONS = -O3 -ffast-math
@@ -32,10 +32,11 @@ clean:
 ######## DEPENDENCIES FOR FILES IN PROJECT ###################################
 
 linalg.h: numerics.h
-klustakwik.h: parameters.h log.h util.h numerics.h linalg.h
+klustakwik.h: parameters.h log.h util.h numerics.h linalg.h memorytracking.h
 numerics.h: globalswitches.h
 parameters.h: numerics.h
 util.h: numerics.h
+memorytracking.h: numerics.h
 
 io.o: io.cpp klustakwik.h
 	$(CC) $(CFLAGS) $<
@@ -56,4 +57,7 @@ precomputations.o: precomputations.cpp klustakwik.h
 	$(CC) $(CFLAGS) $<
 
 util.o: util.cpp util.h
+	$(CC) $(CFLAGS) $<
+
+memorytracking.o: memorytracking.cpp memorytracking.h
 	$(CC) $(CFLAGS) $<
