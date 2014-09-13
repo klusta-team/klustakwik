@@ -17,15 +17,6 @@ scalar iteration_metric3 = (scalar)0;
 clock_t Clock0;
 scalar timesofar;
 
-// initialise global memory counter with 0
-integer KK::total_num_bytes_allocated = 0;
-
-// Destructor of KK class subtracts memory used
-KK::~KK()
-{
-	total_num_bytes_allocated -= num_bytes_allocated;
-}
-
 // Sets storage for KK class.  Needs to have nDims and nPoints defined
 void KK::AllocateArrays() {
 
@@ -33,7 +24,7 @@ void KK::AllocateArrays() {
     NoisePoint = 1; // Ensures that the mixture weight for the noise cluster never gets to zero
 
 	// Compute required memory and check if it exceeds the limit set
-	num_bytes_allocated =
+	integer num_bytes_allocated =
 		sizeof(scalar)*nPoints*nDims +               // Data
 		sizeof(integer)*nPoints*nDims +              // Masks
 		sizeof(scalar)*nPoints*nDims +               // FloatMasks
@@ -54,17 +45,7 @@ void KK::AllocateArrays() {
 		UseDistributional*sizeof(scalar)*MaxPossibleClusters + // CorrectionTerm
 		UseDistributional*sizeof(scalar)*MaxPossibleClusters;  // ClassCorrectionFactor
 
-	total_num_bytes_allocated += num_bytes_allocated;
-	scalar required_ram_gb = (num_bytes_allocated*1.0) / (1024.0*1024.0*1024.0);
-	Output("Expected RAM usage for allocation (in GB): %g\n", required_ram_gb);
-	scalar total_required_ram_gb = (total_num_bytes_allocated*1.0) / (1024.0*1024.0*1024.0);
-	Output("Expected total RAM usage (in GB): %g\n", total_required_ram_gb);
-	if ((RamLimitGB>0) && ((integer)total_required_ram_gb >= RamLimitGB))
-	{
-		Error("RAM usage will exceed the limit, aborting.\n");
-		FlushLog();
-		exit(EXIT_FAILURE);
-	}
+	mem.add(num_bytes_allocated);
 
     // Set sizes for arrays
     Data.resize(nPoints * nDims);
@@ -294,8 +275,11 @@ void KK::MStep()
 //            for(j=i; j<nDims; j++)
 //                Cov[c*nDims2 + i*nDims + j] += Vec2Mean[i] * Vec2Mean[j];
 //    }
-    if((integer)AllVector2Mean.size()<nPoints*nDims)
-        AllVector2Mean.resize(nPoints*nDims);
+	if ((integer)AllVector2Mean.size() < nPoints*nDims)
+	{
+		mem.add((nPoints*nDims-AllVector2Mean.size())*sizeof(scalar));
+		AllVector2Mean.resize(nPoints*nDims);
+	}
     vector< vector<integer> > PointsInClass(MaxPossibleClusters);
     for(p=0; p<nPoints; p++)
     {
@@ -1269,6 +1253,7 @@ int main(int argc, char **argv)
     scalar BestScore = HugeScore;
     integer p, i;
     SetupParams((integer)argc, argv); // This function is defined in parameters.cpp
+	memory_tracker.limit_gb = RamLimitGB;
     
     //clock_t Clock0 = clock();
     Clock0 = clock();
@@ -1290,7 +1275,7 @@ int main(int argc, char **argv)
     {
         Output("\nStarting from cluster file %s\n", StartCluFile);
         
-        scalar iterationtime =clock();
+        scalar iterationtime = (scalar)clock();
         BestScore = K1.CEM(StartCluFile, 1, 1);  //Main computation
         iterationtime = (clock()-iterationtime)/(scalar) CLOCKS_PER_SEC;
         Output("Time taken for this iteration:" SCALARFMT " seconds.\n", iterationtime);
@@ -1307,7 +1292,7 @@ int main(int argc, char **argv)
         {
             // do CEM iteration
 			Output("\nStarting from %d clusters...\n", (int)K1.nStartingClusters);
-            scalar iterationtime =clock();
+            scalar iterationtime = (scalar)clock();
             Score = K1.Cluster(); //Main computation
             iterationtime = (clock()-iterationtime)/(scalar) CLOCKS_PER_SEC;
             Output("Time taken for this iteration:" SCALARFMT " seconds.\n", iterationtime);

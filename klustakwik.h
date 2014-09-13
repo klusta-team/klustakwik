@@ -19,6 +19,7 @@
 #include "util.h"
 #include "numerics.h"
 #include "linalg.h"
+#include "memorytracking.h"
 
 using namespace std;
 
@@ -33,8 +34,6 @@ public:
     KK(const KK &Source, const vector<integer> &Indices);
     // Make an entire copy of existing KK object
     KK(const KK &Source);
-	// Destructor
-	~KK();
     /////////////// FUNCTIONS //////////////////////////////////////////////////
     void AllocateArrays();
     void Reindex();
@@ -137,8 +136,7 @@ public:
     // debugging info
     integer numiterations;
 	// memory tracking
-	static integer total_num_bytes_allocated;
-	integer num_bytes_allocated;
+	KKMemoryRequest mem;
 };
 
 #endif /* MASKED_KLUSTA_KWIK_2_H_ */
