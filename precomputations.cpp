@@ -250,9 +250,9 @@ void KK::ComputeNoiseMeansAndVariances()
     }
     
 //    for(integer i=0; i<nDims; i++)
-//    {    Output(" NoiseMean[%d] = %f",i,NoiseMean[i]);
-//        Output(" NoiseVariance[%d] = %f",i,NoiseVariance[i]);
-//        Output(" nMasked[%d] = %d",i,nMasked[i]);
+//    {    Output(" NoiseMean[%d] = %f",(int)i,NoiseMean[i]);
+//        Output(" NoiseVariance[%d] = %f",(int)i,NoiseVariance[i]);
+//        Output(" nMasked[%d] = %d",(int)i,(int)nMasked[i]);
         
 //    }
 }
@@ -289,7 +289,7 @@ void KK::PointMaskDimension()
         }
         if (Debug)
         {
-            Output("UnMaskDims[%d] = %f ",p,UnMaskDims[p]);
+			Output("UnMaskDims[%d] = %f ", (int)p, UnMaskDims[p]);
         }
         
     }    

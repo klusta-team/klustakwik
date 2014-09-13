@@ -44,3 +44,11 @@ void Error(char *fmt, ...) {
     if (Screen) fprintf(stderr, "%s", str);
     if (Log) fprintf(logfp, "%s", str);
 }
+
+void FlushLog()
+{
+	if (Log)
+	{
+		fflush(logfp);
+	}
+}

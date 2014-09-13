@@ -17,11 +17,54 @@ scalar iteration_metric3 = (scalar)0;
 clock_t Clock0;
 scalar timesofar;
 
+// initialise global memory counter with 0
+integer KK::total_num_bytes_allocated = 0;
+
+// Destructor of KK class subtracts memory used
+KK::~KK()
+{
+	total_num_bytes_allocated -= num_bytes_allocated;
+}
+
 // Sets storage for KK class.  Needs to have nDims and nPoints defined
 void KK::AllocateArrays() {
 
     nDims2 = nDims*nDims;
     NoisePoint = 1; // Ensures that the mixture weight for the noise cluster never gets to zero
+
+	// Compute required memory and check if it exceeds the limit set
+	num_bytes_allocated =
+		sizeof(scalar)*nPoints*nDims +               // Data
+		sizeof(integer)*nPoints*nDims +              // Masks
+		sizeof(scalar)*nPoints*nDims +               // FloatMasks
+		sizeof(scalar)*nPoints +                     // UnMaskDims
+		sizeof(scalar)*MaxPossibleClusters +         // Weight
+		sizeof(scalar)*MaxPossibleClusters*nDims +   // Mean
+		sizeof(scalar)*MaxPossibleClusters*nDims2 +  // Cov
+		sizeof(scalar)*MaxPossibleClusters*nPoints + // LogP
+		sizeof(integer)*nPoints +                    // Class
+		sizeof(integer)*nPoints +                    // OldClass
+		sizeof(integer)*nPoints +                    // Class2
+		sizeof(integer)*nPoints +                    // BestClass
+		sizeof(integer)*MaxPossibleClusters +        // ClassAlive
+		sizeof(integer)*MaxPossibleClusters +        // AliveIndex
+		sizeof(scalar)*MaxPossibleClusters +         // ClassPenalty
+		sizeof(integer)*MaxPossibleClusters +        // nClassMembers
+		// UseDistributional only
+		UseDistributional*sizeof(scalar)*MaxPossibleClusters + // CorrectionTerm
+		UseDistributional*sizeof(scalar)*MaxPossibleClusters;  // ClassCorrectionFactor
+
+	total_num_bytes_allocated += num_bytes_allocated;
+	scalar required_ram_gb = (num_bytes_allocated*1.0) / (1024.0*1024.0*1024.0);
+	Output("Expected RAM usage for allocation (in GB): %g\n", required_ram_gb);
+	scalar total_required_ram_gb = (total_num_bytes_allocated*1.0) / (1024.0*1024.0*1024.0);
+	Output("Expected total RAM usage (in GB): %g\n", total_required_ram_gb);
+	if ((RamLimitGB>0) && ((integer)total_required_ram_gb >= RamLimitGB))
+	{
+		Error("RAM usage will exceed the limit, aborting.\n");
+		FlushLog();
+		exit(EXIT_FAILURE);
+	}
 
     // Set sizes for arrays
     Data.resize(nPoints * nDims);
@@ -154,11 +197,11 @@ void KK::MStep()
         for (integer cc=0; cc<nClustersAlive; cc++)
         {
             integer c = AliveIndex[cc];
-            if (Debug){Output("DistributionalMstep: Class %d contains %d members \n", c, nClassMembers[c]);}
+            if (Debug){Output("DistributionalMstep: Class %d contains %d members \n", (int)c, (int)nClassMembers[c]);}
                 if (c>0 && nClassMembers[c]<1)//nDims)
                 {
                     ClassAlive[c]=0;
-                    if (Debug) {Output("UnmaskedMstep_dist: Deleted class %d: no members\n", c);}
+                    if (Debug) {Output("UnmaskedMstep_dist: Deleted class %d: no members\n", (int)c);}
                 }
         }
     }
@@ -168,11 +211,11 @@ void KK::MStep()
         for (cc=0; cc<nClustersAlive; cc++)
         {
                 c = AliveIndex[cc];
-                if (Debug) {Output("Mstep: Class %d contains %d members \n", c, nClassMembers[c]);}
+                if (Debug) {Output("Mstep: Class %d contains %d members \n", (int)c, (int)nClassMembers[c]);}
                 if (c>0 && nClassMembers[c]<=nDims)
                 {
                     ClassAlive[c]=0;
-                    if (Debug) {Output("Deleted class %d: not enough members\n", c);}
+                    if (Debug) {Output("Deleted class %d: not enough members\n", (int)c);}
                 }
         }
     }
@@ -304,9 +347,9 @@ void KK::MStep()
                     p = PointsInThisClass[q];
                     ccf += CorrectionTerm[p*nDims+i];
                 }
-                //Output("Class %d Class correction factor[%d] = %f \n",c,i,ccf);
+                //Output("Class %d Class correction factor[%d] = %f \n",(int)c,(int)i,ccf);
                 Cov[c*nDims2+i*nDims+i] += ccf;
-            //    Output("Class %d Covariance diagonal[%d] = %f \n",c,i,Cov[c*nDims2+i*nDims+i] );
+            //    Output("Class %d Covariance diagonal[%d] = %f \n",(int)c,(int)i,Cov[c*nDims2+i*nDims+i] );
                 ClassCorrectionFactor[c*nDims+i] = ccf/(scalar)(nClassMembers[c]*nClassMembers[c]);
             }
         }
@@ -355,7 +398,7 @@ void KK::MStep()
         for (cc=0; cc<nClustersAlive; cc++)
         {
             c = AliveIndex[cc];
-            Output("Class %d - Weight %.2g\n", c, Weight[c]);
+			Output("Class %d - Weight %.2g\n", (int)c, Weight[c]);
             Output("Mean: ");
             MatPrint(stdout, &Mean.front() + c*nDims, 1, nDims);
             Output("\nCov:\n");
@@ -414,7 +457,7 @@ void KK::EStep()
             // If Cholesky returns 1, it means the matrix is not positive definite.
             // So kill the class.
             // Cholesky is defined in linalg.cpp
-            Output("Unmasked E-step: Deleting class %d (%d points): covariance matrix is singular \n", c, NumberInClass[c]);
+			Output("Unmasked E-step: Deleting class %d (%d points): covariance matrix is singular \n", (int)c, (int)NumberInClass[c]);
             ClassAlive[c] = 0;
             continue;
         }
@@ -480,7 +523,7 @@ void KK::EStep()
                     //    correction_factor = ClassCorrectionFactor[c*nDims+i]+
                     //            (1.0-2.0/(scalar)nClassMembers[c]);
                     Mahal += correction_factor*CorrectionTerm[p*nDims+i]*safeInvCovDiag[i];
-        //                                if(Debug) {Output("CorrectionTerm[%d*nDims+%d] = %f ",p,CorrectionTerm[p*nDims+i],i);
+        //                                if(Debug) {Output("CorrectionTerm[%d*nDims+%d] = %f ",(int)p,(int)i,CorrectionTerm[p*nDims+i]);
         //               Output("Mahal = %f",Mahal);}
                 }
 
@@ -489,7 +532,7 @@ void KK::EStep()
                                        + LogRootDet
                                     - log(Weight[c])
                                     + (float)log(2*M_PI)*nDims/2;
-                                          //           Output("LogP = %d ",LogP[p*MaxPossibleClusters + c]);
+                                          //           Output("LogP = %f ",LogP[p*MaxPossibleClusters + c]);
 
         } // for(p=0; p<nPoints; p++)
     } // for(cc=1; cc<nClustersAlive; cc++)
@@ -597,14 +640,14 @@ void KK::ConsiderDeletion()
     else
         DeltaPen = Penalty(nClustersAlive) - Penalty(nClustersAlive-1);
 
-    //Output("cand Class %d would lose " SCALARFMT " gain is " SCALARFMT "\n", CandidateClass, Loss, DeltaPen);
+    //Output("cand Class %d would lose " SCALARFMT " gain is " SCALARFMT "\n", (int)CandidateClass, Loss, DeltaPen);
     // is it worth it?
     //06/12/12 fixing bug introduced which considered DeltaPen twice!
     if (UseDistributional) //For the distributional algorithm we need to use the ClusterPenalty
     {
         if (Loss<0)
         {
-            Output("Deleting Class %d (%d points): Lose " SCALARFMT " but Gain " SCALARFMT "\n", CandidateClass, NumberInClass[CandidateClass], DeletionLoss[CandidateClass], DeltaPen);
+			Output("Deleting Class %d (%d points): Lose " SCALARFMT " but Gain " SCALARFMT "\n", (int)CandidateClass, (int)NumberInClass[CandidateClass], DeletionLoss[CandidateClass], DeltaPen);
             // set it to dead
             ClassAlive[CandidateClass] = 0;
             
@@ -618,7 +661,7 @@ void KK::ConsiderDeletion()
     {
         if (Loss<DeltaPen)
         {
-            Output("Deleting Class %d (%d points): Lose " SCALARFMT " but Gain " SCALARFMT "\n", CandidateClass, NumberInClass[CandidateClass], DeletionLoss[CandidateClass], DeltaPen);
+			Output("Deleting Class %d (%d points): Lose " SCALARFMT " but Gain " SCALARFMT "\n", (int)CandidateClass, (int)NumberInClass[CandidateClass], DeletionLoss[CandidateClass], DeltaPen);
             // set it to dead
             ClassAlive[CandidateClass] = 0;
 
@@ -637,7 +680,8 @@ void KK::ConsiderDeletion()
 void KK::LoadClu(char *CluFile)
 {
     FILE *fp;
-    integer p, c, val;
+    integer p, c;
+	int val; // read in from %d
     integer status;
 
 
@@ -707,7 +751,7 @@ integer KK::TrySplits()
         }
 
         // do it
-        if (Verbose>=1) Output("\n Trying to split cluster %d (%d points) \n", c, K2.nPoints);
+		if (Verbose >= 1) Output("\n Trying to split cluster %d (%d points) \n", (int)c, (int)K2.nPoints);
         K2.nStartingClusters=2; // (2 = 1 clusters + 1 unused noise cluster)
         UnsplitScore = K2.CEM(NULL, 0, 1, false);
         K2.nStartingClusters=3; // (3 = 2 clusters + 1 unused noise cluster)
@@ -721,7 +765,7 @@ integer KK::TrySplits()
 
             // assign clusters to K3
             for(c2=0; c2<MaxPossibleClusters; c2++) K3.ClassAlive[c2]=0;
-         //   Output("%d Points in class %d in KKobject K3 ", c2, K3.nClassMembers[c2]);
+         //   Output("%d Points in class %d in KKobject K3 ", (int)c2, (int)K3.nClassMembers[c2]);
             p2 = 0;
             for(p=0; p<nPoints; p++)
             {
@@ -744,12 +788,12 @@ integer KK::TrySplits()
             //Output("About to compute K3 class penalties");
             if (UseDistributional) K3.ComputeClassPenalties(); //SNK Fixed bug: Need to compute the cluster penalty properly, cluster penalty is only used in UseDistributional mode
             NewScore = K3.ComputeScore();
-            Output("\nSplitting cluster %d changes total score from " SCALARFMT " to " SCALARFMT "\n", c, Score, NewScore);
+			Output("\nSplitting cluster %d changes total score from " SCALARFMT " to " SCALARFMT "\n", (int)c, Score, NewScore);
 
             if (NewScore<Score)
             {
                 DidSplit = 1;
-                Output("\n So it's getting split into cluster %d.\n", UnusedCluster);
+				Output("\n So it's getting split into cluster %d.\n", (int)UnusedCluster);
                 // so put clusters from K3 back into main KK struct (K1)
                 for(c2=0; c2<MaxPossibleClusters; c2++) ClassAlive[c2] = K3.ClassAlive[c2];
                 for(p=0; p<nPoints; p++) Class[p] = K3.Class[p];
@@ -778,7 +822,7 @@ scalar KK::ComputeScore()
     for(p=0; p<nPoints; p++)
     {    //debugadd = LogP[p*MaxPossibleClusters + Class[p]];
         Score += LogP[p*MaxPossibleClusters + Class[p]];
-        // Output("point %d: cumulative score " SCALARFMT " adding" SCALARFMT "\n", p, Score, debugadd);
+        // Output("point %d: cumulative score " SCALARFMT " adding" SCALARFMT "\n", (int)p, Score, debugadd);
     }
     //Error("Score: " SCALARFMT " Penalty: " SCALARFMT "\n", Score, penalty);
     Output("Score: Raw " SCALARFMT " + Penalty " SCALARFMT " = " SCALARFMT, Score-penalty, penalty, Score);
@@ -811,7 +855,7 @@ void KK::StartingConditionsRandom()
     for(integer c=0; c<MaxPossibleClusters; c++)
         ClassAlive[c] = (c<nStartingClusters);
 
-    if(SplitInfo == 1) Output("\tSP: Assigned %d initial classes randomly.\n", nStartingClusters);
+	if (SplitInfo == 1) Output("\tSP: Assigned %d initial classes randomly.\n", (int)nStartingClusters);
 }
 
 // Initialise starting conditions by selecting unique masks at random
@@ -837,8 +881,8 @@ void KK::StartingConditionsFromMasks()
         if((nStartingClusters-1)>num_masks)
         {
             Error("Not enough masks (%d) to generate starting clusters (%d), "
-                    "so starting with (%d) clusters instead.\n", num_masks,
-                    nStartingClusters, num_masks+1);
+				"so starting with (%d) clusters instead.\n", (int)num_masks,
+				(int)nStartingClusters, (int)(num_masks + 1));
             nClusters2start = num_masks+1;
             //return;
         }
@@ -914,16 +958,16 @@ void KK::StartingConditionsFromMasks()
         }
         // print some info
         Output("Assigned %d initial classes from %d unique masks.\n",
-                nClusters2start, num_masks);
+			   (int)nClusters2start, (int)num_masks);
         // Dump initial random classes to a file - knowledge of maskstart configuration may be useful
         // TODO: remove this for final version - SNK: actually it is a nice idea to keep this
         char fname[STRLEN];
         FILE *fp;
-        sprintf(fname, "%s.initialclusters.%d.clu.%d", FileBase, nClusters2start, ElecNo);
+		sprintf(fname, "%s.initialclusters.%d.clu.%d", FileBase, (int)nClusters2start, (int)ElecNo);
         fp = fopen_safe(fname, "w");
-        fprintf(fp, "%d\n", nClusters2start);
+		fprintf(fp, "%d\n", (int)nClusters2start);
         for(integer p=0; p<nPoints; p++)
-            fprintf(fp, "%d\n", Class[p]);
+			fprintf(fp, "%d\n", (int)Class[p]);
         fclose(fp);
     }
     for(integer c=0; c<MaxPossibleClusters; c++)
@@ -1006,7 +1050,7 @@ scalar KK::CEM(char *CluFile, integer Recurse, integer InitRand,
             if(Recurse==0) Output("\t\tSP:");
             if ((Recurse!=0)||(SplitInfo==1&&Recurse==0))
                 Output("Iteration %d%c (" SCALARFMT " sec): %d clusters ",
-                        Iter, FullStep ? 'F' : 'Q',timesofar, nClustersAlive);
+				       (int)Iter, FullStep ? 'F' : 'Q', timesofar, (int)nClustersAlive);
         }
         
         // Calculate score
@@ -1016,14 +1060,14 @@ scalar KK::CEM(char *CluFile, integer Recurse, integer InitRand,
         //Finish output to klg file with Score already returned via the ComputeScore() function
         if(Verbose>=1)
         {
-            Output(" nChanged %d\n", nChanged);
+			Output(" nChanged %d\n", (int)nChanged);
         }
 
         //if(Verbose>=1)
         //{
         //    if(Recurse==0) Output("\t");
         //    Output(" Iteration %d%c: %d clusters Score %.7g nChanged %d\n",
-        //        Iter, FullStep ? 'F' : 'Q', nClustersAlive, Score, nChanged);
+        //        (int)Iter, FullStep ? 'F' : 'Q', (int)nClustersAlive, Score, (int)nChanged);
         //}
 
         Iter++;
@@ -1058,8 +1102,8 @@ scalar KK::CEM(char *CluFile, integer Recurse, integer InitRand,
 
         // try splitting
         //integer mod = (abs(Iter-SplitFirst))%SplitEvery;
-        //Output("\n Iter mod SplitEvery = %d\n",mod);
-        //Output("Iter-SplitFirst %d \n",Iter-SplitFirst);
+        //Output("\n Iter mod SplitEvery = %d\n",(int)mod);
+        //Output("Iter-SplitFirst %d \n",(int)(Iter-SplitFirst));
         if ((Recurse && SplitEvery>0) && ( Iter==SplitFirst  ||( Iter>=SplitFirst+1 && (Iter-SplitFirst)%SplitEvery==SplitEvery-1 )  || (nChanged==0 && LastStepFull) ) )
         {
             SaveTempOutput(); //SNK Saves a temporary output clu file before each split
@@ -1090,7 +1134,7 @@ scalar KK::Cluster(char *StartCluFile=NULL)
     
     if (Subset<=1)
     { // don't subset
-        Output("------ Clustering full data set of %d points ------\n", nPoints);
+		Output("------ Clustering full data set of %d points ------\n", (int)nPoints);
         return CEM(NULL, 1, 1);
     }
 
@@ -1104,7 +1148,7 @@ scalar KK::Cluster(char *StartCluFile=NULL)
     KK KKSub = KK(*this, SubsetIndices);
 
     // run CEM algorithm on KKSub
-    Output("------ Running on subset of %d points ------\n", sPoints);
+	Output("------ Running on subset of %d points ------\n", (int)sPoints);
     KKSub.CEM(NULL, 1, 1);
 
     // now copy cluster shapes from KKSub to main KK
@@ -1116,7 +1160,7 @@ scalar KK::Cluster(char *StartCluFile=NULL)
     AliveIndex = KKSub.AliveIndex;
 
     // Run E and C steps on full data set
-    Output("------ Evaluating fit on full set of %d points ------\n", nPoints);
+	Output("------ Evaluating fit on full set of %d points ------\n", (int)nPoints);
     EStep();
     CStep();
 
@@ -1251,24 +1295,24 @@ int main(int argc, char **argv)
         iterationtime = (clock()-iterationtime)/(scalar) CLOCKS_PER_SEC;
         Output("Time taken for this iteration:" SCALARFMT " seconds.\n", iterationtime);
         
-        Output(" %d->%d Clusters: Score " SCALARFMT "\n\n", K1.nStartingClusters, K1.nClustersAlive, BestScore);
+		Output(" %d->%d Clusters: Score " SCALARFMT "\n\n", (int)K1.nStartingClusters, (int)K1.nClustersAlive, BestScore);
         for(p=0; p<K1.nPoints; p++)
             K1.BestClass[p] = K1.Class[p];
         K1.SaveOutput();
     }
 
     // loop through numbers of clusters ...
-    for(K1.nStartingClusters=MinClusters; K1.nStartingClusters<=MaxClusters; K1.nStartingClusters++)
+    for(K1.nStartingClusters=(int)MinClusters; K1.nStartingClusters<=(int)MaxClusters; K1.nStartingClusters++)
         for(i=0; i<nStarts; i++)
         {
             // do CEM iteration
-            Output("\nStarting from %d clusters...\n", K1.nStartingClusters);
+			Output("\nStarting from %d clusters...\n", (int)K1.nStartingClusters);
             scalar iterationtime =clock();
             Score = K1.Cluster(); //Main computation
             iterationtime = (clock()-iterationtime)/(scalar) CLOCKS_PER_SEC;
             Output("Time taken for this iteration:" SCALARFMT " seconds.\n", iterationtime);
 
-            Output(" %d->%d Clusters: Score " SCALARFMT ", best is " SCALARFMT "\n", K1.nStartingClusters, K1.nClustersAlive, Score, BestScore);
+			Output(" %d->%d Clusters: Score " SCALARFMT ", best is " SCALARFMT "\n", (int)K1.nStartingClusters, (int)K1.nClustersAlive, Score, BestScore);
             if (Score < BestScore)
             {
                 Output("THE BEST YET!\n"); // New best classification found
@@ -1285,10 +1329,10 @@ int main(int argc, char **argv)
     scalar tottime = (clock()-Clock0)/(scalar) CLOCKS_PER_SEC;
 
     Output("Main iterations: %d (time per iteration =" SCALARFMT " ms)\n",
-            K1.numiterations,
+		    (int)K1.numiterations,
             1e3*tottime/K1.numiterations);
     Output("Total iterations: %d (time per iteration =" SCALARFMT " ms)\n",
-            global_numiterations,
+		    (int)global_numiterations,
             1e3*tottime/global_numiterations);
     Output("\nDef. Iteration metric 2:\nIteration_metric2 += (scalar)(nDims*nDims)*(scalar)(nPoints)\n");
     Output("Iterations metric 2: " SCALARFMT " (time per metric unit =" SCALARFMT "ns)\n",

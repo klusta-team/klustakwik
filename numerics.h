@@ -93,7 +93,7 @@ SafeArray<T>::SafeArray(vector<T> &vec, size_t offset, const char *vecname)
     if(offset<0 || offset>vec.size())
     {
         Error("Cannot create SafeArray with offset %d from vector of "
-              "size %d (%s)\n", (integer)offset, (integer)vec.size(), name);
+              "size %d (%s)\n", (int)offset, (int)vec.size(), name);
         abort();
     }
     base = &vec[offset];

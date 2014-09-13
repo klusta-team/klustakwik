@@ -60,7 +60,7 @@ void SetupParams(integer argc, char **argv) {
 
     if(2*num_used_arguments!=argc-3)
     {
-        fprintf(stderr, "%d %d\n", num_used_arguments, argc);
+		fprintf(stderr, "%d %d\n", (int)num_used_arguments, (int)argc);
         fprintf(stderr, "Unrecognised command line arguments.\n\n");
         params_error();
     }
@@ -75,7 +75,7 @@ void SetupParams(integer argc, char **argv) {
 
     // open log file, if required
     if (Log) {
-        sprintf(fname, "%s.klg.%d", FileBase, ElecNo);
+		sprintf(fname, "%s.klg.%d", FileBase, (int)ElecNo);
         logfp = fopen_safe(fname, "w");
         print_params(logfp);
     }
@@ -178,9 +178,9 @@ void print_params(FILE *fp)
             case FLOAT:
                 fprintf(fp, SCALARFMT "\n", *(scalar *)(e->addr)); break;
             case INT:
-                fprintf(fp, "%d\n", *(integer *)(e->addr)); break;
+                fprintf(fp, "%d\n", (int)(*(integer *)(e->addr))); break;
             case BOOLEAN:
-                fprintf(fp, "%d\n", *(char *)(e->addr)); break;
+                fprintf(fp, "%d\n", (int)(*(char *)(e->addr))); break;
             case STRING:
                 fprintf(fp, "%s\n", (char *)(e->addr)); break;
             }

@@ -33,6 +33,8 @@ public:
     KK(const KK &Source, const vector<integer> &Indices);
     // Make an entire copy of existing KK object
     KK(const KK &Source);
+	// Destructor
+	~KK();
     /////////////// FUNCTIONS //////////////////////////////////////////////////
     void AllocateArrays();
     void Reindex();
@@ -73,7 +75,7 @@ public:
 public:
     /////////////// VARIABLES //////////////////////////////////////////////////
     integer nDims, nDims2; // nDims2 is nDims squared and the mean of the unmasked dimensions.
-    integer nStartingClusters; // total # starting clusters, including clu 0, the noise cluster.
+    int nStartingClusters; // total # starting clusters, including clu 0, the noise cluster (int because read in from file)
     integer nClustersAlive; // nClustersAlive is total number with points in, excluding noise cluster
     integer nPoints;
     integer priorPoint; // Prior for regularization NOTE: separate from global variabl PriorPoint (capitalization)
@@ -134,6 +136,9 @@ public:
     vector<scalar> ClassPenalty;
     // debugging info
     integer numiterations;
+	// memory tracking
+	static integer total_num_bytes_allocated;
+	integer num_bytes_allocated;
 };
 
 #endif /* MASKED_KLUSTA_KWIK_2_H_ */
