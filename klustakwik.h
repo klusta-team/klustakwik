@@ -35,6 +35,8 @@ public:
     // Make an entire copy of existing KK object
     KK(const KK &Source);
     /////////////// FUNCTIONS //////////////////////////////////////////////////
+	void MemoryCheck();
+	integer NumBytesRequired();
     void AllocateArrays();
     void Reindex();
     // Random initial starting conditions functions

@@ -99,8 +99,8 @@ enum type_t {FLOAT = 'f', INT = 'd',  BOOLEAN = 'b', STRING = 's'};
       BOOLEAN_PARAM, UseMaskedInitialConditions, char UseMaskedInitialConditions, false)\
     F("Assign to first closest mask in mask based initial conditions",         \
       BOOLEAN_PARAM, AssignToFirstClosestMask, char AssignToFirstClosestMask, false)\
-	F("Set RAM usage limit (0 for no limit)",                                  \
-      INT_PARAM,     RamLimitGB,          int RamLimitGB,            0        )\
+	F("Set RAM usage limit (0 for available memory, -1 for no limit)",         \
+      FLOAT_PARAM,     RamLimitGB,        scalar RamLimitGB,          0.0     )\
      
 
 //TODO: Implement the two Debug modes, one less verbose than the other

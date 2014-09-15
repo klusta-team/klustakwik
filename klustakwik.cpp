@@ -17,12 +17,21 @@ scalar iteration_metric3 = (scalar)0;
 clock_t Clock0;
 scalar timesofar;
 
-// Sets storage for KK class.  Needs to have nDims and nPoints defined
-void KK::AllocateArrays() {
+// Does a memory check (should only be called for first instance of KK)
+void KK::MemoryCheck()
+{
+	integer num_bytes_required = 3 * NumBytesRequired();
+	scalar memory_required = (num_bytes_required*1.0) / (1024.0*1024.0*1024.0);
+	if (memory_required > memory_tracker.limit_gb)
+	{
+		Error("Running KlustaKwik on this data will use between %.2f and %.2f GB of RAM, and the limit is set at %.2f.\n", (double)(memory_required*2.0 / 3.0), (double)memory_required, (double)memory_tracker.limit_gb);
+		exit(EXIT_FAILURE);
+	}
+	Output("This run is expected to use between %.2f and %.2f GB of RAM.\n", (double)(memory_required*2.0 / 3.0), (double)memory_required);
+}
 
-    nDims2 = nDims*nDims;
-    NoisePoint = 1; // Ensures that the mixture weight for the noise cluster never gets to zero
-
+integer KK::NumBytesRequired()
+{
 	// Compute required memory and check if it exceeds the limit set
 	integer num_bytes_allocated =
 		sizeof(scalar)*nPoints*nDims +               // Data
@@ -41,10 +50,20 @@ void KK::AllocateArrays() {
 		sizeof(integer)*MaxPossibleClusters +        // AliveIndex
 		sizeof(scalar)*MaxPossibleClusters +         // ClassPenalty
 		sizeof(integer)*MaxPossibleClusters +        // nClassMembers
+		sizeof(scalar)*nPoints*nDims +               // AllVector2Mean
 		// UseDistributional only
 		UseDistributional*sizeof(scalar)*MaxPossibleClusters + // CorrectionTerm
 		UseDistributional*sizeof(scalar)*MaxPossibleClusters;  // ClassCorrectionFactor
+	return num_bytes_allocated;
+}
 
+// Sets storage for KK class.  Needs to have nDims and nPoints defined
+void KK::AllocateArrays() {
+
+    nDims2 = nDims*nDims;
+    NoisePoint = 1; // Ensures that the mixture weight for the noise cluster never gets to zero
+
+	integer num_bytes_allocated = NumBytesRequired();
 	mem.add(num_bytes_allocated);
 
     // Set sizes for arrays
@@ -277,7 +296,7 @@ void KK::MStep()
 //    }
 	if ((integer)AllVector2Mean.size() < nPoints*nDims)
 	{
-		mem.add((nPoints*nDims-AllVector2Mean.size())*sizeof(scalar));
+		//mem.add((nPoints*nDims-AllVector2Mean.size())*sizeof(scalar));
 		AllVector2Mean.resize(nPoints*nDims);
 	}
     vector< vector<integer> > PointsInClass(MaxPossibleClusters);
@@ -1253,6 +1272,16 @@ int main(int argc, char **argv)
     scalar BestScore = HugeScore;
     integer p, i;
     SetupParams((integer)argc, argv); // This function is defined in parameters.cpp
+	if (RamLimitGB == 0.0)
+	{
+		RamLimitGB = (1.0*available_physical_memory()) / (1024.0*1024.0*1024.0);
+		Output("Setting RAM limit to available physical memory, %.2f GB.\n", (double)RamLimitGB);
+	}
+	else if (RamLimitGB < 0.0)
+	{
+		RamLimitGB = 1e20;
+		Output("WARNING: You have chosen not to set a RAM limit, this may cause problems.\n");
+	}
 	memory_tracker.limit_gb = RamLimitGB;
     
     //clock_t Clock0 = clock();

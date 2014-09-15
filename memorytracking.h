@@ -6,14 +6,16 @@ Memory tracking utilities: used to warn the user that the memory they are reques
 
 #include "numerics.h"
 
+size_t available_physical_memory();
+
 class KKMemoryRequest;
 
 class KKMemoryTracker
 {
 public:
 	integer num_bytes_allocated;
-	integer limit_gb;
-	KKMemoryTracker() { num_bytes_allocated = 0; limit_gb = 0; };
+	scalar limit_gb;
+	KKMemoryTracker() { num_bytes_allocated = 0; limit_gb = 0.0; };
 	void request(integer num_bytes);
 	void free(integer num_bytes);
 };

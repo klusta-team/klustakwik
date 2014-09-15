@@ -97,6 +97,7 @@ void KK::LoadData(char *FileBase, integer ElecNo, char *UseFeatures)
         }
       //  Output("nDims = %d ,UseLen = %d ", (int)nDims, (int)UseLen);
     }
+	MemoryCheck();
     AllocateArrays();
 
     // load data
