@@ -16,5 +16,6 @@ extern FILE *logfp;
 
 void Output(char *fmt, ...);
 void Error(char *fmt, ...);
+void FlushLog();
 
 #endif /* LOG_H_ */

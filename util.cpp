@@ -7,14 +7,18 @@
  *      Author: dan
  */
 
+// Disable some Visual Studio warnings
+#define _CRT_SECURE_NO_WARNINGS
+
 #include "util.h"
 #include<stdlib.h>
 #include<stdarg.h>
+#include "numerics.h"
 
 const scalar HugeScore = (scalar)1e32;
 
 /* integer random number between min and max*/
-int irand(int min, int max)
+integer irand(integer min, integer max)
 {
     return (rand() % (max - min + 1) + min);
 }
@@ -32,8 +36,8 @@ FILE *fopen_safe(char *fname, char *mode) {
 }
 
 // Print a matrix
-void MatPrint(FILE *fp, scalar *Mat, int nRows, int nCols) {
-    int i, j;
+void MatPrint(FILE *fp, scalar *Mat, integer nRows, integer nCols) {
+    integer i, j;
 
     for (i=0; i<nRows; i++) {
         for (j=0; j<nCols; j++) {

@@ -8,12 +8,16 @@
  *      Author: dan
  */
 
+// Disable some Visual Studio warnings
+#define _CRT_SECURE_NO_WARNINGS
+
 #include "parameters.h"
 #include "math.h"
 #include "log.h"
 #include "util.h"
 #include <stdlib.h>
 #include <string.h>
+#include "numerics.h"
 
 // See parameters.h for an explanation
 PARAMETERS_TABLE(DEFINE_PARAMETERS)
@@ -25,7 +29,7 @@ Masked KlustaKwik\n\
 Uses the CEM algorithm with masks to do automatic clustering.\n\n\
 ";
 
-int num_used_arguments = 0;
+integer num_used_arguments = 0;
 
 void params_error()
 {
@@ -35,7 +39,7 @@ void params_error()
     exit(1);
 }
 
-void SetupParams(int argc, char **argv) {
+void SetupParams(integer argc, char **argv) {
     char fname[STRLEN];
 
     init_params(argc, argv);
@@ -56,7 +60,7 @@ void SetupParams(int argc, char **argv) {
 
     if(2*num_used_arguments!=argc-3)
     {
-        fprintf(stderr, "%d %d\n", num_used_arguments, argc);
+		fprintf(stderr, "%d %d\n", (int)num_used_arguments, (int)argc);
         fprintf(stderr, "Unrecognised command line arguments.\n\n");
         params_error();
     }
@@ -71,14 +75,14 @@ void SetupParams(int argc, char **argv) {
 
     // open log file, if required
     if (Log) {
-        sprintf(fname, "%s.klg.%d", FileBase, ElecNo);
+		sprintf(fname, "%s.klg.%d", FileBase, (int)ElecNo);
         logfp = fopen_safe(fname, "w");
         print_params(logfp);
     }
 }
 
 typedef struct entry_t {
-    int t;
+    integer t;
     char *name;
     void *addr;
     struct entry_t *next;
@@ -86,24 +90,24 @@ typedef struct entry_t {
 
 
 entry *top, *bottom;
-int argc;
+integer argc;
 char **argv;
 extern char HelpString[];
 
 char help = 0;
 
 /* returns 1 if the parameter was found and changed, else zero. */
-int change_param(char *name, char *value)
+integer change_param(char *name, char *value)
 {
     entry *e;
-    int changed = 0;
+    integer changed = 0;
 
     for(e=bottom; e; e = e->next) if (!strcmp(name, e->name)) {
         switch (e->t) {
         case FLOAT:
             *((scalar *) e->addr) = atof(value); break;
         case INT:
-            *((int *) e->addr) = atoi(value); break;
+            *((integer *) e->addr) = atoi(value); break;
         case BOOLEAN:
             if (*value == '0')
                 *((char *) e->addr) = 0;
@@ -120,7 +124,7 @@ int change_param(char *name, char *value)
     return changed;
 }
 
-void init_params(int ac, char **av)
+void init_params(integer ac, char **av)
 {
     argc = ac;
     argv = av;
@@ -128,7 +132,7 @@ void init_params(int ac, char **av)
 
 void search_command_line(char *name)
 {
-    int i;
+    integer i;
 
     for(i=0; i<argc-1; i++)
         if (argv[i][0] == '-' && !strcmp(argv[i]+1, name))
@@ -137,7 +141,7 @@ void search_command_line(char *name)
         change_param(argv[argc-1] + 1, "");
 }
 
-void add_param(int t, char *name, void *addr)
+void add_param(integer t, char *name, void *addr)
 {
     entry *e;
     if (top == NULL) {
@@ -174,9 +178,9 @@ void print_params(FILE *fp)
             case FLOAT:
                 fprintf(fp, SCALARFMT "\n", *(scalar *)(e->addr)); break;
             case INT:
-                fprintf(fp, "%d\n", *(int *)(e->addr)); break;
+                fprintf(fp, "%d\n", (int)(*(integer *)(e->addr))); break;
             case BOOLEAN:
-                fprintf(fp, "%d\n", *(char *)(e->addr)); break;
+                fprintf(fp, "%d\n", (int)(*(char *)(e->addr))); break;
             case STRING:
                 fprintf(fp, "%s\n", (char *)(e->addr)); break;
             }

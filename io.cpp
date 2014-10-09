@@ -7,34 +7,39 @@
  *      Author: dan
  */
 
+// Disable some Visual Studio warnings
+#define _CRT_SECURE_NO_WARNINGS
+
 #include "klustakwik.h"
+#include "numerics.h"
 
 // Loads in Fet file.  Also allocates storage for other arrays
-void KK::LoadData(char *FileBase, int ElecNo, char *UseFeatures)
+void KK::LoadData(char *FileBase, integer ElecNo, char *UseFeatures)
 {
     char fname[STRLEN];
     //char fnamemask[STRLEN];
     char fnamefmask[STRLEN];
     char line[STRLEN];
-    int p, i, j;
+    integer p, i, j;
+	// nFeatures is read as a %d so it has to be int type, not integer type
     int nFeatures, nmaskFeatures; // not the same as nDims! we don't use all features.
     FILE *fp;
     //FILE *fpmask;
     FILE *fpfmask;
-    int status;
-    //int maskstatus;
+    integer status;
+    //integer maskstatus;
     scalar val;
-    //int maskval;
-    int UseLen;
+    //int maskval; // use int rather than integer because it is read as %d
+    integer UseLen;
     scalar max, min;
     //bool usemasks = (UseDistributional && !UseFloatMasks);
 
     // open file
-    sprintf(fname, "%s.fet.%d", FileBase, ElecNo);
+    sprintf(fname, "%s.fet.%d", FileBase, (int)ElecNo);
     fp = fopen_safe(fname, "r");
     //if(usemasks)
     //{
-    //    sprintf(fnamemask,"%s.mask.%d", FileBase, ElecNo);
+    //    sprintf(fnamemask,"%s.mask.%d", FileBase, (int)ElecNo);
     //    fpmask = fopen_safe(fnamemask, "r");
     //} else
     //{
@@ -48,12 +53,12 @@ void KK::LoadData(char *FileBase, int ElecNo, char *UseFeatures)
         MinClusters = MaskStarts;
         MaxClusters = MaskStarts;
         Output("NOTE: Maskstarts overides above values of MinClusters and MaxClusters \
-                \nMinClusters = %d \nMaxClusters = %d \n ", MinClusters,MaxClusters);
+                \nMinClusters = %d \nMaxClusters = %d \n ", (int)MinClusters, (int)MaxClusters);
     }
     
     if(UseDistributional)// replaces if(UseFloatMasks)
     {
-        sprintf(fnamefmask,"%s.fmask.%d", FileBase, ElecNo);
+        sprintf(fnamefmask,"%s.fmask.%d", FileBase, (int)ElecNo);
         fpfmask = fopen_safe(fnamefmask, "r");
     }
     else
@@ -72,14 +77,14 @@ void KK::LoadData(char *FileBase, int ElecNo, char *UseFeatures)
 
     // read in number of features
     fscanf(fp, "%d", &nFeatures);
-    if(Debug) Output("Number of features read in: %d \n ",nFeatures);
+    if(Debug) Output("Number of features read in: %d \n ", nFeatures);
 
     // calculate number of dimensions
     if (UseFeatures[0] == 0)
     {
         nDims = nFeatures-DropLastNFeatures; // Use all but the last N Features.
         UseLen = nFeatures-DropLastNFeatures;
-       // Output("nDims = %d ,UseLen = %d ",nDims,UseLen);
+       // Output("nDims = %d ,UseLen = %d ", (int)nDims, (int)UseLen);
       //  UseFeatures =
     }
     else
@@ -90,8 +95,10 @@ void KK::LoadData(char *FileBase, int ElecNo, char *UseFeatures)
         {
             nDims += (i<UseLen && UseFeatures[i]=='1');
         }
-      //  Output("nDims = %d ,UseLen = %d ",nDims,UseLen);
+      //  Output("nDims = %d ,UseLen = %d ", (int)nDims, (int)UseLen);
     }
+    nDims2 = nDims*nDims;
+	MemoryCheck();
     AllocateArrays();
 
     // load data
@@ -108,7 +115,7 @@ void KK::LoadData(char *FileBase, int ElecNo, char *UseFeatures)
             {
                 if(i<UseLen  ) //
                 {
-                    //        Output("j = %d, i = %d \n",i,j);
+                    //        Output("j = %d, i = %d \n", (int)i, (int)j);
                     Data[p*nDims + j] = val;
                //             printf("Data = " SCALARFMT "",Data[p*nDims+j]);
                 j++;
@@ -118,7 +125,7 @@ void KK::LoadData(char *FileBase, int ElecNo, char *UseFeatures)
             {
                 if(i<UseLen && UseFeatures[i]=='1' ) 
                 {
-                    //     Output("j = %d, i = %d \n",i,j);
+                    //     Output("j = %d, i = %d \n", (int)i, (int)j);
                     Data[p*nDims + j] = val;
                 //               printf("Data = " SCALARFMT "",Data[p*nDims+j]);
                     j++;
@@ -184,7 +191,7 @@ void KK::LoadData(char *FileBase, int ElecNo, char *UseFeatures)
                 {
                     if(i<UseLen )
                     {
-                      //                                  Output("j = %d, i = %d \n",i,j);
+                      //                                  Output("j = %d, i = %d \n", (int)i, (int)j);
                         FloatMasks[p*nDims + j] = val;
                      //                                   printf("Data = " SCALARFMT "",Data[p*nDims+j]);
                         j++;
@@ -255,20 +262,20 @@ void KK::LoadData(char *FileBase, int ElecNo, char *UseFeatures)
         for(p=0; p<nPoints; p++) Data[p*nDims+i] = (Data[p*nDims+i] - min) / (max-min);
     }
 
-    Output("----------------------------------------------------------\nLoaded %d data points of dimension %d.\n", nPoints, nDims);
+    Output("----------------------------------------------------------\nLoaded %d data points of dimension %d.\n", (int)nPoints, (int)nDims);
     Output("MEMO: A lower score indicates a better clustering \n ");
 }
 
 // write output to .clu file - with 1 added to cluster numbers, and empties removed.
 void KK::SaveOutput()
 {
-    int c;
-    unsigned int p;
+    integer c;
+    uinteger p;
     char fname[STRLEN];
     FILE *fp;
-    int MaxClass = 0;
-    vector<int> NotEmpty(MaxPossibleClusters);
-    vector<int> NewLabel(MaxPossibleClusters);
+    integer MaxClass = 0;
+    vector<integer> NotEmpty(MaxPossibleClusters);
+    vector<integer> NewLabel(MaxPossibleClusters);
 
     // find non-empty clusters
     for(c=0;c<MaxPossibleClusters;c++) NewLabel[c] = NotEmpty[c] = 0;
@@ -285,11 +292,11 @@ void KK::SaveOutput()
     }
 
     // print file
-    sprintf(fname, "%s.clu.%d", FileBase, ElecNo);
+    sprintf(fname, "%s.clu.%d", FileBase, (int)ElecNo);
     fp = fopen_safe(fname, "w");
 
-    fprintf(fp, "%d\n", MaxClass);
-    for (p=0; p<BestClass.size(); p++) fprintf(fp, "%d\n", NewLabel[BestClass[p]]);
+    fprintf(fp, "%d\n", (int)MaxClass);
+    for (p=0; p<BestClass.size(); p++) fprintf(fp, "%d\n", (int)NewLabel[BestClass[p]]);
 
     fclose(fp);
 
@@ -302,13 +309,13 @@ void KK::SaveOutput()
 // write output to .clu file - with 1 added to cluster numbers, and empties removed.
 void KK::SaveTempOutput()
 {
-    int c;
-    unsigned int p;
+    integer c;
+    uinteger p;
     char fname[STRLEN];
     FILE *fp;
-    int MaxClass = 0;
-    vector<int> NotEmpty(MaxPossibleClusters);
-    vector<int> NewLabel(MaxPossibleClusters);
+    integer MaxClass = 0;
+    vector<integer> NotEmpty(MaxPossibleClusters);
+    vector<integer> NewLabel(MaxPossibleClusters);
     
     // find non-empty clusters
     for(c=0;c<MaxPossibleClusters;c++) NewLabel[c] = NotEmpty[c] = 0;
@@ -325,11 +332,11 @@ void KK::SaveTempOutput()
     }
     
     // print file
-    sprintf(fname, "%s.temp.clu.%d", FileBase, ElecNo);
+    sprintf(fname, "%s.temp.clu.%d", FileBase, (int)ElecNo);
     fp = fopen_safe(fname, "w");
     
-    fprintf(fp, "%d\n", MaxClass);
-    for (p=0; p<BestClass.size(); p++) fprintf(fp, "%d\n", NewLabel[BestClass[p]]);
+    fprintf(fp, "%d\n", (int)MaxClass);
+    for (p=0; p<BestClass.size(); p++) fprintf(fp, "%d\n", (int)NewLabel[BestClass[p]]);
     
     fclose(fp);
     
@@ -344,14 +351,14 @@ void KK::SaveCovMeans()
     char fname[STRLEN];
     FILE *fp;
     // print covariance to file
-    sprintf(fname, "%s.cov.%d", FileBase, ElecNo);
+    sprintf(fname, "%s.cov.%d", FileBase, (int)ElecNo);
     fp = fopen_safe(fname, "w");
-    for (int cc=0; cc<nClustersAlive; cc++)
+    for (integer cc=0; cc<nClustersAlive; cc++)
     {
-        int c = AliveIndex[cc];
-        for(int i=0; i<nDims; i++)
+        integer c = AliveIndex[cc];
+        for(integer i=0; i<nDims; i++)
         {
-            for(int j=0; j<nDims; j++)
+            for(integer j=0; j<nDims; j++)
             {
                 fprintf(fp, SCALARFMT " ", Cov[c*nDims2+i*nDims+j]);
             }
@@ -361,12 +368,12 @@ void KK::SaveCovMeans()
     }
     fclose(fp);
     // print mean to file
-    sprintf(fname, "%s.mean.%d", FileBase, ElecNo);
+    sprintf(fname, "%s.mean.%d", FileBase, (int)ElecNo);
     fp = fopen_safe(fname, "w");
-    for (int cc=0; cc<nClustersAlive; cc++)
+    for (integer cc=0; cc<nClustersAlive; cc++)
     {
-        int c = AliveIndex[cc];
-        for(int i=0; i<nDims; i++)
+        integer c = AliveIndex[cc];
+        for(integer i=0; i<nDims; i++)
         {
             fprintf(fp, SCALARFMT " ", Mean[c*nDims+i]);
         }
@@ -381,26 +388,26 @@ void KK::SaveSortedData()
     char fname[STRLEN];
     FILE *fp;
     // sorted.fet file
-    sprintf(fname, "%s.sorted.fet.%d", FileBase, ElecNo);
+    sprintf(fname, "%s.sorted.fet.%d", FileBase, (int)ElecNo);
     fp = fopen_safe(fname, "w");
-    fprintf(fp, "%d\n", nDims);
-    for(int q=0; q<nPoints; q++)
+    fprintf(fp, "%d\n", (int)nDims);
+    for(integer q=0; q<nPoints; q++)
     {
-        int p = SortedIndices[q];
-        for(int i=0; i<nDims; i++)
+        integer p = SortedIndices[q];
+        for(integer i=0; i<nDims; i++)
             fprintf(fp, SCALARFMT " ", Data[p*nDims+i]);
         fprintf(fp, "\n");
     }
     fclose(fp);
     // sorted.mask file
-    sprintf(fname, "%s.sorted.mask.%d", FileBase, ElecNo);
+    sprintf(fname, "%s.sorted.mask.%d", FileBase, (int)ElecNo);
     fp = fopen_safe(fname, "w");
-    fprintf(fp, "%d\n", nDims);
-    for(int q=0; q<nPoints; q++)
+    fprintf(fp, "%d\n", (int)nDims);
+    for(integer q=0; q<nPoints; q++)
     {
-        int p = SortedIndices[q];
-        for(int i=0; i<nDims; i++)
-            fprintf(fp, "%d ", Masks[p*nDims+i]);
+        integer p = SortedIndices[q];
+        for(integer i=0; i<nDims; i++)
+            fprintf(fp, "%d ", (int)Masks[p*nDims+i]);
         fprintf(fp, "\n");
     }
     fclose(fp);
@@ -411,21 +418,21 @@ void KK::SaveSortedClu()
 {
     char fname[STRLEN];
     FILE *fp;
-    vector<int> NotEmpty(MaxPossibleClusters);
-    vector<int> NewLabel(MaxPossibleClusters);
-    for(int c=0; c<MaxPossibleClusters; c++)
+    vector<integer> NotEmpty(MaxPossibleClusters);
+    vector<integer> NewLabel(MaxPossibleClusters);
+    for(integer c=0; c<MaxPossibleClusters; c++)
         NewLabel[c] = NotEmpty[c] = 0;
-    for(int q=0; q<nPoints; q++)
+    for(integer q=0; q<nPoints; q++)
         NotEmpty[Class[SortedIndices[q]]] = 1;
     NewLabel[0] = 1;
-    int MaxClass = 1;
-    for(int c=1; c<MaxPossibleClusters; c++)
+    integer MaxClass = 1;
+    for(integer c=1; c<MaxPossibleClusters; c++)
         if(NotEmpty[c])
             NewLabel[c] = ++MaxClass;
-    sprintf(fname, "%s.sorted.clu.%d", FileBase, ElecNo);
+    sprintf(fname, "%s.sorted.clu.%d", FileBase, (int)ElecNo);
     fp = fopen_safe(fname, "w");
-    fprintf(fp, "%d\n", MaxClass);
-    for(int q=0; q<nPoints; q++)
-        fprintf(fp, "%d\n", NewLabel[Class[SortedIndices[q]]]);
+    fprintf(fp, "%d\n", (int)MaxClass);
+    for(integer q=0; q<nPoints; q++)
+        fprintf(fp, "%d\n", (int)NewLabel[Class[SortedIndices[q]]]);
     fclose(fp);
 }

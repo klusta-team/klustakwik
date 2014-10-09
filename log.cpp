@@ -7,6 +7,9 @@
  *      Author: dan
  */
 
+// Disable some Visual Studio warnings
+#define _CRT_SECURE_NO_WARNINGS
+
 #include "log.h"
 #include "parameters.h"
 #include<stdio.h>
@@ -40,4 +43,12 @@ void Error(char *fmt, ...) {
 
     if (Screen) fprintf(stderr, "%s", str);
     if (Log) fprintf(logfp, "%s", str);
+}
+
+void FlushLog()
+{
+	if (Log)
+	{
+		fflush(logfp);
+	}
 }

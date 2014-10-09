@@ -17,11 +17,15 @@
 #include<vector>
 #include<stdlib.h>
 #include<iostream>
+#include<stdint.h>
 
 using namespace std;
 
 //#include "array.h"
 //#include <blitz/array.h>
+
+typedef intptr_t integer;
+typedef uintptr_t uinteger;
 
 #ifdef USE_DOUBLE_PRECISION
 typedef double scalar;
@@ -70,7 +74,7 @@ public:
     // Initialise from a vector, with an optional offset
     SafeArray(vector<T> &vec, const char *vecname);
     SafeArray(vector<T> &vec, size_t offset, const char *vecname);
-    inline T& operator[](const int i) const;
+    inline T& operator[](const integer i) const;
     // TODO: add an .at() method which always does bounds checking
 };
 
@@ -97,10 +101,10 @@ SafeArray<T>::SafeArray(vector<T> &vec, size_t offset, const char *vecname)
 }
 
 template <class T>
-inline T& SafeArray<T>::operator[](const int i) const
+inline T& SafeArray<T>::operator[](const integer i) const
 {
 #ifdef SAFEARRAY_BOUNDSCHECKING
-    if(i<0 || i>=(int)length)
+    if(i<0 || i>=(integer)length)
     {
         cerr << "Array index " << i << " out of bounds (" << name << ")" << endl;
         abort();

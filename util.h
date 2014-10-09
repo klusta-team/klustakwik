@@ -16,8 +16,8 @@ extern const scalar HugeScore;
 
 #define MIN(X,Y) ((X) < (Y) ? (X) : (Y))
 
-int irand(int min, int max);
+integer irand(integer min, integer max);
 FILE *fopen_safe(char *fname, char *mode);
-void MatPrint(FILE *fp, scalar *Mat, int nRows, int nCols);
+void MatPrint(FILE *fp, scalar *Mat, integer nRows, integer nCols);
 
 #endif /* UTIL_H_ */

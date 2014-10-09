@@ -10,6 +10,7 @@
 #include "linalg.h"
 #include<math.h>
 #include<vector>
+#include "numerics.h"
 
 using namespace std;
 
@@ -21,9 +22,9 @@ using namespace std;
 // D is number of dimensions
 //
 // returns 0 if OK, returns 1 if matrix is not positive definite
-int Cholesky(SafeArray<scalar> &In, SafeArray<scalar> &Out, int D)
+integer Cholesky(SafeArray<scalar> &In, SafeArray<scalar> &Out, integer D)
 {
-    int i, j, k;
+    integer i, j, k;
     scalar sum;
 
     // empty output array
@@ -52,13 +53,13 @@ int Cholesky(SafeArray<scalar> &In, SafeArray<scalar> &Out, int D)
 // Where M is lower triangular (M[i*D + j] >0 if j>=i);
 // D is number of dimensions
 void TriSolve(SafeArray<scalar> &M, SafeArray<scalar> &x,
-                SafeArray<scalar> &Out, int D)
+                SafeArray<scalar> &Out, integer D)
 {
-    for(int i=0; i<D; i++)
+    for(integer i=0; i<D; i++)
     {
         scalar *MiD = &M[i*D];
         scalar sum = x[i];
-        for(int j=0; j<i; j++) // j<i
+        for(integer j=0; j<i; j++) // j<i
             //sum += M[i*D + j] * Out[j];
             sum += MiD[j] * Out[j];
         //Out[i] = - sum / M[i*D + i];
