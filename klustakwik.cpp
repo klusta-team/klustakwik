@@ -25,6 +25,10 @@ void KK::MemoryCheck()
 	if (memory_required > memory_tracker.limit_gb)
 	{
 		Error("Running KlustaKwik on this data will use between %.2f and %.2f GB of RAM, and the limit is set at %.2f.\n", (double)(memory_required*2.0 / 3.0), (double)memory_required, (double)memory_tracker.limit_gb);
+		Error("Possible candidates are:\n");
+		Error("- nPoints = %d\n", (int)nPoints);
+		Error("- nDims = %d\n", (int)nDims);
+		Error("- MaxPossibleClusters = %d\n", (int)MaxPossibleClusters);
 		exit(EXIT_FAILURE);
 	}
 	Output("This run is expected to use between %.2f and %.2f GB of RAM.\n", (double)(memory_required*2.0 / 3.0), (double)memory_required);
