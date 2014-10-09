@@ -32,6 +32,7 @@ void KK::MemoryCheck()
 
 integer KK::NumBytesRequired()
 {
+	nDims2 = nDims*nDims;
 	// Compute required memory and check if it exceeds the limit set
 	integer num_bytes_allocated =
 		sizeof(scalar)*nPoints*nDims +               // Data
