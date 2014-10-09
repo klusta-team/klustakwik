@@ -1193,6 +1193,7 @@ void KK::ConstructFrom(const KK &Source, const vector<integer> &Indices)
 {
     
     nDims = Source.nDims;
+    nDims2 = nDims*nDims;
     nPoints = Indices.size();
     penaltyK = Source.penaltyK;
     penaltyKLogN = Source.penaltyKLogN;
