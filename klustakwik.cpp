@@ -312,6 +312,52 @@ void KK::MStep()
         for(i=0; i<nDims; i++)
             AllVector2Mean[p*nDims+i] = Data[p*nDims + i] - Mean[c*nDims + i];
     }
+
+
+	//for (c = 0; c < MaxPossibleClusters; c++)
+	//{
+	//	// Compute covariance matrix term 1 (unmasked channel interactions: unmasekd block + horizontal and vertical bands)
+	//	vector<integer> &PointsInThisClass = PointsInClass[c];
+	//	for (integer q = 0; q < (integer)PointsInThisClass.size(); q++)
+	//	{
+	//		p = PointsInThisClass[q];
+	//		// Compute the set of pairs (i, j) that we need to iterate over, they are the
+	//		// ones that are either:
+	//		// - unmasked for i and unmasked for j
+	//		// - unmasked for i and masked for j
+	//		// - masked for i and unmasked for j
+	//		// which we do by:
+	//		// looping over all unmasked i, all j
+	//		// looping over all unmasked j, all i, skipping unmasked i
+	//		for (ii = UnmaskedInd[p]; ii < UnmaskedInd[p + 1]; ii++)
+	//		{
+	//			i = Unmasked[ii];
+	//			for (j = 0; j < nDims; j++)
+	//			{
+	//				Cov[c*nDims2 + i*nDims + j] += AllVector2Mean[p*nDims + i] * AllVector2Mean[p*nDims + i];
+	//			}
+	//		}
+	//		for (jj = UnmaskedInd[p]; jj < UnmaskedInd[p + 1]; jj++)
+	//		{
+	//			j = Unmasked[jj];
+	//			for (i = 0; i < nDims; i++)
+	//			{
+	//				if (Masks[c*nDims + i])
+	//					continue;
+	//				Cov[c*nDims2 + i*nDims + j] += AllVector2Mean[p*nDims + i] * AllVector2Mean[p*nDims + i];
+	//			}
+	//		}
+	//	}
+
+	//	// Compute covariance matrix term 2 (masked channel terms)
+
+	//	// Compute covariance matrix term 3 (masked with masked channel interactions: diagonal)
+	//	// done below
+	//}
+
+
+
+
     for(c=0; c<MaxPossibleClusters; c++)
     {
         vector<integer> &PointsInThisClass = PointsInClass[c];

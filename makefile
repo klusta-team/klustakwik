@@ -6,6 +6,7 @@ PROGRAM = KlustaKwik
 OBJS = io.o linalg.o log.o parameters.o precomputations.o util.o memorytracking.o klustakwik.o
 CC = g++
 DEBUG = -g
+PROFILE = -pg
 OPTIMISATIONS = -O3 -ffast-math
 CFLAGS = -Wall -c -Wno-write-strings $(OPTIMISATIONS)
 LFLAGS = -Wall
@@ -16,6 +17,12 @@ all: executable
 debug: CFLAGS += $(DEBUG)
 debug: LFLAGS += $(DEBUG)
 debug: executable
+
+# Adds profiling flags
+profile: OPTIMISATIONS += -march=native
+profile: CFLAGS += $(PROFILE)
+profile: LFLAGS += $(PROFILE)
+profile: executable
 
 # Adds -march=native to optimisations, which only works for recent gcc versions
 native: OPTIMISATIONS += -march=native
