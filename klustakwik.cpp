@@ -303,87 +303,125 @@ void KK::MStep()
 		AllVector2Mean.resize(nPoints*nDims);
 	}
     vector< vector<integer> > PointsInClass(MaxPossibleClusters);
+	vector<bool> ClusterMask;
+	if (UseDistributional)
+	{
+		ClusterMask.resize(MaxPossibleClusters*nDims);
+		//for (i = 0; i < ClusterMask.size(); i++)
+		//	ClusterMask[i] = false;
+	}
     for(p=0; p<nPoints; p++)
     {
         c = Class[p];
         PointsInClass[c].push_back(p);
-        for(i=0; i<nDims; i++)
-            AllVector2Mean[p*nDims+i] = Data[p*nDims + i] - Mean[c*nDims + i];
+		for (i = 0; i < nDims; i++)
+		{
+			AllVector2Mean[p*nDims + i] = Data[p*nDims + i] - Mean[c*nDims + i];
+			if (UseDistributional)
+				if (FloatMasks[p*nDims + i]>0)
+					ClusterMask[c*nDims + i] = true;
+		}
     }
 
+	if (UseDistributional)
+	{
+		vector< vector<integer> > ClusterUnmaskedFeatures;
+		ClusterUnmaskedFeatures.resize(MaxPossibleClusters);
+		for (cc = 0; cc<nClustersAlive; cc++)
+		{
+			c = AliveIndex[cc];
+			vector<integer> &CurrentUnmasked = ClusterUnmaskedFeatures[c];
+			for (i = 0; i < nDims; i++)
+			{
+				if (ClusterMask[c*nDims + i] == true)
+					CurrentUnmasked.push_back(i);
+			}
+		}
+		for (cc = 0; cc<nClustersAlive; cc++)
+		{
+			c = AliveIndex[cc];
+			vector<integer> &PointsInThisClass = PointsInClass[c];
+			vector<integer> &CurrentUnmasked = ClusterUnmaskedFeatures[c];
+			// Correct version
+			//for (integer q = 0; q < (integer)PointsInThisClass.size(); q++)
+			//{
+			//	p = PointsInThisClass[q];
+			//	for (integer ii = 0; ii < (integer)CurrentUnmasked.size(); ii++)
+			//	{
+			//		i = CurrentUnmasked[ii];
+			//		for (integer jj = 0; jj < (integer)CurrentUnmasked.size(); jj++)
+			//		{
+			//			j = CurrentUnmasked[jj];
+			//			Cov[c*nDims2 + i*nDims + j] += AllVector2Mean[p*nDims + i] * AllVector2Mean[p*nDims + j];
+			//		}
+			//	}
+			//}
+			// Faster version (equivalent)
+			// Doesn't make any use of cache structure, but no need to upgrade now because
+			// we will move to a sparse block matrix structure that will make this more
+			// natural
+			const integer * __restrict cu = &(CurrentUnmasked[0]);
+			const integer ncu = (integer)CurrentUnmasked.size();
+			scalar * __restrict cov_c = &(Cov[c*nDims2]);
+			const integer * __restrict pitc = &(PointsInThisClass[0]);
+			const integer npitc = (integer)PointsInThisClass.size();
+			const scalar * __restrict av2m = &(AllVector2Mean[0]);
+			for (integer q = 0; q < npitc; q++)
+			{
+				const integer p = pitc[q];
+				const scalar * __restrict av2m_p = av2m + p*nDims;
+				for (integer ii = 0; ii < ncu; ii++)
+				{
+					const integer i = cu[ii];
+					const scalar av2m_p_i = av2m_p[i];
+					scalar * __restrict cov_c_i = cov_c + i*nDims;
+					for (integer jj = 0; jj < ncu; jj++)
+					{
+						const integer j = cu[jj];
+						cov_c_i[j] += av2m_p_i*av2m_p[j];
+						//Cov[c*nDims2 + i*nDims + j] += AllVector2Mean[p*nDims + i] * AllVector2Mean[p*nDims + j];
+					}
+				}
+			}
 
-	//for (c = 0; c < MaxPossibleClusters; c++)
-	//{
-	//	// Compute covariance matrix term 1 (unmasked channel interactions: unmasekd block + horizontal and vertical bands)
-	//	vector<integer> &PointsInThisClass = PointsInClass[c];
-	//	for (integer q = 0; q < (integer)PointsInThisClass.size(); q++)
-	//	{
-	//		p = PointsInThisClass[q];
-	//		// Compute the set of pairs (i, j) that we need to iterate over, they are the
-	//		// ones that are either:
-	//		// - unmasked for i and unmasked for j
-	//		// - unmasked for i and masked for j
-	//		// - masked for i and unmasked for j
-	//		// which we do by:
-	//		// looping over all unmasked i, all j
-	//		// looping over all unmasked j, all i, skipping unmasked i
-	//		for (ii = UnmaskedInd[p]; ii < UnmaskedInd[p + 1]; ii++)
-	//		{
-	//			i = Unmasked[ii];
-	//			for (j = 0; j < nDims; j++)
-	//			{
-	//				Cov[c*nDims2 + i*nDims + j] += AllVector2Mean[p*nDims + i] * AllVector2Mean[p*nDims + i];
-	//			}
-	//		}
-	//		for (jj = UnmaskedInd[p]; jj < UnmaskedInd[p + 1]; jj++)
-	//		{
-	//			j = Unmasked[jj];
-	//			for (i = 0; i < nDims; i++)
-	//			{
-	//				if (Masks[c*nDims + i])
-	//					continue;
-	//				Cov[c*nDims2 + i*nDims + j] += AllVector2Mean[p*nDims + i] * AllVector2Mean[p*nDims + i];
-	//			}
-	//		}
-	//	}
-
-	//	// Compute covariance matrix term 2 (masked channel terms)
-
-	//	// Compute covariance matrix term 3 (masked with masked channel interactions: diagonal)
-	//	// done below
-	//}
-
-
-
-
-    for(c=0; c<MaxPossibleClusters; c++)
-    {
-        vector<integer> &PointsInThisClass = PointsInClass[c];
-        SafeArray<scalar> safeCov(Cov, c*nDims2, "safeCovMStep");
-        for(integer iblock=0; iblock<nDims; iblock+=COVARIANCE_BLOCKSIZE)
-            for(integer jblock=iblock; jblock<nDims; jblock+=COVARIANCE_BLOCKSIZE)
-                for(integer q=0; q<(integer)PointsInThisClass.size(); q++)
-                {
-                    p = PointsInThisClass[q];
-                    scalar *cv2m = &AllVector2Mean[p*nDims];
-                    for(i=iblock; i<MIN(nDims, iblock+COVARIANCE_BLOCKSIZE); i++)
-                    {
-                        scalar cv2mi = cv2m[i];
-                        integer jstart;
-                        if(jblock!=iblock)
-                            jstart = jblock;
-                        else
-                            jstart = i;
-                        scalar *covptr = &safeCov[i*nDims+jstart];
-                        scalar *cv2mjptr = &cv2m[jstart];
-                        //scalar *cv2mjend = cv2m+MIN(nDims, jblock+COVARIANCE_BLOCKSIZE);
-                        //for(j=jstart; j<MIN(nDims, jblock+COVARIANCE_BLOCKSIZE); j++)
-                        //for(; cv2mjptr!=cv2mjend;)
-                        for(j=MIN(nDims, jblock+COVARIANCE_BLOCKSIZE)-jstart; j; j--)
-                            *covptr++ += cv2mi*(*cv2mjptr++);
-                    }
-                }
-    }
+		}
+	}
+	else
+	{
+		// I think this code gives wrong results (but only slightly) (DFMG: 2014/10/13)
+		for (c = 0; c < MaxPossibleClusters; c++)
+		{
+			vector<integer> &PointsInThisClass = PointsInClass[c];
+			SafeArray<scalar> safeCov(Cov, c*nDims2, "safeCovMStep");
+			for (integer iblock = 0; iblock < nDims; iblock += COVARIANCE_BLOCKSIZE)
+			{
+				for (integer jblock = iblock; jblock < nDims; jblock += COVARIANCE_BLOCKSIZE)
+				{
+					for (integer q = 0; q < (integer)PointsInThisClass.size(); q++)
+					{
+						p = PointsInThisClass[q];
+						scalar *cv2m = &AllVector2Mean[p*nDims];
+						for (i = iblock; i < MIN(nDims, iblock + COVARIANCE_BLOCKSIZE); i++)
+						{
+							scalar cv2mi = cv2m[i];
+							integer jstart;
+							if (jblock != iblock)
+								jstart = jblock;
+							else
+								jstart = i;
+							scalar *covptr = &safeCov[i*nDims + jstart];
+							scalar *cv2mjptr = &cv2m[jstart];
+							//scalar *cv2mjend = cv2m+MIN(nDims, jblock+COVARIANCE_BLOCKSIZE);
+							//for(j=jstart; j<MIN(nDims, jblock+COVARIANCE_BLOCKSIZE); j++)
+							//for(; cv2mjptr!=cv2mjend;)
+							for (j = MIN(nDims, jblock + COVARIANCE_BLOCKSIZE) - jstart; j; j--)
+								*covptr++ += cv2mi*(*cv2mjptr++);
+						}
+					}
+				}
+			}
+		}
+	}
 
     if(UseDistributional)
     {
