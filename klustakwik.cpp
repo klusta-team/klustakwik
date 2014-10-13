@@ -57,8 +57,7 @@ integer KK::NumBytesRequired()
 		sizeof(integer)*MaxPossibleClusters +        // nClassMembers
 		sizeof(scalar)*nPoints*nDims +               // AllVector2Mean
 		// UseDistributional only
-		UseDistributional*sizeof(scalar)*MaxPossibleClusters + // CorrectionTerm
-		UseDistributional*sizeof(scalar)*MaxPossibleClusters;  // ClassCorrectionFactor
+		UseDistributional*sizeof(scalar)*MaxPossibleClusters;  // CorrectionTerm
 	return num_bytes_allocated;
 }
 
@@ -92,7 +91,6 @@ void KK::AllocateArrays() {
     if(UseDistributional)
     {
         CorrectionTerm.resize(nPoints * nDims);
-        ClassCorrectionFactor.resize(MaxPossibleClusters*nDims);
     }
 }
 
@@ -404,19 +402,19 @@ void KK::MStep()
                 //Output("Class %d Class correction factor[%d] = %f \n",(int)c,(int)i,ccf);
                 Cov[c*nDims2+i*nDims+i] += ccf;
             //    Output("Class %d Covariance diagonal[%d] = %f \n",(int)c,(int)i,Cov[c*nDims2+i*nDims+i] );
-                ClassCorrectionFactor[c*nDims+i] = ccf/(scalar)(nClassMembers[c]*nClassMembers[c]);
             }
         }
 
     // Add a diagonal matrix of Noise variances to the covariance matrix for renormalization
         for (cc=0; cc<nClustersAlive; cc++)
-                {c = AliveIndex[cc];
-                for (i=0; i<nDims; i++)
-                    {
-                    //Output("Class %d: PriorPoint*NoiseVariance[%d] = %f",c,i,priorPoint*NoiseVariance[i]);
-                    Cov[c*nDims2+i*nDims+i] += priorPoint*NoiseVariance[i];
-                    }
-                }
+		{
+        	c = AliveIndex[cc];
+			for (i=0; i<nDims; i++)
+			{
+				//Output("Class %d: PriorPoint*NoiseVariance[%d] = %f",c,i,priorPoint*NoiseVariance[i]);
+				Cov[c*nDims2+i*nDims+i] += priorPoint*NoiseVariance[i];
+			}
+		}
 
 
     }

@@ -132,7 +132,6 @@ public:
     vector<integer> nMasked;
     // used in distribution EM steps
     vector<scalar> CorrectionTerm;
-    vector<scalar> ClassCorrectionFactor;
     // used in ComputeScore and ConsiderDeletion
     vector<scalar> ClassPenalty;
     // debugging info
