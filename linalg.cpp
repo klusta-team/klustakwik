@@ -117,3 +117,27 @@ void TriSolve(SafeArray<scalar> &M, SafeArray<scalar> &x,
         Out[i] = - sum / MiD[i];
     }
 }
+
+void MaskedTriSolve(SafeArray<scalar> &M, SafeArray<scalar> &x,
+                	SafeArray<scalar> &Out, integer D,
+					vector<integer> &Masked, vector<integer> &Unmasked)
+{
+	integer NumUnmasked = (integer)Unmasked.size();
+	integer NumMasked = (integer)Masked.size();
+	for (integer ii = 0; ii < NumUnmasked; ii++)
+	{
+		integer i = Unmasked[ii];
+		scalar sum = x[i];
+		for (integer jj = 0; jj < ii; jj++) // j<i
+		{
+			integer j = Unmasked[jj];
+			sum += M[i*D + j] * Out[j];
+		}
+		Out[i] = - sum / M[i*D + i];
+	}
+	for (integer ii = 0; ii < NumMasked; ii++)
+	{
+		integer i = Masked[ii];
+		Out[i] = -x[i] / M[i*D + i];
+	}
+}

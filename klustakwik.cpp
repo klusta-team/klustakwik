@@ -597,9 +597,10 @@ void KK::EStep()
             for(integer i=0; i<nDims; i++)
                 safeBasisVector[i] = (scalar)0;
             for(integer i=0; i<nDims; i++)
-            {   safeBasisVector[i] = (scalar)1;
+            {  
+				safeBasisVector[i] = (scalar)1;
                 // calculate Root vector - by Chol*Root = BasisVector
-                TriSolve(safeChol, safeBasisVector, safeRoot, nDims);
+				MaskedTriSolve(safeChol, safeBasisVector, safeRoot, nDims, ClusterMaskedFeatures[c], ClusterUnmaskedFeatures[c]);
                 // add half of Root vector squared to log p
                 scalar Sii = (scalar)0;
                 for(integer j=0; j<nDims; j++)
@@ -630,7 +631,10 @@ void KK::EStep()
                 Vec2Mean[i] = Data[p*nDims + i] - Mean[c*nDims + i];
 
             // calculate Root vector - by Chol*Root = Vec2Mean
-            TriSolve(safeChol, safeVec2Mean, safeRoot, nDims);
+			if (UseDistributional)
+				MaskedTriSolve(safeChol, safeVec2Mean, safeRoot, nDims, ClusterMaskedFeatures[c], ClusterUnmaskedFeatures[c]);
+			else
+				TriSolve(safeChol, safeVec2Mean, safeRoot, nDims);
 
             // add half of Root vector squared to log p
             for(i=0; i<nDims; i++)
