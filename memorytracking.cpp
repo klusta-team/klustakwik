@@ -14,7 +14,22 @@ size_t available_physical_memory()
 	return pages * page_size;
 }
 
-#elif _WIN32
+#endif
+
+#ifdef __APPLE__
+// Unix way works on Mac?
+#include <unistd.h>
+
+size_t available_physical_memory()
+{
+	long pages = sysconf(_SC_AVPHYS_PAGES);
+	long page_size = sysconf(_SC_PAGE_SIZE);
+	return pages * page_size;
+}
+
+#endif
+
+#ifdef _WIN32
 
 // Windows way
 
