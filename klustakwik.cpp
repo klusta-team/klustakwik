@@ -1281,7 +1281,13 @@ int main(int argc, char **argv)
 	if (RamLimitGB == 0.0)
 	{
 		RamLimitGB = (1.0*available_physical_memory()) / (1024.0*1024.0*1024.0);
+#ifdef __APPLE__
+		Output("Setting RAM limit to total physical memory, %.2f GB.\n", (double)RamLimitGB);
+		Output("WARNING: Not all physical memory will be available, but on Macs it is not possible\n");
+		Output("         to get the available physical memory.\n");
+#else
 		Output("Setting RAM limit to available physical memory, %.2f GB.\n", (double)RamLimitGB);
+#endif
 	}
 	else if (RamLimitGB < 0.0)
 	{
