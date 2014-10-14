@@ -57,8 +57,10 @@ integer KK::NumBytesRequired()
 		sizeof(integer)*MaxPossibleClusters +        // nClassMembers
 		sizeof(scalar)*nPoints*nDims +               // AllVector2Mean
 		// UseDistributional only
-		UseDistributional*sizeof(scalar)*MaxPossibleClusters + // CorrectionTerm
-		UseDistributional*sizeof(scalar)*MaxPossibleClusters;  // ClassCorrectionFactor
+		UseDistributional*sizeof(scalar)*MaxPossibleClusters +  // CorrectionTerm
+		(UseDistributional*MaxPossibleClusters*nDims)/8 +       // ClusterMask (vector<bool>)
+		UseDistributional*sizeof(integer)*MaxPossibleClusters*nDims; // ClusterUnmaskedFeatures + ClusterMaskedFeatures
+
 	return num_bytes_allocated;
 }
 
@@ -92,7 +94,7 @@ void KK::AllocateArrays() {
     if(UseDistributional)
     {
         CorrectionTerm.resize(nPoints * nDims);
-        ClassCorrectionFactor.resize(MaxPossibleClusters*nDims);
+        ClusterMask.resize(MaxPossibleClusters*nDims);
     }
 }
 
@@ -168,6 +170,50 @@ void KK::ComputeClassPenalties()
 }
 
 
+// Compute the cluster masks (i.e. the sets of features which are masked/unmasked
+// for the whole cluster). Used by M-step and E-step
+void KK::ComputeClusterMasks()
+{
+	Reindex();
+
+	// Initialise cluster mask to 0
+	for(integer i=0; i<nDims*MaxPossibleClusters; i++)
+		ClusterMask[i] = false;
+
+	// Compute cluster mask
+    for(integer p=0; p<nPoints; p++)
+    {
+        integer c = Class[p];
+		for (integer i = 0; i < nDims; i++)
+		{
+			if (FloatMasks[p*nDims + i]>0)
+				ClusterMask[c*nDims + i] = true;
+		}
+    }
+
+    // Compute the set of masked/unmasked features for each cluster
+
+	// reset all the subvectors to empty
+	ClusterUnmaskedFeatures.clear();
+	ClusterUnmaskedFeatures.resize(MaxPossibleClusters);
+	ClusterMaskedFeatures.clear();
+	ClusterMaskedFeatures.resize(MaxPossibleClusters);
+	// fill them in
+	for (integer cc = 0; cc<nClustersAlive; cc++)
+	{
+		integer c = AliveIndex[cc];
+		vector<integer> &CurrentUnmasked = ClusterUnmaskedFeatures[c];
+		vector<integer> &CurrentMasked = ClusterMaskedFeatures[c];
+		for (integer i = 0; i < nDims; i++)
+		{
+			if (ClusterMask[c*nDims + i] == true)
+				CurrentUnmasked.push_back(i);
+			else
+				CurrentMasked.push_back(i);
+		}
+	}
+
+}
 
 
 // M-step: Calculate mean, cov, and weight for each living class
@@ -309,37 +355,100 @@ void KK::MStep()
     {
         c = Class[p];
         PointsInClass[c].push_back(p);
-        for(i=0; i<nDims; i++)
-            AllVector2Mean[p*nDims+i] = Data[p*nDims + i] - Mean[c*nDims + i];
+		for (i = 0; i < nDims; i++)
+			AllVector2Mean[p*nDims + i] = Data[p*nDims + i] - Mean[c*nDims + i];
     }
-    for(c=0; c<MaxPossibleClusters; c++)
-    {
-        vector<integer> &PointsInThisClass = PointsInClass[c];
-        SafeArray<scalar> safeCov(Cov, c*nDims2, "safeCovMStep");
-        for(integer iblock=0; iblock<nDims; iblock+=COVARIANCE_BLOCKSIZE)
-            for(integer jblock=iblock; jblock<nDims; jblock+=COVARIANCE_BLOCKSIZE)
-                for(integer q=0; q<(integer)PointsInThisClass.size(); q++)
-                {
-                    p = PointsInThisClass[q];
-                    scalar *cv2m = &AllVector2Mean[p*nDims];
-                    for(i=iblock; i<MIN(nDims, iblock+COVARIANCE_BLOCKSIZE); i++)
-                    {
-                        scalar cv2mi = cv2m[i];
-                        integer jstart;
-                        if(jblock!=iblock)
-                            jstart = jblock;
-                        else
-                            jstart = i;
-                        scalar *covptr = &safeCov[i*nDims+jstart];
-                        scalar *cv2mjptr = &cv2m[jstart];
-                        //scalar *cv2mjend = cv2m+MIN(nDims, jblock+COVARIANCE_BLOCKSIZE);
-                        //for(j=jstart; j<MIN(nDims, jblock+COVARIANCE_BLOCKSIZE); j++)
-                        //for(; cv2mjptr!=cv2mjend;)
-                        for(j=MIN(nDims, jblock+COVARIANCE_BLOCKSIZE)-jstart; j; j--)
-                            *covptr++ += cv2mi*(*cv2mjptr++);
-                    }
-                }
-    }
+
+	if (UseDistributional)
+	{
+		// Compute the cluster masks, used below to optimise the computation
+		ComputeClusterMasks();
+
+		for (cc = 0; cc<nClustersAlive; cc++)
+		{
+			c = AliveIndex[cc];
+			vector<integer> &PointsInThisClass = PointsInClass[c];
+			vector<integer> &CurrentUnmasked = ClusterUnmaskedFeatures[c];
+			// Correct version
+			//for (integer q = 0; q < (integer)PointsInThisClass.size(); q++)
+			//{
+			//	p = PointsInThisClass[q];
+			//	for (integer ii = 0; ii < (integer)CurrentUnmasked.size(); ii++)
+			//	{
+			//		i = CurrentUnmasked[ii];
+			//		for (integer jj = 0; jj < (integer)CurrentUnmasked.size(); jj++)
+			//		{
+			//			j = CurrentUnmasked[jj];
+			//			Cov[c*nDims2 + i*nDims + j] += AllVector2Mean[p*nDims + i] * AllVector2Mean[p*nDims + j];
+			//		}
+			//	}
+			//}
+			// Faster version (equivalent)
+			// Doesn't make any use of cache structure, but no need to upgrade now because
+			// we will move to a sparse block matrix structure that will make this more
+			// natural
+			const integer * __restrict cu = &(CurrentUnmasked[0]);
+			const integer ncu = (integer)CurrentUnmasked.size();
+			scalar * __restrict cov_c = &(Cov[c*nDims2]);
+			const integer * __restrict pitc = &(PointsInThisClass[0]);
+			const integer npitc = (integer)PointsInThisClass.size();
+			const scalar * __restrict av2m = &(AllVector2Mean[0]);
+			for (integer q = 0; q < npitc; q++)
+			{
+				const integer p = pitc[q];
+				const scalar * __restrict av2m_p = av2m + p*nDims;
+				for (integer ii = 0; ii < ncu; ii++)
+				{
+					const integer i = cu[ii];
+					const scalar av2m_p_i = av2m_p[i];
+					scalar * __restrict cov_c_i = cov_c + i*nDims;
+					for (integer jj = 0; jj < ncu; jj++)
+					{
+						const integer j = cu[jj];
+						cov_c_i[j] += av2m_p_i*av2m_p[j];
+						//Cov[c*nDims2 + i*nDims + j] += AllVector2Mean[p*nDims + i] * AllVector2Mean[p*nDims + j];
+					}
+				}
+			}
+
+		}
+	}
+	else
+	{
+		// I think this code gives wrong results (but only slightly) (DFMG: 2014/10/13)
+		for (c = 0; c < MaxPossibleClusters; c++)
+		{
+			vector<integer> &PointsInThisClass = PointsInClass[c];
+			SafeArray<scalar> safeCov(Cov, c*nDims2, "safeCovMStep");
+			for (integer iblock = 0; iblock < nDims; iblock += COVARIANCE_BLOCKSIZE)
+			{
+				for (integer jblock = iblock; jblock < nDims; jblock += COVARIANCE_BLOCKSIZE)
+				{
+					for (integer q = 0; q < (integer)PointsInThisClass.size(); q++)
+					{
+						p = PointsInThisClass[q];
+						scalar *cv2m = &AllVector2Mean[p*nDims];
+						for (i = iblock; i < MIN(nDims, iblock + COVARIANCE_BLOCKSIZE); i++)
+						{
+							scalar cv2mi = cv2m[i];
+							integer jstart;
+							if (jblock != iblock)
+								jstart = jblock;
+							else
+								jstart = i;
+							scalar *covptr = &safeCov[i*nDims + jstart];
+							scalar *cv2mjptr = &cv2m[jstart];
+							//scalar *cv2mjend = cv2m+MIN(nDims, jblock+COVARIANCE_BLOCKSIZE);
+							//for(j=jstart; j<MIN(nDims, jblock+COVARIANCE_BLOCKSIZE); j++)
+							//for(; cv2mjptr!=cv2mjend;)
+							for (j = MIN(nDims, jblock + COVARIANCE_BLOCKSIZE) - jstart; j; j--)
+								*covptr++ += cv2mi*(*cv2mjptr++);
+						}
+					}
+				}
+			}
+		}
+	}
 
     if(UseDistributional)
     {
@@ -358,19 +467,19 @@ void KK::MStep()
                 //Output("Class %d Class correction factor[%d] = %f \n",(int)c,(int)i,ccf);
                 Cov[c*nDims2+i*nDims+i] += ccf;
             //    Output("Class %d Covariance diagonal[%d] = %f \n",(int)c,(int)i,Cov[c*nDims2+i*nDims+i] );
-                ClassCorrectionFactor[c*nDims+i] = ccf/(scalar)(nClassMembers[c]*nClassMembers[c]);
             }
         }
 
     // Add a diagonal matrix of Noise variances to the covariance matrix for renormalization
         for (cc=0; cc<nClustersAlive; cc++)
-                {c = AliveIndex[cc];
-                for (i=0; i<nDims; i++)
-                    {
-                    //Output("Class %d: PriorPoint*NoiseVariance[%d] = %f",c,i,priorPoint*NoiseVariance[i]);
-                    Cov[c*nDims2+i*nDims+i] += priorPoint*NoiseVariance[i];
-                    }
-                }
+		{
+        	c = AliveIndex[cc];
+			for (i=0; i<nDims; i++)
+			{
+				//Output("Class %d: PriorPoint*NoiseVariance[%d] = %f",c,i,priorPoint*NoiseVariance[i]);
+				Cov[c*nDims2+i*nDims+i] += priorPoint*NoiseVariance[i];
+			}
+		}
 
 
     }
@@ -460,7 +569,12 @@ void KK::EStep()
 
         // calculate cholesky decomposition for class c
         SafeArray<scalar> safeCov(Cov, c*nDims2, "safeCov");
-        if(Cholesky(safeCov, safeChol, nDims))
+		integer chol_return;
+		if (UseDistributional)
+			chol_return = MaskedCholesky(safeCov, safeChol, nDims, ClusterMaskedFeatures[c], ClusterUnmaskedFeatures[c]);
+		else
+			chol_return = Cholesky(safeCov, safeChol, nDims);
+        if(chol_return)
         {
             // If Cholesky returns 1, it means the matrix is not positive definite.
             // So kill the class.
@@ -483,9 +597,10 @@ void KK::EStep()
             for(integer i=0; i<nDims; i++)
                 safeBasisVector[i] = (scalar)0;
             for(integer i=0; i<nDims; i++)
-            {   safeBasisVector[i] = (scalar)1;
+            {  
+				safeBasisVector[i] = (scalar)1;
                 // calculate Root vector - by Chol*Root = BasisVector
-                TriSolve(safeChol, safeBasisVector, safeRoot, nDims);
+				MaskedTriSolve(safeChol, safeBasisVector, safeRoot, nDims, ClusterMaskedFeatures[c], ClusterUnmaskedFeatures[c]);
                 // add half of Root vector squared to log p
                 scalar Sii = (scalar)0;
                 for(integer j=0; j<nDims; j++)
@@ -516,7 +631,10 @@ void KK::EStep()
                 Vec2Mean[i] = Data[p*nDims + i] - Mean[c*nDims + i];
 
             // calculate Root vector - by Chol*Root = Vec2Mean
-            TriSolve(safeChol, safeVec2Mean, safeRoot, nDims);
+			if (UseDistributional)
+				MaskedTriSolve(safeChol, safeVec2Mean, safeRoot, nDims, ClusterMaskedFeatures[c], ClusterUnmaskedFeatures[c]);
+			else
+				TriSolve(safeChol, safeVec2Mean, safeRoot, nDims);
 
             // add half of Root vector squared to log p
             for(i=0; i<nDims; i++)
@@ -1169,6 +1287,8 @@ scalar KK::Cluster(char *StartCluFile=NULL)
 
     // Run E and C steps on full data set
 	Output("------ Evaluating fit on full set of %d points ------\n", (int)nPoints);
+	if(UseDistributional)
+		ComputeClusterMasks(); // needed by E-step normally computed by M-step
     EStep();
     CStep();
 
