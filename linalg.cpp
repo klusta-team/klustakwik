@@ -49,6 +49,57 @@ integer Cholesky(SafeArray<scalar> &In, SafeArray<scalar> &Out, integer D)
     return 0; // for sucess
 }
 
+integer MaskedCholesky(SafeArray<scalar> &In, SafeArray<scalar> &Out, integer D, vector<integer> &Masked, vector<integer> &Unmasked)
+{
+	integer i, j, k;
+	integer ii, jj, kk;
+	scalar sum;
+
+	integer NumUnmasked = (integer)Unmasked.size();
+
+	// empty output array
+	for (i = 0; i<D*D; i++) Out[i] = 0;
+
+	// main bit for unmasked features
+	//for (i = 0; i<D; i++)
+	for (ii = 0; ii < NumUnmasked; ii++)
+	{
+		i = Unmasked[ii];
+		//for (j = i; j<D; j++) 
+		for (jj = ii; jj < NumUnmasked; jj++)
+		{    // j>=i
+			j = Unmasked[jj];
+			sum = In[i*D + j];
+
+			//for (k = i - 1; k >= 0; k--)
+			for (kk = ii - 1; kk >= 0; kk--)
+			{
+				k = Unmasked[kk];
+				sum -= Out[i*D + k] * Out[j*D + k]; // i,j >= k
+			}
+			if (i == j) {
+				if (sum <= 0) return(1); // Cholesky decomposition has failed
+				Out[i*D + i] = (scalar)sqrt(sum);
+			}
+			else {
+				Out[j*D + i] = sum / Out[i*D + i];
+			}
+		}
+	}
+	// main bit for masked features
+	for (ii = 0; ii < (integer)Masked.size(); ii++)
+	{
+		i = Masked[ii];
+		scalar sum = In[i*D + i];
+		if (sum <= 0)
+			return 1; // Cholesky failed
+		Out[i*D + i] = (scalar)sqrt(sum);
+	}
+
+	return 0; // for sucess
+}
+
+
 // Solve a set of linear equations M*Out = x.
 // Where M is lower triangular (M[i*D + j] >0 if j>=i);
 // D is number of dimensions

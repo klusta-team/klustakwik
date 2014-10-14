@@ -52,7 +52,9 @@ public:
     void ComputeSortedUnmaskedChangePoints();
     void ComputeNoiseMeansAndVariances();
     void ComputeCorrectionTermsAndReplaceData();
-    void PointMaskDimension ();//SNK PointMaskDimension() computes the sum of the masks/float masks for each point  
+    void PointMaskDimension ();//SNK PointMaskDimension() computes the sum of the masks/float masks for each point
+    // Precomputations for cluster masks
+    void ComputeClusterMasks();
     // Score and penalty functions
     scalar ComputeScore();
     scalar Penalty(integer n);
@@ -123,6 +125,11 @@ public:
     vector<integer> BestClass; // BestClass = best classification yet achieved
     vector<integer> ClassAlive; // contains 1 if the class is still alive - otherwise 0
     vector<integer> AliveIndex; // a list of the alive classes to iterate over
+
+    // Used for distributional optimisations
+    vector<bool> ClusterMask;
+    vector< vector<integer> > ClusterUnmaskedFeatures;
+    vector< vector<integer> > ClusterMaskedFeatures;
 
     // Used in EStep(), but this will probably change later
     vector<scalar> AllVector2Mean;

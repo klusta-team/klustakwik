@@ -13,6 +13,7 @@
 #include "numerics.h"
 
 integer Cholesky(SafeArray<scalar> &In, SafeArray<scalar> &Out, integer D);
+integer MaskedCholesky(SafeArray<scalar> &In, SafeArray<scalar> &Out, integer D, vector<integer> &Masked, vector<integer> &Unmasked);
 void TriSolve(SafeArray<scalar> &M, SafeArray<scalar> &x, SafeArray<scalar> &Out, integer D);
 
 #endif /* LINALG_H_ */

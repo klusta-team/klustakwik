@@ -57,7 +57,10 @@ integer KK::NumBytesRequired()
 		sizeof(integer)*MaxPossibleClusters +        // nClassMembers
 		sizeof(scalar)*nPoints*nDims +               // AllVector2Mean
 		// UseDistributional only
-		UseDistributional*sizeof(scalar)*MaxPossibleClusters;  // CorrectionTerm
+		UseDistributional*sizeof(scalar)*MaxPossibleClusters +  // CorrectionTerm
+		(UseDistributional*MaxPossibleClusters*nDims)/8 +       // ClusterMask (vector<bool>)
+		UseDistributional*sizeof(integer)*MaxPossibleClusters*nDims; // ClusterUnmaskedFeatures + ClusterMaskedFeatures
+
 	return num_bytes_allocated;
 }
 
@@ -91,6 +94,7 @@ void KK::AllocateArrays() {
     if(UseDistributional)
     {
         CorrectionTerm.resize(nPoints * nDims);
+        ClusterMask.resize(MaxPossibleClusters*nDims);
     }
 }
 
@@ -166,6 +170,50 @@ void KK::ComputeClassPenalties()
 }
 
 
+// Compute the cluster masks (i.e. the sets of features which are masked/unmasked
+// for the whole cluster). Used by M-step and E-step
+void KK::ComputeClusterMasks()
+{
+	Reindex();
+
+	// Initialise cluster mask to 0
+	for(integer i=0; i<nDims*MaxPossibleClusters; i++)
+		ClusterMask[i] = false;
+
+	// Compute cluster mask
+    for(integer p=0; p<nPoints; p++)
+    {
+        integer c = Class[p];
+		for (integer i = 0; i < nDims; i++)
+		{
+			if (FloatMasks[p*nDims + i]>0)
+				ClusterMask[c*nDims + i] = true;
+		}
+    }
+
+    // Compute the set of masked/unmasked features for each cluster
+
+	// reset all the subvectors to empty
+	ClusterUnmaskedFeatures.clear();
+	ClusterUnmaskedFeatures.resize(MaxPossibleClusters);
+	ClusterMaskedFeatures.clear();
+	ClusterMaskedFeatures.resize(MaxPossibleClusters);
+	// fill them in
+	for (integer cc = 0; cc<nClustersAlive; cc++)
+	{
+		integer c = AliveIndex[cc];
+		vector<integer> &CurrentUnmasked = ClusterUnmaskedFeatures[c];
+		vector<integer> &CurrentMasked = ClusterMaskedFeatures[c];
+		for (integer i = 0; i < nDims; i++)
+		{
+			if (ClusterMask[c*nDims + i] == true)
+				CurrentUnmasked.push_back(i);
+			else
+				CurrentMasked.push_back(i);
+		}
+	}
+
+}
 
 
 // M-step: Calculate mean, cov, and weight for each living class
@@ -303,40 +351,19 @@ void KK::MStep()
 		AllVector2Mean.resize(nPoints*nDims);
 	}
     vector< vector<integer> > PointsInClass(MaxPossibleClusters);
-	vector<bool> ClusterMask;
-	if (UseDistributional)
-	{
-		ClusterMask.resize(MaxPossibleClusters*nDims);
-		//for (i = 0; i < ClusterMask.size(); i++)
-		//	ClusterMask[i] = false;
-	}
     for(p=0; p<nPoints; p++)
     {
         c = Class[p];
         PointsInClass[c].push_back(p);
 		for (i = 0; i < nDims; i++)
-		{
 			AllVector2Mean[p*nDims + i] = Data[p*nDims + i] - Mean[c*nDims + i];
-			if (UseDistributional)
-				if (FloatMasks[p*nDims + i]>0)
-					ClusterMask[c*nDims + i] = true;
-		}
     }
 
 	if (UseDistributional)
 	{
-		vector< vector<integer> > ClusterUnmaskedFeatures;
-		ClusterUnmaskedFeatures.resize(MaxPossibleClusters);
-		for (cc = 0; cc<nClustersAlive; cc++)
-		{
-			c = AliveIndex[cc];
-			vector<integer> &CurrentUnmasked = ClusterUnmaskedFeatures[c];
-			for (i = 0; i < nDims; i++)
-			{
-				if (ClusterMask[c*nDims + i] == true)
-					CurrentUnmasked.push_back(i);
-			}
-		}
+		// Compute the cluster masks, used below to optimise the computation
+		ComputeClusterMasks();
+
 		for (cc = 0; cc<nClustersAlive; cc++)
 		{
 			c = AliveIndex[cc];
@@ -542,7 +569,12 @@ void KK::EStep()
 
         // calculate cholesky decomposition for class c
         SafeArray<scalar> safeCov(Cov, c*nDims2, "safeCov");
-        if(Cholesky(safeCov, safeChol, nDims))
+		integer chol_return;
+		if (UseDistributional)
+			chol_return = MaskedCholesky(safeCov, safeChol, nDims, ClusterMaskedFeatures[c], ClusterUnmaskedFeatures[c]);
+		else
+			chol_return = Cholesky(safeCov, safeChol, nDims);
+        if(chol_return)
         {
             // If Cholesky returns 1, it means the matrix is not positive definite.
             // So kill the class.
