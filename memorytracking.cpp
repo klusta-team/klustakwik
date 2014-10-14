@@ -14,7 +14,32 @@ size_t available_physical_memory()
 	return pages * page_size;
 }
 
-#elif _WIN32
+#endif
+
+#ifdef __APPLE__
+// Mac way only returns total, not available physical memory because of the
+// way the Mac uses memory to cache some data meaning that almost all memory
+// is used at all times
+#include <stdio.h>
+#include <stdint.h>
+#include <sys/types.h>
+#include <sys/sysctl.h>
+
+size_t available_physical_memory()
+{
+	int mib [] = { CTL_HW, HW_MEMSIZE };
+	uint64_t value = 0;
+	size_t length = sizeof(value);
+
+	sysctl(mib, 2, &value, &length, NULL, 0);
+	// Physical memory is now in value
+
+	return (size_t) value;
+}
+
+#endif
+
+#ifdef _WIN32
 
 // Windows way
 
