@@ -1283,6 +1283,8 @@ scalar KK::Cluster(char *StartCluFile=NULL)
 
     // Run E and C steps on full data set
 	Output("------ Evaluating fit on full set of %d points ------\n", (int)nPoints);
+	if(UseDistributional)
+		ComputeClusterMasks(); // needed by E-step normally computed by M-step
     EStep();
     CStep();
 
