@@ -17,14 +17,24 @@ size_t available_physical_memory()
 #endif
 
 #ifdef __APPLE__
-// Unix way works on Mac?
-#include <unistd.h>
+// Mac way only returns total, not available physical memory because of the
+// way the Mac uses memory to cache some data meaning that almost all memory
+// is used at all times
+#include <stdio.h>
+#include <stdint.h>
+#include <sys/types.h>
+#include <sys/sysctl.h>
 
 size_t available_physical_memory()
 {
-	long pages = sysconf(_SC_AVPHYS_PAGES);
-	long page_size = sysconf(_SC_PAGE_SIZE);
-	return pages * page_size;
+	int mib [] = { CTL_HW, HW_MEMSIZE };
+	uint64_t value = 0;
+	size_t length = sizeof(value);
+
+	sysctl(mib, 2, &value, &length, NULL, 0);
+	// Physical memory is now in value
+
+	return (size_t) value;
 }
 
 #endif
