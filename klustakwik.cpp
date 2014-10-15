@@ -36,6 +36,10 @@ void KK::MemoryCheck()
 
 integer KK::NumBytesRequired()
 {
+	// we don't allocate any memory if we have already allocated memory to this
+	// (i.e. if we are in TrySplits)
+	if (Data.size())
+		return 0;
 	nDims2 = nDims*nDims;
 	// Compute required memory and check if it exceeds the limit set
 	integer num_bytes_allocated =
@@ -841,7 +845,24 @@ integer KK::TrySplits()
     }
 
     // set up K3 and remember to add the masks
-    KK K3(*this);
+    //KK K3(*this);
+	if (KK_split == NULL)
+	{
+		KK_split = new KK(*this);
+	}
+	else
+	{
+		// We have to clear these to bypass the debugging checks
+		// in precomputations.cpp
+		KK_split->Unmasked.clear();
+		KK_split->UnmaskedInd.clear();
+		KK_split->SortedMaskChange.clear();
+		KK_split->SortedIndices.clear();
+		// now we treat it as empty
+		KK_split->ConstructFrom(*this);
+	}
+	KK &K3 = *KK_split;
+
     Output("Compute initial score before splitting: ");
     Score = ComputeScore();
 
@@ -1300,6 +1321,7 @@ scalar KK::Cluster(char *StartCluFile=NULL)
 KK::KK(char *FileBase, integer ElecNo, char *UseFeatures,
         scalar PenaltyK, scalar PenaltyKLogN, integer PriorPoint)
 {
+	KK_split = NULL;
     penaltyK = PenaltyK;
     penaltyKLogN = PenaltyKLogN;
     LoadData(FileBase, ElecNo, UseFeatures);
@@ -1315,7 +1337,7 @@ KK::KK(char *FileBase, integer ElecNo, char *UseFeatures,
 // the data from a source KK object with a subset of the indices.
 void KK::ConstructFrom(const KK &Source, const vector<integer> &Indices)
 {
-    
+	KK_split = NULL;
     nDims = Source.nDims;
     nDims2 = nDims*nDims;
     nPoints = Indices.size();
@@ -1377,6 +1399,14 @@ void KK::ConstructFrom(const KK &Source, const vector<integer> &Indices)
     numiterations = 0;
 }
 
+void KK::ConstructFrom(const KK &Source)
+{
+	vector<integer> Indices(Source.nPoints);
+	for (integer i = 0; i<Source.nPoints; i++)
+		Indices[i] = i;
+	ConstructFrom(Source, Indices);
+}
+
 KK::KK(const KK &Source, const vector<integer> &Indices)
 {
     ConstructFrom(Source, Indices);
@@ -1385,10 +1415,13 @@ KK::KK(const KK &Source, const vector<integer> &Indices)
 // If we don't specify an index subset, use everything.
 KK::KK(const KK &Source)
 {
-    vector<integer> Indices(Source.nPoints);
-    for(integer i=0; i<Source.nPoints; i++)
-        Indices[i] = i;
-    ConstructFrom(Source, Indices);
+	ConstructFrom(Source);
+}
+
+KK::~KK()
+{
+	if (KK_split) delete KK_split;
+	KK_split = NULL;
 }
 
 // Main loop
