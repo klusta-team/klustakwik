@@ -53,11 +53,11 @@ KlustaKwik runs from the command line, and takes a large number of options. We p
 
 The first two arguments are the filebase and shank number, after which come optional parameters. For example if you wanted to cluster the 4th shank from a file called "recording" in masked mode (96-dimensional data with one time dimension that you want to omit), you would run something like this:
 
-    [yourterminal]$./KlustaKwik recording 4 -UseDistributional 1 -MaxPossibleClusters 500 -MaskStarts 300 -PenaltyK 1 -PenaltyKLogN 0 -DropLastNFeatures 1
+    [yourterminal]$./KlustaKwik recording 4 -UseDistributional 1 -MaxPossibleClusters 500 -MaskStarts 300 -PenaltyK 0 -PenaltyKLogN 1 -DropLastNFeatures 1
 
 This command is equivalent to the more detailed command, which advanced users may still use, if they want to be more specific:
 
-    [yourterminal]$./KlustaKwik recording 4 -UseDistributional 1 -UseMaskedInitialConditions 1 -AssignToFirstClosestMask 1 -MaxPossibleClusters 500 -MinClusters 300 -MaxClusters 300 -PenaltyK 1 -PenaltyKLogN 0 -UseFeatures 111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111110
+    [yourterminal]$./KlustaKwik recording 4 -UseDistributional 1 -UseMaskedInitialConditions 1 -AssignToFirstClosestMask 1 -MaxPossibleClusters 500 -MinClusters 300 -MaxClusters 300 -PenaltyK 0 -PenaltyKLogN 1 -UseFeatures 111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111110
 
 You will probably want to write a script to generate such these commands. An example Python script could read as follows:
 
@@ -74,8 +74,8 @@ You will probably want to write a script to generate such these commands. An exa
             +'filebase ' +'shank_num' + -DropLastNFeatures 1 '
             '-MaskStarts 300 '
             '-MaxPossibleClusters 500 '
-            '-PenaltyK 1.0 '
-            '-PenaltyKLogN 0.0 '
+            '-PenaltyK 0.0 '
+            '-PenaltyKLogN 1.0 '
             '-SplitFirst 20 '
             '-SplitEvery 100'
             '-UseDistributional 1 '
