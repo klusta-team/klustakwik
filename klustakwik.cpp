@@ -68,6 +68,7 @@ integer KK::NumBytesRequired()
 	return num_bytes_allocated;
 }
 
+#define RESIZE_AND_FILL_WITH_ZEROS(name, size) name.resize(size); fill(name.begin(), name.end(), 0);
 // Sets storage for KK class.  Needs to have nDims and nPoints defined
 void KK::AllocateArrays() {
 
@@ -78,27 +79,29 @@ void KK::AllocateArrays() {
 	mem.add(num_bytes_allocated);
 
     // Set sizes for arrays
-    Data.resize(nPoints * nDims);
+	RESIZE_AND_FILL_WITH_ZEROS(Data, nPoints * nDims);
     //SNK
-    Masks.resize(nPoints * nDims);
-    FloatMasks.resize(nPoints * nDims);
-    UnMaskDims.resize(nPoints); //SNK Number of unmasked dimensions for each data point when using float masks $\sum m_i$
-    Weight.resize(MaxPossibleClusters);
-    Mean.resize(MaxPossibleClusters*nDims);
-    Cov.resize(MaxPossibleClusters*nDims2);
-    LogP.resize(MaxPossibleClusters*nPoints);
-    Class.resize(nPoints);
-    OldClass.resize(nPoints);
-    Class2.resize(nPoints);
-    BestClass.resize(nPoints);
-    ClassAlive.resize(MaxPossibleClusters);
-    AliveIndex.resize(MaxPossibleClusters);
-    ClassPenalty.resize(MaxPossibleClusters);
-    nClassMembers.resize(MaxPossibleClusters);
+	RESIZE_AND_FILL_WITH_ZEROS(Masks, nPoints * nDims);
+	RESIZE_AND_FILL_WITH_ZEROS(FloatMasks, nPoints * nDims);
+	RESIZE_AND_FILL_WITH_ZEROS(UnMaskDims, nPoints); //SNK Number of unmasked dimensions for each data point when using float masks $\sum m_i$
+	RESIZE_AND_FILL_WITH_ZEROS(Weight, MaxPossibleClusters);
+	RESIZE_AND_FILL_WITH_ZEROS(Mean, MaxPossibleClusters*nDims);
+	RESIZE_AND_FILL_WITH_ZEROS(Cov, MaxPossibleClusters*nDims2);
+	RESIZE_AND_FILL_WITH_ZEROS(LogP, MaxPossibleClusters*nPoints);
+	RESIZE_AND_FILL_WITH_ZEROS(Class, nPoints);
+	RESIZE_AND_FILL_WITH_ZEROS(OldClass, nPoints);
+	RESIZE_AND_FILL_WITH_ZEROS(Class2, nPoints);
+	RESIZE_AND_FILL_WITH_ZEROS(BestClass, nPoints);
+	RESIZE_AND_FILL_WITH_ZEROS(ClassAlive, MaxPossibleClusters);
+	RESIZE_AND_FILL_WITH_ZEROS(AliveIndex, MaxPossibleClusters);
+	RESIZE_AND_FILL_WITH_ZEROS(ClassPenalty, MaxPossibleClusters);
+	RESIZE_AND_FILL_WITH_ZEROS(nClassMembers, MaxPossibleClusters);
     if(UseDistributional)
     {
-        CorrectionTerm.resize(nPoints * nDims);
-        ClusterMask.resize(MaxPossibleClusters*nDims);
+		RESIZE_AND_FILL_WITH_ZEROS(CorrectionTerm, nPoints * nDims);
+		//RESIZE_AND_FILL_WITH_ZEROS(ClusterMask, MaxPossibleClusters*nDims);
+		ClusterMask.clear();
+		ClusterMask.resize(MaxPossibleClusters*nDims);
     }
 }
 
@@ -866,6 +869,8 @@ integer KK::TrySplits()
     Output("Compute initial score before splitting: ");
     Score = ComputeScore();
 
+	KK *K2_container = NULL;
+
     // loop thu clusters, trying to split
     for (cc=1; cc<nClustersAlive; cc++)
     {
@@ -879,7 +884,25 @@ integer KK::TrySplits()
                 SubsetIndices.push_back(p);
         if(SubsetIndices.size()==0)
             continue;
-        KK K2(*this, SubsetIndices);
+
+		if (K2_container)
+		{
+			// We have to clear these to bypass the debugging checks
+			// in precomputations.cpp
+			K2_container->Unmasked.clear();
+			K2_container->UnmaskedInd.clear();
+			K2_container->SortedMaskChange.clear();
+			K2_container->SortedIndices.clear();
+			K2_container->AllVector2Mean.clear();
+			// now we treat it as empty
+			K2_container->ConstructFrom(*this, SubsetIndices);
+		}
+		else
+		{
+			K2_container = new KK(*this, SubsetIndices);
+		}
+        //KK K2(*this, SubsetIndices);
+		KK &K2 = *K2_container;
 
         // find an unused cluster
         UnusedCluster = -1;
@@ -894,6 +917,8 @@ integer KK::TrySplits()
         if (UnusedCluster==-1)
         {
             Output("No free clusters, abandoning split");
+			if (K2_container)
+				delete K2_container;
             return DidSplit;
         }
 
@@ -950,7 +975,9 @@ integer KK::TrySplits()
             }
         }
     }
-    return DidSplit;
+	if (K2_container)
+		delete K2_container;
+	return DidSplit;
 }
 
 // ComputeScore() - computes total score.  Requires M, E, and C steps to have been run
@@ -1345,6 +1372,10 @@ void KK::ConstructFrom(const KK &Source, const vector<integer> &Indices)
     penaltyKLogN = Source.penaltyKLogN;
     priorPoint = Source.priorPoint;
     nStartingClusters = Source.nStartingClusters;
+	NoisePoint = Source.NoisePoint;
+	FullStep = Source.FullStep;
+	nClustersAlive = Source.nClustersAlive;
+	numiterations = Source.numiterations;
     AllocateArrays(); // Set storage for all the arrays such as Data, FloatMasks, Weight, Mean, Cov, etc.
 
     if (Debug)
