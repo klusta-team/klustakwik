@@ -80,7 +80,7 @@ public:
     void SaveCovMeans();
 public:
     /////////////// VARIABLES //////////////////////////////////////////////////
-	KK *KK_split; // used for splitting
+	KK *KK_split, *K2_container; // used for splitting
     integer nDims, nDims2; // nDims2 is nDims squared and the mean of the unmasked dimensions.
     int nStartingClusters; // total # starting clusters, including clu 0, the noise cluster (int because read in from file)
     integer nClustersAlive; // nClustersAlive is total number with points in, excluding noise cluster

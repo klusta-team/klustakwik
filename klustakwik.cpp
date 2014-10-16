@@ -100,7 +100,7 @@ void KK::AllocateArrays() {
     {
 		RESIZE_AND_FILL_WITH_ZEROS(CorrectionTerm, nPoints * nDims);
 		//RESIZE_AND_FILL_WITH_ZEROS(ClusterMask, MaxPossibleClusters*nDims);
-		ClusterMask.clear();
+		//ClusterMask.clear();
 		ClusterMask.resize(MaxPossibleClusters*nDims);
     }
 }
@@ -869,8 +869,6 @@ integer KK::TrySplits()
     Output("Compute initial score before splitting: ");
     Score = ComputeScore();
 
-	KK *K2_container = NULL;
-
     // loop thu clusters, trying to split
     for (cc=1; cc<nClustersAlive; cc++)
     {
@@ -893,7 +891,7 @@ integer KK::TrySplits()
 			K2_container->UnmaskedInd.clear();
 			K2_container->SortedMaskChange.clear();
 			K2_container->SortedIndices.clear();
-			K2_container->AllVector2Mean.clear();
+			//K2_container->AllVector2Mean.clear();
 			// now we treat it as empty
 			K2_container->ConstructFrom(*this, SubsetIndices);
 		}
@@ -917,8 +915,6 @@ integer KK::TrySplits()
         if (UnusedCluster==-1)
         {
             Output("No free clusters, abandoning split");
-			if (K2_container)
-				delete K2_container;
             return DidSplit;
         }
 
@@ -975,8 +971,6 @@ integer KK::TrySplits()
             }
         }
     }
-	if (K2_container)
-		delete K2_container;
 	return DidSplit;
 }
 
@@ -1349,6 +1343,7 @@ KK::KK(char *FileBase, integer ElecNo, char *UseFeatures,
         scalar PenaltyK, scalar PenaltyKLogN, integer PriorPoint)
 {
 	KK_split = NULL;
+	K2_container = NULL;
     penaltyK = PenaltyK;
     penaltyKLogN = PenaltyKLogN;
     LoadData(FileBase, ElecNo, UseFeatures);
@@ -1365,6 +1360,7 @@ KK::KK(char *FileBase, integer ElecNo, char *UseFeatures,
 void KK::ConstructFrom(const KK &Source, const vector<integer> &Indices)
 {
 	KK_split = NULL;
+	K2_container = NULL;
     nDims = Source.nDims;
     nDims2 = nDims*nDims;
     nPoints = Indices.size();
@@ -1453,6 +1449,8 @@ KK::~KK()
 {
 	if (KK_split) delete KK_split;
 	KK_split = NULL;
+	if (K2_container) delete K2_container;
+	K2_container = NULL;
 }
 
 // Main loop
