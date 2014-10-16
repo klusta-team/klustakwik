@@ -156,9 +156,9 @@ This is an integer N when used in combination with the empty string for *UseFeat
 
 KlustaKwik uses penalties to reduce the number of clusters fit. The parameters PenaltyK and PenaltyKLogN are given positive values. The higher the values, the fewer clusters you obtain. Higher penalties discourage cluster splitting. PenaltyKLogN also increases penalty when there are more points.
 
--PenaltyK 0 -PenaltyKLogN 1 is the default, corresponding to the "Bayesian Information Criterion". This is recommended for classic mode.
+-PenaltyK 0 -PenaltyKLogN 1 is the default, corresponding to the "Bayesian Information Criterion". 
 
--PenaltyK 1 -PenaltyKLogN 0  corresponds to "Akaike's Information Criterion". This is recommended for large probes and masked mode.
+-PenaltyK 1 -PenaltyKLogN 0  corresponds to "Akaike's Information Criterion". This produces a larger number of clusters, and is recommended if you are find that clusters corresponding to different neurons are incorrectly merged.
 
 + **UseDistributional** (*default* 0)
 
