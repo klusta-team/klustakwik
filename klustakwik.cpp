@@ -213,7 +213,7 @@ void KK::ComputeClusterMasks()
 		vector<integer> &CurrentMasked = ClusterMaskedFeatures[c];
 		for (integer i = 0; i < nDims; i++)
 		{
-			if (ClusterMask[c*nDims + i] == true)
+			if (ClusterMask[c*nDims + i])
 				CurrentUnmasked.push_back(i);
 			else
 				CurrentMasked.push_back(i);
