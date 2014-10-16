@@ -62,13 +62,32 @@ integer KK::NumBytesRequired()
 		sizeof(scalar)*nPoints*nDims +               // AllVector2Mean
 		// UseDistributional only
 		UseDistributional*sizeof(scalar)*MaxPossibleClusters +  // CorrectionTerm
-		(UseDistributional*MaxPossibleClusters*nDims)/8 +       // ClusterMask (vector<bool>)
+		(UseDistributional*MaxPossibleClusters*nDims) +       // ClusterMask (vector<char>)
 		UseDistributional*sizeof(integer)*MaxPossibleClusters*nDims; // ClusterUnmaskedFeatures + ClusterMaskedFeatures
 
 	return num_bytes_allocated;
 }
 
-#define RESIZE_AND_FILL_WITH_ZEROS(name, size) name.resize(size); fill(name.begin(), name.end(), 0);
+template<class T>
+inline void resize_and_fill_with_zeros(vector<T> &x, integer newsize)
+{
+	if (x.size() == 0)
+	{
+		x.resize((uinteger)newsize);
+		return;
+	}
+	if (x.size() > (uinteger)newsize)
+	{
+		fill(x.begin(), x.end(), (T)0);
+		x.resize((uinteger)newsize);
+	}
+	else
+	{
+		x.resize((uinteger)newsize);
+		fill(x.begin(), x.end(), (T)0);
+	}
+}
+
 // Sets storage for KK class.  Needs to have nDims and nPoints defined
 void KK::AllocateArrays() {
 
@@ -79,29 +98,27 @@ void KK::AllocateArrays() {
 	mem.add(num_bytes_allocated);
 
     // Set sizes for arrays
-	RESIZE_AND_FILL_WITH_ZEROS(Data, nPoints * nDims);
+	resize_and_fill_with_zeros(Data, nPoints * nDims);
     //SNK
-	RESIZE_AND_FILL_WITH_ZEROS(Masks, nPoints * nDims);
-	RESIZE_AND_FILL_WITH_ZEROS(FloatMasks, nPoints * nDims);
-	RESIZE_AND_FILL_WITH_ZEROS(UnMaskDims, nPoints); //SNK Number of unmasked dimensions for each data point when using float masks $\sum m_i$
-	RESIZE_AND_FILL_WITH_ZEROS(Weight, MaxPossibleClusters);
-	RESIZE_AND_FILL_WITH_ZEROS(Mean, MaxPossibleClusters*nDims);
-	RESIZE_AND_FILL_WITH_ZEROS(Cov, MaxPossibleClusters*nDims2);
-	RESIZE_AND_FILL_WITH_ZEROS(LogP, MaxPossibleClusters*nPoints);
-	RESIZE_AND_FILL_WITH_ZEROS(Class, nPoints);
-	RESIZE_AND_FILL_WITH_ZEROS(OldClass, nPoints);
-	RESIZE_AND_FILL_WITH_ZEROS(Class2, nPoints);
-	RESIZE_AND_FILL_WITH_ZEROS(BestClass, nPoints);
-	RESIZE_AND_FILL_WITH_ZEROS(ClassAlive, MaxPossibleClusters);
-	RESIZE_AND_FILL_WITH_ZEROS(AliveIndex, MaxPossibleClusters);
-	RESIZE_AND_FILL_WITH_ZEROS(ClassPenalty, MaxPossibleClusters);
-	RESIZE_AND_FILL_WITH_ZEROS(nClassMembers, MaxPossibleClusters);
+	resize_and_fill_with_zeros(Masks, nPoints * nDims);
+	resize_and_fill_with_zeros(FloatMasks, nPoints * nDims);
+	resize_and_fill_with_zeros(UnMaskDims, nPoints); //SNK Number of unmasked dimensions for each data point when using float masks $\sum m_i$
+	resize_and_fill_with_zeros(Weight, MaxPossibleClusters);
+	resize_and_fill_with_zeros(Mean, MaxPossibleClusters*nDims);
+	resize_and_fill_with_zeros(Cov, MaxPossibleClusters*nDims2);
+	resize_and_fill_with_zeros(LogP, MaxPossibleClusters*nPoints);
+	resize_and_fill_with_zeros(Class, nPoints);
+	resize_and_fill_with_zeros(OldClass, nPoints);
+	resize_and_fill_with_zeros(Class2, nPoints);
+	resize_and_fill_with_zeros(BestClass, nPoints);
+	resize_and_fill_with_zeros(ClassAlive, MaxPossibleClusters);
+	resize_and_fill_with_zeros(AliveIndex, MaxPossibleClusters);
+	resize_and_fill_with_zeros(ClassPenalty, MaxPossibleClusters);
+	resize_and_fill_with_zeros(nClassMembers, MaxPossibleClusters);
     if(UseDistributional)
     {
-		RESIZE_AND_FILL_WITH_ZEROS(CorrectionTerm, nPoints * nDims);
-		//RESIZE_AND_FILL_WITH_ZEROS(ClusterMask, MaxPossibleClusters*nDims);
-		//ClusterMask.clear();
-		ClusterMask.resize(MaxPossibleClusters*nDims);
+		resize_and_fill_with_zeros(CorrectionTerm, nPoints * nDims);
+		resize_and_fill_with_zeros(ClusterMask, MaxPossibleClusters*nDims);
     }
 }
 
