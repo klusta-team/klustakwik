@@ -618,7 +618,6 @@ void KK::EStep()
         if(UseDistributional)
         {
             vector<scalar> BasisVector(nDims);
-			scalar *basis_vector_ptr = &(BasisVector[0]);
             SafeArray<scalar> safeBasisVector(BasisVector, "BasisVector");
             for(integer i=0; i<nDims; i++)
                 safeBasisVector[i] = (scalar)0;
