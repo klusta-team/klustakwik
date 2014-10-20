@@ -34,5 +34,7 @@ void TriSolve(SafeArray<scalar> &M, SafeArray<scalar> &x, SafeArray<scalar> &Out
 void MaskedTriSolve(SafeArray<scalar> &M, SafeArray<scalar> &x,
 	SafeArray<scalar> &Out, integer D,
 	vector<integer> &Masked, vector<integer> &Unmasked);
+void BPDTriSolve(BlockPlusDiagonalMatrix &M, SafeArray<scalar> &x,
+	SafeArray<scalar> &Out);
 
 #endif /* LINALG_H_ */

@@ -49,7 +49,7 @@ integer KK::NumBytesRequired()
 		sizeof(scalar)*nPoints +                     // UnMaskDims
 		sizeof(scalar)*MaxPossibleClusters +         // Weight
 		sizeof(scalar)*MaxPossibleClusters*nDims +   // Mean
-		sizeof(scalar)*MaxPossibleClusters*nDims2 +  // Cov
+		(1 - UseDistributional)*sizeof(scalar)*MaxPossibleClusters*nDims2 + // Cov
 		sizeof(scalar)*MaxPossibleClusters*nPoints + // LogP
 		sizeof(integer)*nPoints +                    // Class
 		sizeof(integer)*nPoints +                    // OldClass
@@ -105,7 +105,8 @@ void KK::AllocateArrays() {
 	resize_and_fill_with_zeros(UnMaskDims, nPoints); //SNK Number of unmasked dimensions for each data point when using float masks $\sum m_i$
 	resize_and_fill_with_zeros(Weight, MaxPossibleClusters);
 	resize_and_fill_with_zeros(Mean, MaxPossibleClusters*nDims);
-	resize_and_fill_with_zeros(Cov, MaxPossibleClusters*nDims2);
+	if (!UseDistributional)
+		resize_and_fill_with_zeros(Cov, MaxPossibleClusters*nDims2);
 	resize_and_fill_with_zeros(LogP, MaxPossibleClusters*nPoints);
 	resize_and_fill_with_zeros(Class, nPoints);
 	resize_and_fill_with_zeros(OldClass, nPoints);
@@ -256,14 +257,12 @@ void KK::MStep()
     // clear arrays
     memset((void*)&nClassMembers.front(), 0, MaxPossibleClusters*sizeof(integer));
     memset((void*)&Mean.front(), 0, MaxPossibleClusters*nDims*sizeof(scalar));
-    memset((void*)&Cov.front(), 0, MaxPossibleClusters*nDims*nDims*sizeof(scalar));
+	if (!UseDistributional)
+		memset((void*)&Cov.front(), 0, MaxPossibleClusters*nDims2*sizeof(scalar));
 // NOTE: memset commands above replace the code below:
 //    for(c=0; c<MaxPossibleClusters; c++) {
 //        nClassMembers[c] = 0;
 //        for(i=0; i<nDims; i++) Mean[c*nDims + i] = 0;
-//        for(i=0; i<nDims; i++) for(j=i; j<nDims; j++) {
-//            Cov[c*nDims2 + i*nDims + j] = 0;
-//        }
 //    }
 
     if (Debug) { Output("Entering Unmasked Mstep \n");}
@@ -441,7 +440,7 @@ void KK::MStep()
 			// Doesn't make any use of cache structure, but no need to upgrade now because
 			// we will move to a sparse block matrix structure that will make this more
 			// natural
-			
+			/*
 			const integer * __restrict cu = &(CurrentUnmasked[0]);
 			const integer ncu = (integer)CurrentUnmasked.size();
 			scalar * __restrict cov_c = &(Cov[c*nDims2]);
@@ -465,7 +464,7 @@ void KK::MStep()
 					}
 				}
 			}
-			
+			*/
 		}
 	}
 	else
@@ -512,19 +511,6 @@ void KK::MStep()
             c = AliveIndex[cc];
             vector<integer> &PointsInThisClass = PointsInClass[c];
 			integer NumPointsInThisClass = PointsInThisClass.size();
-            for(i=0; i<nDims; i++)
-            {
-                scalar ccf = 0.0; // class correction factor
-                for(integer q=0; q<NumPointsInThisClass; q++)
-                {
-                    p = PointsInThisClass[q];
-                    ccf += CorrectionTerm[p*nDims+i];
-                }
-                //Output("Class %d Class correction factor[%d] = %f \n",(int)c,(int)i,ccf);
-                Cov[c*nDims2+i*nDims+i] += ccf;
-            //    Output("Class %d Covariance diagonal[%d] = %f \n",(int)c,(int)i,Cov[c*nDims2+i*nDims+i] );
-            }
-			// DynamicCov way
 			BlockPlusDiagonalMatrix &CurrentCov = DynamicCov[cc];
 			for (integer ii = 0; ii<CurrentCov.NumUnmasked; ii++)
 			{
@@ -554,12 +540,6 @@ void KK::MStep()
 		for (cc = 0; cc < nClustersAlive; cc++)
 		{
 			c = AliveIndex[cc];
-			for (i = 0; i < nDims; i++)
-			{
-				//Output("Class %d: PriorPoint*NoiseVariance[%d] = %f",c,i,priorPoint*NoiseVariance[i]);
-				Cov[c*nDims2 + i*nDims + i] += priorPoint*NoiseVariance[i];
-			}
-			// DynamicCov way
 			BlockPlusDiagonalMatrix &CurrentCov = DynamicCov[cc];
 			for (integer ii = 0; ii < CurrentCov.NumUnmasked; ii++)
 				CurrentCov.Block[ii*CurrentCov.NumUnmasked + ii] += priorPoint*NoiseVariance[CurrentCov.Unmasked[ii]];
@@ -571,33 +551,29 @@ void KK::MStep()
     }
 
     // and normalize
-    if(UseDistributional){
-                for (cc=0; cc<nClustersAlive; cc++)
-                {
-                    c = AliveIndex[cc];
-                    for(i=0; i<nDims; i++)
-                        for(j=i; j<nDims; j++)
-                            Cov[c*nDims2 + i*nDims + j] /= (nClassMembers[c]+priorPoint-1);
-					// DynamicCov way
-					BlockPlusDiagonalMatrix &CurrentCov = DynamicCov[cc];
-					scalar factor = 1.0 / (nClassMembers[c] + priorPoint - 1);
-					for (i = 0; i < (integer)CurrentCov.Block.size(); i++)
-						//if (i/CurrentCov.NumUnmasked<=i%CurrentCov.NumUnmasked)
-							CurrentCov.Block[i] *= factor;
-					for (i = 0; i < (integer)CurrentCov.Diagonal.size(); i++)
-						CurrentCov.Diagonal[i] *= factor;
-				}
-
-        }
-    else {    //For original KlustaKwik classical EM
+    if(UseDistributional)
+	{
         for (cc=0; cc<nClustersAlive; cc++)
-                        {
-                            c = AliveIndex[cc];
-                            for(i=0; i<nDims; i++)
-                                for(j=i; j<nDims; j++)
-                                    Cov[c*nDims2 + i*nDims + j] /= (nClassMembers[c]-1);
-                        }
+        {
+            c = AliveIndex[cc];
+			BlockPlusDiagonalMatrix &CurrentCov = DynamicCov[cc];
+			scalar factor = 1.0 / (nClassMembers[c] + priorPoint - 1);
+			for (i = 0; i < (integer)CurrentCov.Block.size(); i++)
+				CurrentCov.Block[i] *= factor;
+			for (i = 0; i < (integer)CurrentCov.Diagonal.size(); i++)
+				CurrentCov.Diagonal[i] *= factor;
+		}
 
+    }
+    else
+	{    //For original KlustaKwik classical EM
+        for (cc=0; cc<nClustersAlive; cc++)
+        {
+            c = AliveIndex[cc];
+            for(i=0; i<nDims; i++)
+                for(j=i; j<nDims; j++)
+                    Cov[c*nDims2 + i*nDims + j] /= (nClassMembers[c]-1);
+        }
     }
 
 
@@ -612,8 +588,11 @@ void KK::MStep()
 			Output("Class %d - Weight %.2g\n", (int)c, Weight[c]);
             Output("Mean: ");
             MatPrint(stdout, &Mean.front() + c*nDims, 1, nDims);
-            Output("\nCov:\n");
-            MatPrint(stdout, &Cov.front() + c*nDims2, nDims, nDims);
+			if (!UseDistributional)
+			{
+				Output("\nCov:\n");
+				MatPrint(stdout, &Cov.front() + c*nDims2, nDims, nDims);
+			}
             Output("\n");
         }
     }
@@ -657,23 +636,31 @@ void KK::EStep()
         NumberInClass[ccc]++;
     }
 
-    for(cc=1; cc<nClustersAlive; cc++)
+	BlockPlusDiagonalMatrix *CurrentCov;
+	BlockPlusDiagonalMatrix *CholBPD = NULL;
+
+	for (cc = 1; cc<nClustersAlive; cc++)
     {
         c = AliveIndex[cc];
 
         // calculate cholesky decomposition for class c
-        SafeArray<scalar> safeCov(Cov, c*nDims2, "safeCov");
 		integer chol_return;
-		BlockPlusDiagonalMatrix &CurrentCov = DynamicCov[cc];
-		BlockPlusDiagonalMatrix CholBPD(CurrentCov.Masked, CurrentCov.Unmasked);
 		if (UseDistributional)
 		{
-			chol_return = MaskedCholesky(safeCov, safeChol, nDims, ClusterMaskedFeatures[c], ClusterUnmaskedFeatures[c]);
-			chol_return = BPDCholesky(CurrentCov, CholBPD);
-			//CholBPD.compare(&(Chol[0]));
+			CurrentCov = &(DynamicCov[cc]);
+			if (CholBPD)
+			{
+				delete CholBPD;
+				CholBPD = NULL;
+			}
+			CholBPD = new BlockPlusDiagonalMatrix(CurrentCov->Masked, CurrentCov->Unmasked);
+			chol_return = BPDCholesky(*CurrentCov, *CholBPD);
 		}
 		else
+		{
+			SafeArray<scalar> safeCov(Cov, c*nDims2, "safeCov");
 			chol_return = Cholesky(safeCov, safeChol, nDims);
+		}
         if(chol_return)
         {
             // If Cholesky returns 1, it means the matrix is not positive definite.
@@ -688,16 +675,16 @@ void KK::EStep()
 		if (UseDistributional)
 		{
 			LogRootDet = 0;
-			for (integer ii = 0; ii < CholBPD.NumUnmasked; ii++)
-				LogRootDet += log(CholBPD.Block[ii*CholBPD.NumUnmasked + ii]);
-			for (integer ii = 0; ii < CholBPD.NumMasked; ii++)
-				LogRootDet += log(CholBPD.Diagonal[ii]);
+			for (integer ii = 0; ii < CholBPD->NumUnmasked; ii++)
+				LogRootDet += log(CholBPD->Block[ii*CholBPD->NumUnmasked + ii]);
+			for (integer ii = 0; ii < CholBPD->NumMasked; ii++)
+				LogRootDet += log(CholBPD->Diagonal[ii]);
 		}
 		else
 		{
 			LogRootDet = 0;
 			for (i = 0; i < nDims; i++)
-				LogRootDet += (float)log(Chol[i*nDims + i]);
+				LogRootDet += log(Chol[i*nDims + i]);
 		}
 
         // if distributional E step, compute diagonal of inverse of cov matrix
@@ -711,7 +698,7 @@ void KK::EStep()
             {  
 				safeBasisVector[i] = (scalar)1;
                 // calculate Root vector - by Chol*Root = BasisVector
-				MaskedTriSolve(safeChol, safeBasisVector, safeRoot, nDims, ClusterMaskedFeatures[c], ClusterUnmaskedFeatures[c]);
+				BPDTriSolve(*CholBPD, safeBasisVector, safeRoot);
                 // add half of Root vector squared to log p
                 scalar Sii = (scalar)0;
                 for(integer j=0; j<nDims; j++)
@@ -748,14 +735,13 @@ void KK::EStep()
 
             // calculate Root vector - by Chol*Root = Vec2Mean
 			if (UseDistributional)
-				MaskedTriSolve(safeChol, safeVec2Mean, safeRoot, nDims, ClusterMaskedFeatures[c], ClusterUnmaskedFeatures[c]);
+				BPDTriSolve(*CholBPD, safeVec2Mean, safeRoot);
 			else
 				TriSolve(safeChol, safeVec2Mean, safeRoot, nDims);
 
             // add half of Root vector squared to log p
             for(i=0; i<nDims; i++)
                 Mahal += Root[i]*Root[i];
-    //        if(Debug)Output("Mahal = %f",Mahal);
 
             // if distributional E step, add correction term
 			if (UseDistributional)
@@ -767,26 +753,16 @@ void KK::EStep()
 					subMahal += ctp[i] * icd[i];
 				Mahal += subMahal*correction_factor;
 			}
-        //        for(i=0; i<nDims; i++)
-        //        {
-        //            //if(UseDistributionalEStep==2)      // Distribution E-Step 2 "semi-Bayesian", no longer used, code retained here in case
-        //            //    correction_factor = ClassCorrectionFactor[c*nDims+i]+
-        //            //            (1.0-2.0/(scalar)nClassMembers[c]);
-        //            Mahal += correction_factor*CorrectionTerm[p*nDims+i]*safeInvCovDiag[i];
-        ////                                if(Debug) {Output("CorrectionTerm[%d*nDims+%d] = %f ",(int)p,(int)i,CorrectionTerm[p*nDims+i]);
-        ////               Output("Mahal = %f",Mahal);}
-        //        }
-
             // Score is given by Mahal/2 + log RootDet - log weight
             LogP[p*MaxPossibleClusters + c] = Mahal/2
                                        + LogRootDet
                                     - log(Weight[c])
-                                    //+ (float)log(2*M_PI)*nDims/2;
 									+ (0.5*log(2 * M_PI))*nDims;
-                                          //           Output("LogP = %f ",LogP[p*MaxPossibleClusters + c]);
 
         } // for(p=0; p<nPoints; p++)
     } // for(cc=1; cc<nClustersAlive; cc++)
+	if (CholBPD)
+		delete CholBPD;
 }
 
 

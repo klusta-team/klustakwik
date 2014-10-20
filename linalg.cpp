@@ -163,7 +163,7 @@ integer BPDCholesky(BlockPlusDiagonalMatrix &In, BlockPlusDiagonalMatrix &Out)
 {
 	integer ii, jj, kk;
 	scalar sum;
-	integer NumUnmasked = (integer)In.Unmasked.size();
+	integer NumUnmasked = (integer)In.NumUnmasked;
 
 	// main bit for unmasked features
 	for (ii = 0; ii < NumUnmasked; ii++)
@@ -270,4 +270,29 @@ void MaskedTriSolve(SafeArray<scalar> &M, SafeArray<scalar> &x,
 	vector<integer> &Masked, vector<integer> &Unmasked)
 {
 	FastMaskedTriSolve(&(M[0]), &(x[0]), &(Out[0]), D, &(Masked[0]), &(Unmasked[0]), Masked.size(), Unmasked.size());
+}
+
+
+void BPDTriSolve(BlockPlusDiagonalMatrix &M, SafeArray<scalar> &x,
+	SafeArray<scalar> &Out)
+{
+	for (integer ii = 0; ii < M.NumUnmasked; ii++)
+	{
+		const integer i = M.Unmasked[ii];
+		scalar sum = x[i];
+		//scalar * __restrict MiD = &(M.Block[ii*M.NumUnmasked]);
+		for (integer jj = 0; jj < ii; jj++) // j<i
+		{
+			const integer j = M.Unmasked[jj];
+			//sum += MiD[jj] * Out[j];
+			sum += M.Block[ii*M.NumUnmasked + jj] * Out[j];
+		}
+		//Out[i] = -sum / MiD[ii];
+		Out[i] = -sum / M.Block[ii*M.NumUnmasked + ii];
+	}
+	for (integer ii = 0; ii < M.NumMasked; ii++)
+	{
+		const integer i = M.Masked[ii];
+		Out[i] = -x[i] / M.Diagonal[ii];
+	}
 }
