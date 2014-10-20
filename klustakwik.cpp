@@ -235,6 +235,12 @@ void KK::ComputeClusterMasks()
 			else
 				CurrentMasked.push_back(i);
 		}
+		if (Verbose>=2)
+		{
+			Output("Cluster mask: cluster %d unmasked %d iterations %d/%d.\n",
+				(int)cc, (int)CurrentUnmasked.size(),
+				(int)numiterations, (int)global_numiterations);
+		}
 	}
 
 }
