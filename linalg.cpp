@@ -118,26 +118,58 @@ void TriSolve(SafeArray<scalar> &M, SafeArray<scalar> &x,
     }
 }
 
-void MaskedTriSolve(SafeArray<scalar> &M, SafeArray<scalar> &x,
-                	SafeArray<scalar> &Out, integer D,
-					vector<integer> &Masked, vector<integer> &Unmasked)
+//void MaskedTriSolve(SafeArray<scalar> &M, SafeArray<scalar> &x,
+//                	SafeArray<scalar> &Out, integer D,
+//					vector<integer> &Masked, vector<integer> &Unmasked)
+//{
+//	integer NumUnmasked = (integer)Unmasked.size();
+//	integer NumMasked = (integer)Masked.size();
+//	for (integer ii = 0; ii < NumUnmasked; ii++)
+//	{
+//		integer i = Unmasked[ii];
+//		scalar sum = x[i];
+//		for (integer jj = 0; jj < ii; jj++) // j<i
+//		{
+//			integer j = Unmasked[jj];
+//			sum += M[i*D + j] * Out[j];
+//		}
+//		Out[i] = - sum / M[i*D + i];
+//	}
+//	for (integer ii = 0; ii < NumMasked; ii++)
+//	{
+//		integer i = Masked[ii];
+//		Out[i] = -x[i] / M[i*D + i];
+//	}
+//}
+
+// fast version with pointers and restricts
+void FastMaskedTriSolve(scalar * __restrict M, scalar * __restrict x,
+	scalar * __restrict Out, integer D,
+	integer * __restrict Masked, integer * __restrict Unmasked,
+	integer NumMasked, integer NumUnmasked)
 {
-	integer NumUnmasked = (integer)Unmasked.size();
-	integer NumMasked = (integer)Masked.size();
 	for (integer ii = 0; ii < NumUnmasked; ii++)
 	{
-		integer i = Unmasked[ii];
+		const integer i = Unmasked[ii];
 		scalar sum = x[i];
+		scalar * __restrict MiD = M + i*D;
 		for (integer jj = 0; jj < ii; jj++) // j<i
 		{
-			integer j = Unmasked[jj];
-			sum += M[i*D + j] * Out[j];
+			const integer j = Unmasked[jj];
+			sum += MiD[j] * Out[j];
 		}
-		Out[i] = - sum / M[i*D + i];
+		Out[i] = -sum / MiD[i];
 	}
 	for (integer ii = 0; ii < NumMasked; ii++)
 	{
-		integer i = Masked[ii];
+		const integer i = Masked[ii];
 		Out[i] = -x[i] / M[i*D + i];
 	}
+}
+
+void MaskedTriSolve(SafeArray<scalar> &M, SafeArray<scalar> &x,
+	SafeArray<scalar> &Out, integer D,
+	vector<integer> &Masked, vector<integer> &Unmasked)
+{
+	FastMaskedTriSolve(&(M[0]), &(x[0]), &(Out[0]), D, &(Masked[0]), &(Unmasked[0]), Masked.size(), Unmasked.size());
 }

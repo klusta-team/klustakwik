@@ -36,6 +36,10 @@ void KK::MemoryCheck()
 
 integer KK::NumBytesRequired()
 {
+	// we don't allocate any memory if we have already allocated memory to this
+	// (i.e. if we are in TrySplits)
+	if (Data.size())
+		return 0;
 	nDims2 = nDims*nDims;
 	// Compute required memory and check if it exceeds the limit set
 	integer num_bytes_allocated =
@@ -58,10 +62,30 @@ integer KK::NumBytesRequired()
 		sizeof(scalar)*nPoints*nDims +               // AllVector2Mean
 		// UseDistributional only
 		UseDistributional*sizeof(scalar)*MaxPossibleClusters +  // CorrectionTerm
-		(UseDistributional*MaxPossibleClusters*nDims)/8 +       // ClusterMask (vector<bool>)
+		(UseDistributional*MaxPossibleClusters*nDims) +       // ClusterMask (vector<char>)
 		UseDistributional*sizeof(integer)*MaxPossibleClusters*nDims; // ClusterUnmaskedFeatures + ClusterMaskedFeatures
 
 	return num_bytes_allocated;
+}
+
+template<class T>
+inline void resize_and_fill_with_zeros(vector<T> &x, integer newsize)
+{
+	if (x.size() == 0)
+	{
+		x.resize((uinteger)newsize);
+		return;
+	}
+	if (x.size() > (uinteger)newsize)
+	{
+		fill(x.begin(), x.end(), (T)0);
+		x.resize((uinteger)newsize);
+	}
+	else
+	{
+		x.resize((uinteger)newsize);
+		fill(x.begin(), x.end(), (T)0);
+	}
 }
 
 // Sets storage for KK class.  Needs to have nDims and nPoints defined
@@ -74,27 +98,27 @@ void KK::AllocateArrays() {
 	mem.add(num_bytes_allocated);
 
     // Set sizes for arrays
-    Data.resize(nPoints * nDims);
+	resize_and_fill_with_zeros(Data, nPoints * nDims);
     //SNK
-    Masks.resize(nPoints * nDims);
-    FloatMasks.resize(nPoints * nDims);
-    UnMaskDims.resize(nPoints); //SNK Number of unmasked dimensions for each data point when using float masks $\sum m_i$
-    Weight.resize(MaxPossibleClusters);
-    Mean.resize(MaxPossibleClusters*nDims);
-    Cov.resize(MaxPossibleClusters*nDims2);
-    LogP.resize(MaxPossibleClusters*nPoints);
-    Class.resize(nPoints);
-    OldClass.resize(nPoints);
-    Class2.resize(nPoints);
-    BestClass.resize(nPoints);
-    ClassAlive.resize(MaxPossibleClusters);
-    AliveIndex.resize(MaxPossibleClusters);
-    ClassPenalty.resize(MaxPossibleClusters);
-    nClassMembers.resize(MaxPossibleClusters);
+	resize_and_fill_with_zeros(Masks, nPoints * nDims);
+	resize_and_fill_with_zeros(FloatMasks, nPoints * nDims);
+	resize_and_fill_with_zeros(UnMaskDims, nPoints); //SNK Number of unmasked dimensions for each data point when using float masks $\sum m_i$
+	resize_and_fill_with_zeros(Weight, MaxPossibleClusters);
+	resize_and_fill_with_zeros(Mean, MaxPossibleClusters*nDims);
+	resize_and_fill_with_zeros(Cov, MaxPossibleClusters*nDims2);
+	resize_and_fill_with_zeros(LogP, MaxPossibleClusters*nPoints);
+	resize_and_fill_with_zeros(Class, nPoints);
+	resize_and_fill_with_zeros(OldClass, nPoints);
+	resize_and_fill_with_zeros(Class2, nPoints);
+	resize_and_fill_with_zeros(BestClass, nPoints);
+	resize_and_fill_with_zeros(ClassAlive, MaxPossibleClusters);
+	resize_and_fill_with_zeros(AliveIndex, MaxPossibleClusters);
+	resize_and_fill_with_zeros(ClassPenalty, MaxPossibleClusters);
+	resize_and_fill_with_zeros(nClassMembers, MaxPossibleClusters);
     if(UseDistributional)
     {
-        CorrectionTerm.resize(nPoints * nDims);
-        ClusterMask.resize(MaxPossibleClusters*nDims);
+		resize_and_fill_with_zeros(CorrectionTerm, nPoints * nDims);
+		resize_and_fill_with_zeros(ClusterMask, MaxPossibleClusters*nDims);
     }
 }
 
@@ -206,7 +230,7 @@ void KK::ComputeClusterMasks()
 		vector<integer> &CurrentMasked = ClusterMaskedFeatures[c];
 		for (integer i = 0; i < nDims; i++)
 		{
-			if (ClusterMask[c*nDims + i] == true)
+			if (ClusterMask[c*nDims + i])
 				CurrentUnmasked.push_back(i);
 			else
 				CurrentMasked.push_back(i);
@@ -456,10 +480,11 @@ void KK::MStep()
         {
             c = AliveIndex[cc];
             vector<integer> &PointsInThisClass = PointsInClass[c];
+			integer NumPointsInThisClass = PointsInThisClass.size();
             for(i=0; i<nDims; i++)
             {
                 scalar ccf = 0.0; // class correction factor
-                for(integer q=0; q<(integer)PointsInThisClass.size(); q++)
+                for(integer q=0; q<NumPointsInThisClass; q++)
                 {
                     p = PointsInThisClass[q];
                     ccf += CorrectionTerm[p*nDims+i];
@@ -626,9 +651,14 @@ void KK::EStep()
             // Compute Mahalanobis distance
             Mahal = 0;
 
-            // calculate data minus class mean
-            for(i=0; i<nDims; i++)
-                Vec2Mean[i] = Data[p*nDims + i] - Mean[c*nDims + i];
+			// calculate data minus class mean
+			//for (i = 0; i<nDims; i++)
+			//	Vec2Mean[i] = Data[p*nDims + i] - Mean[c*nDims + i];
+			scalar * __restrict Data_p = &(Data[p*nDims]);
+			scalar * __restrict Mean_c = &(Mean[c*nDims]);
+			scalar * __restrict v2m = &(Vec2Mean[0]);
+			for (i = 0; i < nDims; i++)
+				v2m[i] = Data_p[i] - Mean_c[i];
 
             // calculate Root vector - by Chol*Root = Vec2Mean
 			if (UseDistributional)
@@ -642,22 +672,31 @@ void KK::EStep()
     //        if(Debug)Output("Mahal = %f",Mahal);
 
             // if distributional E step, add correction term
-            if(UseDistributional)
-                for(i=0; i<nDims; i++)
-                {
-                    //if(UseDistributionalEStep==2)      // Distribution E-Step 2 "semi-Bayesian", no longer used, code retained here in case
-                    //    correction_factor = ClassCorrectionFactor[c*nDims+i]+
-                    //            (1.0-2.0/(scalar)nClassMembers[c]);
-                    Mahal += correction_factor*CorrectionTerm[p*nDims+i]*safeInvCovDiag[i];
-        //                                if(Debug) {Output("CorrectionTerm[%d*nDims+%d] = %f ",(int)p,(int)i,CorrectionTerm[p*nDims+i]);
-        //               Output("Mahal = %f",Mahal);}
-                }
+			if (UseDistributional)
+			{
+				scalar * __restrict ctp = &(CorrectionTerm[p*nDims]);
+				scalar * __restrict icd = &(InvCovDiag[0]);
+				scalar subMahal = 0.0;
+				for (i = 0; i < nDims; i++)
+					subMahal += ctp[i] * icd[i];
+				Mahal += subMahal*correction_factor;
+			}
+        //        for(i=0; i<nDims; i++)
+        //        {
+        //            //if(UseDistributionalEStep==2)      // Distribution E-Step 2 "semi-Bayesian", no longer used, code retained here in case
+        //            //    correction_factor = ClassCorrectionFactor[c*nDims+i]+
+        //            //            (1.0-2.0/(scalar)nClassMembers[c]);
+        //            Mahal += correction_factor*CorrectionTerm[p*nDims+i]*safeInvCovDiag[i];
+        ////                                if(Debug) {Output("CorrectionTerm[%d*nDims+%d] = %f ",(int)p,(int)i,CorrectionTerm[p*nDims+i]);
+        ////               Output("Mahal = %f",Mahal);}
+        //        }
 
             // Score is given by Mahal/2 + log RootDet - log weight
             LogP[p*MaxPossibleClusters + c] = Mahal/2
                                        + LogRootDet
                                     - log(Weight[c])
-                                    + (float)log(2*M_PI)*nDims/2;
+                                    //+ (float)log(2*M_PI)*nDims/2;
+									+ (0.5*log(2 * M_PI))*nDims;
                                           //           Output("LogP = %f ",LogP[p*MaxPossibleClusters + c]);
 
         } // for(p=0; p<nPoints; p++)
@@ -841,7 +880,24 @@ integer KK::TrySplits()
     }
 
     // set up K3 and remember to add the masks
-    KK K3(*this);
+    //KK K3(*this);
+	if (KK_split == NULL)
+	{
+		KK_split = new KK(*this);
+	}
+	else
+	{
+		// We have to clear these to bypass the debugging checks
+		// in precomputations.cpp
+		KK_split->Unmasked.clear();
+		KK_split->UnmaskedInd.clear();
+		KK_split->SortedMaskChange.clear();
+		KK_split->SortedIndices.clear();
+		// now we treat it as empty
+		KK_split->ConstructFrom(*this);
+	}
+	KK &K3 = *KK_split;
+
     Output("Compute initial score before splitting: ");
     Score = ComputeScore();
 
@@ -858,7 +914,25 @@ integer KK::TrySplits()
                 SubsetIndices.push_back(p);
         if(SubsetIndices.size()==0)
             continue;
-        KK K2(*this, SubsetIndices);
+
+		if (K2_container)
+		{
+			// We have to clear these to bypass the debugging checks
+			// in precomputations.cpp
+			K2_container->Unmasked.clear();
+			K2_container->UnmaskedInd.clear();
+			K2_container->SortedMaskChange.clear();
+			K2_container->SortedIndices.clear();
+			//K2_container->AllVector2Mean.clear();
+			// now we treat it as empty
+			K2_container->ConstructFrom(*this, SubsetIndices);
+		}
+		else
+		{
+			K2_container = new KK(*this, SubsetIndices);
+		}
+        //KK K2(*this, SubsetIndices);
+		KK &K2 = *K2_container;
 
         // find an unused cluster
         UnusedCluster = -1;
@@ -929,7 +1003,7 @@ integer KK::TrySplits()
             }
         }
     }
-    return DidSplit;
+	return DidSplit;
 }
 
 // ComputeScore() - computes total score.  Requires M, E, and C steps to have been run
@@ -1300,6 +1374,8 @@ scalar KK::Cluster(char *StartCluFile=NULL)
 KK::KK(char *FileBase, integer ElecNo, char *UseFeatures,
         scalar PenaltyK, scalar PenaltyKLogN, integer PriorPoint)
 {
+	KK_split = NULL;
+	K2_container = NULL;
     penaltyK = PenaltyK;
     penaltyKLogN = PenaltyKLogN;
     LoadData(FileBase, ElecNo, UseFeatures);
@@ -1315,7 +1391,8 @@ KK::KK(char *FileBase, integer ElecNo, char *UseFeatures,
 // the data from a source KK object with a subset of the indices.
 void KK::ConstructFrom(const KK &Source, const vector<integer> &Indices)
 {
-    
+	KK_split = NULL;
+	K2_container = NULL;
     nDims = Source.nDims;
     nDims2 = nDims*nDims;
     nPoints = Indices.size();
@@ -1323,6 +1400,10 @@ void KK::ConstructFrom(const KK &Source, const vector<integer> &Indices)
     penaltyKLogN = Source.penaltyKLogN;
     priorPoint = Source.priorPoint;
     nStartingClusters = Source.nStartingClusters;
+	NoisePoint = Source.NoisePoint;
+	FullStep = Source.FullStep;
+	nClustersAlive = Source.nClustersAlive;
+	numiterations = Source.numiterations;
     AllocateArrays(); // Set storage for all the arrays such as Data, FloatMasks, Weight, Mean, Cov, etc.
 
     if (Debug)
@@ -1377,6 +1458,14 @@ void KK::ConstructFrom(const KK &Source, const vector<integer> &Indices)
     numiterations = 0;
 }
 
+void KK::ConstructFrom(const KK &Source)
+{
+	vector<integer> Indices(Source.nPoints);
+	for (integer i = 0; i<Source.nPoints; i++)
+		Indices[i] = i;
+	ConstructFrom(Source, Indices);
+}
+
 KK::KK(const KK &Source, const vector<integer> &Indices)
 {
     ConstructFrom(Source, Indices);
@@ -1385,10 +1474,15 @@ KK::KK(const KK &Source, const vector<integer> &Indices)
 // If we don't specify an index subset, use everything.
 KK::KK(const KK &Source)
 {
-    vector<integer> Indices(Source.nPoints);
-    for(integer i=0; i<Source.nPoints; i++)
-        Indices[i] = i;
-    ConstructFrom(Source, Indices);
+	ConstructFrom(Source);
+}
+
+KK::~KK()
+{
+	if (KK_split) delete KK_split;
+	KK_split = NULL;
+	if (K2_container) delete K2_container;
+	K2_container = NULL;
 }
 
 // Main loop

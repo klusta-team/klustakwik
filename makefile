@@ -1,13 +1,11 @@
-# MAKE FILE, use 'make native' if you are running on a reasonably recent version
-# of g++ for best optimisation. When ready for release, change PROGRAM to
-# KlustaKwik for backwards compatibility
+# MAKE FILE
 
 PROGRAM = KlustaKwik
 OBJS = io.o linalg.o log.o parameters.o precomputations.o util.o memorytracking.o klustakwik.o
 CC = g++
 DEBUG = -g
 PROFILE = -pg
-OPTIMISATIONS = -O3 -ffast-math
+OPTIMISATIONS = -O3 -ffast-math -march=native
 CFLAGS = -Wall -c -Wno-write-strings $(OPTIMISATIONS)
 LFLAGS = -Wall
 
@@ -19,14 +17,13 @@ debug: LFLAGS += $(DEBUG)
 debug: executable
 
 # Adds profiling flags
-profile: OPTIMISATIONS += -march=native
 profile: CFLAGS += $(PROFILE)
 profile: LFLAGS += $(PROFILE)
 profile: executable
 
-# Adds -march=native to optimisations, which only works for recent gcc versions
-native: OPTIMISATIONS += -march=native
-native: executable
+# Remove -march=native from optimisations for older gcc versions
+oldgcc: OPTIMISATIONS = -O3 -ffast-math
+oldgcc: executable
 
 .PHONY: all debug native executable clean
 

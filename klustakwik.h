@@ -31,9 +31,12 @@ public:
             scalar PenaltyK, scalar PenaltyKLogN, integer PriorPoint);
     // Construct from subset of existing KK object
     void ConstructFrom(const KK &Source, const vector<integer> &Indices);
+	void ConstructFrom(const KK &Source);
     KK(const KK &Source, const vector<integer> &Indices);
     // Make an entire copy of existing KK object
     KK(const KK &Source);
+	// Destructor
+	~KK();
     /////////////// FUNCTIONS //////////////////////////////////////////////////
 	void MemoryCheck();
 	integer NumBytesRequired();
@@ -77,6 +80,7 @@ public:
     void SaveCovMeans();
 public:
     /////////////// VARIABLES //////////////////////////////////////////////////
+	KK *KK_split, *K2_container; // used for splitting
     integer nDims, nDims2; // nDims2 is nDims squared and the mean of the unmasked dimensions.
     int nStartingClusters; // total # starting clusters, including clu 0, the noise cluster (int because read in from file)
     integer nClustersAlive; // nClustersAlive is total number with points in, excluding noise cluster
@@ -127,7 +131,7 @@ public:
     vector<integer> AliveIndex; // a list of the alive classes to iterate over
 
     // Used for distributional optimisations
-    vector<bool> ClusterMask;
+    vector<char> ClusterMask;
     vector< vector<integer> > ClusterUnmaskedFeatures;
     vector< vector<integer> > ClusterMaskedFeatures;
 

@@ -15,10 +15,18 @@ You may subscribe to our googlegroups discussions by sending an email to:  klust
 Installation
 ------------
 
-### Windows 64 bits
+### Windows 64 bit (from binary installer, may be an older version)
 
   * Download and install the [KlustaKwik installer for Windows 64 bits.](http://klustakwik.rossant.net/klustakwik-setup.exe)
   * After the installation, the command `klustakwik` will be available in the terminal.
+  
+### Windows from source
+
+  * The source files contain Visual Studio project files. This has been tested
+    on the freely available Visual Studio Express 2013 and is compatible with
+    both 32 and 64 bit architectures. Simply open the project files, select
+    the 'Release' target for 32/64 bit and select build. The compiled
+    executable will be available in e.g. ``x64/Release/KlustaKwik.exe``.
   
 ### Other systems
 
@@ -226,9 +234,7 @@ Full Glossary of Parameters
 Memory usage
 ------------
 
-When processing large files, memory can become an issue. The largest array stored by KlustaKwik is of size N_points*MaxPossibleClusters. (This is the array LogP, containing the log likelihood of each spike in each cluster). If you are having memory problems, try reducing the MaxPossibleClusters parameter, or use the -Subset option, which will also make it run faster.
-
-Also please note that the current version uses integer addressing, which in most compilers means 32 bit. This means it won't run in cases where the largest array exceeds ~2GB. Fixing this issue is on the to-do list, but for now please use the workarounds described in the last paragraph.
+When processing large files, memory can become an issue. The largest array stored by KlustaKwik is of size N_points*MaxPossibleClusters. (This is the array LogP, containing the log likelihood of each spike in each cluster). If you are having memory problems, try reducing the MaxPossibleClusters parameter.
 
 
 Various debugging options for developers
@@ -281,13 +287,8 @@ If you are uncertain whether or not you have run KlustaKwik having inputted the 
 How to cite
 -----------
 
-If you have used KlustaKwik and/or SpikeDetekt for a scientific publication, please cite our preprint on the arxiv,
-'High-dimensional cluster analysis with the Masked EM Algorithm' by Shabnam N. Kadir, Dan F.M. Goodman and Kenneth D. Harris:
+If you have used KlustaKwik and/or SpikeDetekt for a scientific publication, please cite the following paper:
 
-http://arxiv.org/abs/1309.2848
-    
-    
-
-
-
-
+    Kadir SN, Goodman DFM, Harris KD (2014).
+    High-dimensional cluster analysis with the masked EM algorithm.
+    Neural Computation 26:11. doi:10.1162/NECO_a_00661
