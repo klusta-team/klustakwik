@@ -480,10 +480,11 @@ void KK::MStep()
         {
             c = AliveIndex[cc];
             vector<integer> &PointsInThisClass = PointsInClass[c];
+			integer NumPointsInThisClass = PointsInThisClass.size();
             for(i=0; i<nDims; i++)
             {
                 scalar ccf = 0.0; // class correction factor
-                for(integer q=0; q<(integer)PointsInThisClass.size(); q++)
+                for(integer q=0; q<NumPointsInThisClass; q++)
                 {
                     p = PointsInThisClass[q];
                     ccf += CorrectionTerm[p*nDims+i];
@@ -617,6 +618,7 @@ void KK::EStep()
         if(UseDistributional)
         {
             vector<scalar> BasisVector(nDims);
+			scalar *basis_vector_ptr = &(BasisVector[0]);
             SafeArray<scalar> safeBasisVector(BasisVector, "BasisVector");
             for(integer i=0; i<nDims; i++)
                 safeBasisVector[i] = (scalar)0;
@@ -650,9 +652,14 @@ void KK::EStep()
             // Compute Mahalanobis distance
             Mahal = 0;
 
-            // calculate data minus class mean
-            for(i=0; i<nDims; i++)
-                Vec2Mean[i] = Data[p*nDims + i] - Mean[c*nDims + i];
+			// calculate data minus class mean
+			//for (i = 0; i<nDims; i++)
+			//	Vec2Mean[i] = Data[p*nDims + i] - Mean[c*nDims + i];
+			scalar * __restrict Data_p = &(Data[p*nDims]);
+			scalar * __restrict Mean_c = &(Mean[c*nDims]);
+			scalar * __restrict v2m = &(Vec2Mean[0]);
+			for (i = 0; i < nDims; i++)
+				v2m[i] = Data_p[i] - Mean_c[i];
 
             // calculate Root vector - by Chol*Root = Vec2Mean
 			if (UseDistributional)
@@ -666,22 +673,31 @@ void KK::EStep()
     //        if(Debug)Output("Mahal = %f",Mahal);
 
             // if distributional E step, add correction term
-            if(UseDistributional)
-                for(i=0; i<nDims; i++)
-                {
-                    //if(UseDistributionalEStep==2)      // Distribution E-Step 2 "semi-Bayesian", no longer used, code retained here in case
-                    //    correction_factor = ClassCorrectionFactor[c*nDims+i]+
-                    //            (1.0-2.0/(scalar)nClassMembers[c]);
-                    Mahal += correction_factor*CorrectionTerm[p*nDims+i]*safeInvCovDiag[i];
-        //                                if(Debug) {Output("CorrectionTerm[%d*nDims+%d] = %f ",(int)p,(int)i,CorrectionTerm[p*nDims+i]);
-        //               Output("Mahal = %f",Mahal);}
-                }
+			if (UseDistributional)
+			{
+				scalar * __restrict ctp = &(CorrectionTerm[p*nDims]);
+				scalar * __restrict icd = &(InvCovDiag[0]);
+				scalar subMahal = 0.0;
+				for (i = 0; i < nDims; i++)
+					subMahal += ctp[i] * icd[i];
+				Mahal += subMahal*correction_factor;
+			}
+        //        for(i=0; i<nDims; i++)
+        //        {
+        //            //if(UseDistributionalEStep==2)      // Distribution E-Step 2 "semi-Bayesian", no longer used, code retained here in case
+        //            //    correction_factor = ClassCorrectionFactor[c*nDims+i]+
+        //            //            (1.0-2.0/(scalar)nClassMembers[c]);
+        //            Mahal += correction_factor*CorrectionTerm[p*nDims+i]*safeInvCovDiag[i];
+        ////                                if(Debug) {Output("CorrectionTerm[%d*nDims+%d] = %f ",(int)p,(int)i,CorrectionTerm[p*nDims+i]);
+        ////               Output("Mahal = %f",Mahal);}
+        //        }
 
             // Score is given by Mahal/2 + log RootDet - log weight
             LogP[p*MaxPossibleClusters + c] = Mahal/2
                                        + LogRootDet
                                     - log(Weight[c])
-                                    + (float)log(2*M_PI)*nDims/2;
+                                    //+ (float)log(2*M_PI)*nDims/2;
+									+ (0.5*log(2 * M_PI))*nDims;
                                           //           Output("LogP = %f ",LogP[p*MaxPossibleClusters + c]);
 
         } // for(p=0; p<nPoints; p++)
