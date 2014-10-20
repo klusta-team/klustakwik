@@ -235,6 +235,12 @@ void KK::ComputeClusterMasks()
 			else
 				CurrentMasked.push_back(i);
 		}
+		if (Verbose>=2)
+		{
+			Output("Cluster mask: cluster %d unmasked %d iterations %d/%d init type %d.\n",
+				(int)cc, (int)CurrentUnmasked.size(),
+				(int)numiterations, (int)global_numiterations, (int)init_type);
+		}
 	}
 
 }
@@ -1385,6 +1391,7 @@ KK::KK(char *FileBase, integer ElecNo, char *UseFeatures,
     
     DoInitialPrecomputations();//Now DoPrecomputations is only invoked in the initialization
     numiterations = 0;
+	init_type = 0;
 }
 
 // This function is used by both of the constructors below, it initialises
@@ -1469,12 +1476,14 @@ void KK::ConstructFrom(const KK &Source)
 KK::KK(const KK &Source, const vector<integer> &Indices)
 {
     ConstructFrom(Source, Indices);
+	init_type = 2;
 }
 
 // If we don't specify an index subset, use everything.
 KK::KK(const KK &Source)
 {
 	ConstructFrom(Source);
+	init_type = 1;
 }
 
 KK::~KK()
