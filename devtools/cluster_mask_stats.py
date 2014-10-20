@@ -7,7 +7,8 @@ from pylab import *
 import sys
 import re
 
-def compute_stats(fname, itype_filter=None, title_addition="all"):
+def compute_stats(fname, itype_filter=None, title_addition="all",
+                  exclude_noise_cluster=True):
     logfile = open(fname, 'r').read()
     pattern = r'Cluster mask: cluster (\d+) unmasked (\d+) iterations (\d+)/(\d+) init type (\d+).'
     cluster_mask_lines = re.findall(pattern, logfile)
@@ -17,6 +18,14 @@ def compute_stats(fname, itype_filter=None, title_addition="all"):
     localiter = array(map(int, localiter))
     globaliter = array(map(int, globaliter))
     itype = array(map(int, itype))
+    
+    if exclude_noise_cluster:
+        I = cluster!=0
+        cluster = cluster[I]
+        unmasked = unmasked[I]
+        localiter = localiter[I]
+        globaliter = globaliter[I]
+        itype = itype[I]
     
     if itype_filter is not None:
         I = itype==itype_filter
