@@ -7,15 +7,28 @@ from pylab import *
 import sys
 import re
 
-def compute_stats(fname):
+def compute_stats(fname, itype_filter=None, title_addition="all"):
     logfile = open(fname, 'r').read()
-    pattern = r'Cluster mask: cluster (\d+) unmasked (\d+) iterations (\d+)/(\d+).'
+    pattern = r'Cluster mask: cluster (\d+) unmasked (\d+) iterations (\d+)/(\d+) init type (\d+).'
     cluster_mask_lines = re.findall(pattern, logfile)
-    cluster, unmasked, localiter, globaliter = zip(*cluster_mask_lines)
+    cluster, unmasked, localiter, globaliter, itype = zip(*cluster_mask_lines)
     cluster = array(map(int, cluster))
     unmasked = array(map(int, unmasked))
     localiter = array(map(int, localiter))
     globaliter = array(map(int, globaliter))
+    itype = array(map(int, itype))
+    
+    if itype_filter is not None:
+        I = itype==itype_filter
+        if sum(I)==0:
+            return True
+        globaliter = globaliter[I]
+        # relabel main iterations
+        globaliter = cumsum(hstack((0, minimum(diff(globaliter), 1))))
+        cluster = cluster[I]
+        unmasked = unmasked[I]
+        localiter = localiter[I]
+        itype = itype[I]
     
     numiter = amax(globaliter)+1
     maxunmasked = amax(unmasked)+1
@@ -56,7 +69,7 @@ def compute_stats(fname):
     barhist(unmasked)
     xlabel("Number of unmasked features")
     yticks([])
-    title("Frequency over entire run")
+    title("Frequency over entire run (%s)" % title_addition)
     axis('tight')
     
     subplot(334)
@@ -88,6 +101,8 @@ def compute_stats(fname):
     
     tight_layout()
     
+    return False
+    
 
 if __name__=='__main__':
     
@@ -100,6 +115,11 @@ if __name__=='__main__':
         exit()
     
     fname = sys.argv[1]
-    compute_stats(fname)
+    
+    compute_stats(fname, None, "all iteration types")
+    compute_stats(fname, 0, "main iterations only")
+    compute_stats(fname, 1, "K3 iterations only")
+    compute_stats(fname, 2, "K2 iterations only")
+
     show()
     

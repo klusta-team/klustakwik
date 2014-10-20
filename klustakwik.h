@@ -147,6 +147,7 @@ public:
     vector<scalar> ClassPenalty;
     // debugging info
     integer numiterations;
+	integer init_type;
 	// memory tracking
 	KKMemoryRequest mem;
 };
