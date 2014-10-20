@@ -290,5 +290,5 @@ How to cite
 If you have used KlustaKwik and/or SpikeDetekt for a scientific publication, please cite the following paper:
 
     Kadir SN, Goodman DFM, Harris KD (2014).
-    **High-dimensional cluster analysis with the masked EM algorithm.**
-    *Neural Computation 26:11. doi:10.1162/NECO_a_00661*
+    High-dimensional cluster analysis with the masked EM algorithm.
+    Neural Computation 26:11. doi:10.1162/NECO_a_00661
