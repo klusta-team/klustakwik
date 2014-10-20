@@ -393,12 +393,36 @@ void KK::MStep()
 	{
 		// Compute the cluster masks, used below to optimise the computation
 		ComputeClusterMasks();
+		// Empty the dynamic covariance matrices (we will fill it up as we go)
+		DynamicCov.clear();
 
 		for (cc = 0; cc<nClustersAlive; cc++)
 		{
 			c = AliveIndex[cc];
 			vector<integer> &PointsInThisClass = PointsInClass[c];
 			vector<integer> &CurrentUnmasked = ClusterUnmaskedFeatures[c];
+			vector<integer> &CurrentMasked = ClusterMaskedFeatures[c];
+			DynamicCov.push_back(BlockPlusDiagonalMatrix(CurrentMasked, CurrentUnmasked));
+			BlockPlusDiagonalMatrix &CurrentCov = DynamicCov.back();
+			if (CurrentUnmasked.size() == 0)
+				continue;
+
+			// Version for dynamic cov matrix
+			for (integer q = 0; q < (integer)PointsInThisClass.size(); q++)
+			{
+				p = PointsInThisClass[q];
+				for (integer ii = 0; ii < (integer)CurrentUnmasked.size(); ii++)
+				{
+					i = CurrentUnmasked[ii];
+					for (integer jj = 0; jj < (integer)CurrentUnmasked.size(); jj++)
+					{
+						j = CurrentUnmasked[jj];
+						//Cov[c*nDims2 + i*nDims + j] += AllVector2Mean[p*nDims + i] * AllVector2Mean[p*nDims + j];
+						CurrentCov.Block[ii*CurrentCov.NumUnmasked + jj] += AllVector2Mean[p*nDims + i] * AllVector2Mean[p*nDims + j];
+					}
+				}
+			}
+
 			// Correct version
 			//for (integer q = 0; q < (integer)PointsInThisClass.size(); q++)
 			//{
@@ -417,6 +441,7 @@ void KK::MStep()
 			// Doesn't make any use of cache structure, but no need to upgrade now because
 			// we will move to a sparse block matrix structure that will make this more
 			// natural
+			
 			const integer * __restrict cu = &(CurrentUnmasked[0]);
 			const integer ncu = (integer)CurrentUnmasked.size();
 			scalar * __restrict cov_c = &(Cov[c*nDims2]);
@@ -440,7 +465,7 @@ void KK::MStep()
 					}
 				}
 			}
-
+			
 		}
 	}
 	else
@@ -499,17 +524,47 @@ void KK::MStep()
                 Cov[c*nDims2+i*nDims+i] += ccf;
             //    Output("Class %d Covariance diagonal[%d] = %f \n",(int)c,(int)i,Cov[c*nDims2+i*nDims+i] );
             }
-        }
+			// DynamicCov way
+			BlockPlusDiagonalMatrix &CurrentCov = DynamicCov[cc];
+			for (integer ii = 0; ii<CurrentCov.NumUnmasked; ii++)
+			{
+				i = CurrentCov.Unmasked[ii];
+				scalar ccf = 0.0; // class correction factor
+				for (integer q = 0; q<NumPointsInThisClass; q++)
+				{
+					p = PointsInThisClass[q];
+					ccf += CorrectionTerm[p*nDims + i];
+				}
+				CurrentCov.Block[ii*CurrentCov.NumUnmasked + ii] += ccf;
+			}
+			for (integer ii = 0; ii<CurrentCov.NumMasked; ii++)
+			{
+				i = CurrentCov.Masked[ii];
+				scalar ccf = 0.0; // class correction factor
+				for (integer q = 0; q<NumPointsInThisClass; q++)
+				{
+					p = PointsInThisClass[q];
+					ccf += CorrectionTerm[p*nDims + i];
+				}
+				CurrentCov.Diagonal[ii] += ccf;
+			}
+		}
 
     // Add a diagonal matrix of Noise variances to the covariance matrix for renormalization
-        for (cc=0; cc<nClustersAlive; cc++)
+		for (cc = 0; cc < nClustersAlive; cc++)
 		{
-        	c = AliveIndex[cc];
-			for (i=0; i<nDims; i++)
+			c = AliveIndex[cc];
+			for (i = 0; i < nDims; i++)
 			{
 				//Output("Class %d: PriorPoint*NoiseVariance[%d] = %f",c,i,priorPoint*NoiseVariance[i]);
-				Cov[c*nDims2+i*nDims+i] += priorPoint*NoiseVariance[i];
+				Cov[c*nDims2 + i*nDims + i] += priorPoint*NoiseVariance[i];
 			}
+			// DynamicCov way
+			BlockPlusDiagonalMatrix &CurrentCov = DynamicCov[cc];
+			for (integer ii = 0; ii < CurrentCov.NumUnmasked; ii++)
+				CurrentCov.Block[ii*CurrentCov.NumUnmasked + ii] += priorPoint*NoiseVariance[CurrentCov.Unmasked[ii]];
+			for (integer ii = 0; ii < CurrentCov.NumMasked; ii++)
+				CurrentCov.Diagonal[ii] += priorPoint*NoiseVariance[CurrentCov.Masked[ii]];
 		}
 
 
@@ -523,7 +578,15 @@ void KK::MStep()
                     for(i=0; i<nDims; i++)
                         for(j=i; j<nDims; j++)
                             Cov[c*nDims2 + i*nDims + j] /= (nClassMembers[c]+priorPoint-1);
-                }
+					// DynamicCov way
+					BlockPlusDiagonalMatrix &CurrentCov = DynamicCov[cc];
+					scalar factor = 1.0 / (nClassMembers[c] + priorPoint - 1);
+					for (i = 0; i < (integer)CurrentCov.Block.size(); i++)
+						//if (i/CurrentCov.NumUnmasked<=i%CurrentCov.NumUnmasked)
+							CurrentCov.Block[i] *= factor;
+					for (i = 0; i < (integer)CurrentCov.Diagonal.size(); i++)
+						CurrentCov.Diagonal[i] *= factor;
+				}
 
         }
     else {    //For original KlustaKwik classical EM
@@ -601,8 +664,14 @@ void KK::EStep()
         // calculate cholesky decomposition for class c
         SafeArray<scalar> safeCov(Cov, c*nDims2, "safeCov");
 		integer chol_return;
+		BlockPlusDiagonalMatrix &CurrentCov = DynamicCov[cc];
+		BlockPlusDiagonalMatrix CholBPD(CurrentCov.Masked, CurrentCov.Unmasked);
 		if (UseDistributional)
+		{
 			chol_return = MaskedCholesky(safeCov, safeChol, nDims, ClusterMaskedFeatures[c], ClusterUnmaskedFeatures[c]);
+			chol_return = BPDCholesky(CurrentCov, CholBPD);
+			//CholBPD.compare(&(Chol[0]));
+		}
 		else
 			chol_return = Cholesky(safeCov, safeChol, nDims);
         if(chol_return)
@@ -616,9 +685,20 @@ void KK::EStep()
         }
 
         // LogRootDet is given by log of product of diagonal elements
-        LogRootDet = 0;
-        for(i=0; i<nDims; i++)
-            LogRootDet += (float)log(Chol[i*nDims + i]);
+		if (UseDistributional)
+		{
+			LogRootDet = 0;
+			for (integer ii = 0; ii < CholBPD.NumUnmasked; ii++)
+				LogRootDet += log(CholBPD.Block[ii*CholBPD.NumUnmasked + ii]);
+			for (integer ii = 0; ii < CholBPD.NumMasked; ii++)
+				LogRootDet += log(CholBPD.Diagonal[ii]);
+		}
+		else
+		{
+			LogRootDet = 0;
+			for (i = 0; i < nDims; i++)
+				LogRootDet += (float)log(Chol[i*nDims + i]);
+		}
 
         // if distributional E step, compute diagonal of inverse of cov matrix
         if(UseDistributional)
