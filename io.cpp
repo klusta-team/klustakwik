@@ -360,7 +360,9 @@ void KK::SaveCovMeans()
         {
             for(integer j=0; j<nDims; j++)
             {
-                fprintf(fp, SCALARFMT " ", Cov[c*nDims2+i*nDims+j]);
+				// TODO: update Cov output for distributional
+				if (!UseDistributional)
+					fprintf(fp, SCALARFMT " ", Cov[c*nDims2+i*nDims+j]);
             }
             fprintf(fp, "\n");
         }

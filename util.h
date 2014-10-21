@@ -19,5 +19,6 @@ extern const scalar HugeScore;
 integer irand(integer min, integer max);
 FILE *fopen_safe(char *fname, char *mode);
 void MatPrint(FILE *fp, scalar *Mat, integer nRows, integer nCols);
+void CompareVectors(scalar *A, scalar *B, integer N);
 
 #endif /* UTIL_H_ */
