@@ -273,26 +273,61 @@ void MaskedTriSolve(SafeArray<scalar> &M, SafeArray<scalar> &x,
 }
 
 
+//void BPDTriSolve(BlockPlusDiagonalMatrix &M, SafeArray<scalar> &x,
+//	SafeArray<scalar> &Out)
+//{
+//	for (integer ii = 0; ii < M.NumUnmasked; ii++)
+//	{
+//		const integer i = M.Unmasked[ii];
+//		scalar sum = x[i];
+//		//scalar * __restrict MiD = &(M.Block[ii*M.NumUnmasked]);
+//		for (integer jj = 0; jj < ii; jj++) // j<i
+//		{
+//			const integer j = M.Unmasked[jj];
+//			//sum += MiD[jj] * Out[j];
+//			sum += M.Block[ii*M.NumUnmasked + jj] * Out[j];
+//		}
+//		//Out[i] = -sum / MiD[ii];
+//		Out[i] = -sum / M.Block[ii*M.NumUnmasked + ii];
+//	}
+//	for (integer ii = 0; ii < M.NumMasked; ii++)
+//	{
+//		const integer i = M.Masked[ii];
+//		Out[i] = -x[i] / M.Diagonal[ii];
+//	}
+//}
+
 void BPDTriSolve(BlockPlusDiagonalMatrix &M, SafeArray<scalar> &x,
 	SafeArray<scalar> &Out)
 {
-	for (integer ii = 0; ii < M.NumUnmasked; ii++)
+	const integer NumUnmasked = M.NumUnmasked;
+	const integer NumMasked = M.NumMasked;
+	const scalar * __restrict ptr_x = &(x[0]);
+	scalar * __restrict ptr_Out = &(Out[0]);
+	if (NumUnmasked)
 	{
-		const integer i = M.Unmasked[ii];
-		scalar sum = x[i];
-		//scalar * __restrict MiD = &(M.Block[ii*M.NumUnmasked]);
-		for (integer jj = 0; jj < ii; jj++) // j<i
+		const integer * __restrict Unmasked = &(M.Unmasked[0]);
+		for (integer ii = 0; ii < NumUnmasked; ii++)
 		{
-			const integer j = M.Unmasked[jj];
-			//sum += MiD[jj] * Out[j];
-			sum += M.Block[ii*M.NumUnmasked + jj] * Out[j];
+			const integer i = Unmasked[ii];
+			scalar sum = ptr_x[i];
+			const scalar * __restrict row = &(M.Block[ii*M.NumUnmasked]);
+			for (integer jj = 0; jj < ii; jj++) // j<i
+			{
+				const integer j = Unmasked[jj];
+				sum += row[jj] * ptr_Out[j];
+			}
+			ptr_Out[i] = -sum / row[ii];
 		}
-		//Out[i] = -sum / MiD[ii];
-		Out[i] = -sum / M.Block[ii*M.NumUnmasked + ii];
 	}
-	for (integer ii = 0; ii < M.NumMasked; ii++)
+	if (NumMasked)
 	{
-		const integer i = M.Masked[ii];
-		Out[i] = -x[i] / M.Diagonal[ii];
+		const integer * __restrict Masked = &(M.Masked[0]);
+		const scalar * __restrict Diagonal = &(M.Diagonal[0]);
+		for (integer ii = 0; ii < NumMasked; ii++)
+		{
+			const integer i = Masked[ii];
+			Out[i] = -ptr_x[i] / Diagonal[ii];
+		}
 	}
 }

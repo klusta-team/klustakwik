@@ -406,18 +406,43 @@ void KK::MStep()
 			if (CurrentUnmasked.size() == 0)
 				continue;
 
-			// Version for dynamic cov matrix
-			for (integer q = 0; q < (integer)PointsInThisClass.size(); q++)
+			//// Correct version for dynamic cov matrix
+			//for (integer q = 0; q < (integer)PointsInThisClass.size(); q++)
+			//{
+			//	p = PointsInThisClass[q];
+			//	for (integer ii = 0; ii < (integer)CurrentUnmasked.size(); ii++)
+			//	{
+			//		i = CurrentUnmasked[ii];
+			//		for (integer jj = 0; jj < (integer)CurrentUnmasked.size(); jj++)
+			//		{
+			//			j = CurrentUnmasked[jj];
+			//			//Cov[c*nDims2 + i*nDims + j] += AllVector2Mean[p*nDims + i] * AllVector2Mean[p*nDims + j];
+			//			CurrentCov.Block[ii*CurrentCov.NumUnmasked + jj] += AllVector2Mean[p*nDims + i] * AllVector2Mean[p*nDims + j];
+			//		}
+			//	}
+			//}
+			// Fast version for dynamic cov matrix
+			const integer npoints = (integer)PointsInThisClass.size();
+			const integer nunmasked = (integer)CurrentUnmasked.size();
+			if (npoints > 0 && nunmasked > 0)
 			{
-				p = PointsInThisClass[q];
-				for (integer ii = 0; ii < (integer)CurrentUnmasked.size(); ii++)
+				const integer * __restrict pitc = &(PointsInThisClass[0]);
+				const integer * __restrict cu = &(CurrentUnmasked[0]);
+				for (integer q = 0; q < npoints; q++)
 				{
-					i = CurrentUnmasked[ii];
-					for (integer jj = 0; jj < (integer)CurrentUnmasked.size(); jj++)
+					const integer p = pitc[q];
+					const scalar * __restrict av2mp = &(AllVector2Mean[p*nDims]);
+					for (integer ii = 0; ii < nunmasked; ii++)
 					{
-						j = CurrentUnmasked[jj];
-						//Cov[c*nDims2 + i*nDims + j] += AllVector2Mean[p*nDims + i] * AllVector2Mean[p*nDims + j];
-						CurrentCov.Block[ii*CurrentCov.NumUnmasked + jj] += AllVector2Mean[p*nDims + i] * AllVector2Mean[p*nDims + j];
+						const integer i = cu[ii];
+						const scalar av2mp_i = av2mp[i];
+						scalar * __restrict row = &(CurrentCov.Block[ii*nunmasked]);
+						for (integer jj = 0; jj < nunmasked; jj++)
+						{
+							const integer j = cu[jj];
+							//Cov[c*nDims2 + i*nDims + j] += AllVector2Mean[p*nDims + i] * AllVector2Mean[p*nDims + j];
+							row[jj] += av2mp_i * av2mp[j];
+						}
 					}
 				}
 			}
