@@ -101,7 +101,9 @@ enum type_t {FLOAT = 'f', INT = 'd',  BOOLEAN = 'b', STRING = 's'};
       BOOLEAN_PARAM, AssignToFirstClosestMask, char AssignToFirstClosestMask, false)\
 	F("Set RAM usage limit (0 for available memory, -1 for no limit)",         \
       FLOAT_PARAM,     RamLimitGB,        scalar RamLimitGB,          0.0     )\
-     
+	F("Always split bimodal clusters (can save time)",                         \
+      BOOLEAN_PARAM,   AlwaysSplitBimodal,char AlwaysSplitBimodal,    false   )\
+
 
 //TODO: Implement the two Debug modes, one less verbose than the other
 
