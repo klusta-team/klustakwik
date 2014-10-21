@@ -62,7 +62,7 @@ integer KK::NumBytesRequired()
 		sizeof(scalar)*nPoints*nDims +               // AllVector2Mean
 		// UseDistributional only
 		UseDistributional*sizeof(scalar)*MaxPossibleClusters +  // CorrectionTerm
-		(UseDistributional*MaxPossibleClusters*nDims) +       // ClusterMask (vector<char>)
+		sizeof(scalar)*(UseDistributional*MaxPossibleClusters*nDims) + // ClusterMask (vector<scalar>)
 		UseDistributional*sizeof(integer)*MaxPossibleClusters*nDims; // ClusterUnmaskedFeatures + ClusterMaskedFeatures
 
 	return num_bytes_allocated;
@@ -203,7 +203,7 @@ void KK::ComputeClusterMasks()
 
 	// Initialise cluster mask to 0
 	for(integer i=0; i<nDims*MaxPossibleClusters; i++)
-		ClusterMask[i] = false;
+		ClusterMask[i] = 0;
 
 	// Compute cluster mask
     for(integer p=0; p<nPoints; p++)
@@ -211,8 +211,7 @@ void KK::ComputeClusterMasks()
         integer c = Class[p];
 		for (integer i = 0; i < nDims; i++)
 		{
-			if (FloatMasks[p*nDims + i]>0)
-				ClusterMask[c*nDims + i] = true;
+			ClusterMask[c*nDims + i] += FloatMasks[p*nDims + i];
 		}
     }
 
@@ -231,7 +230,7 @@ void KK::ComputeClusterMasks()
 		vector<integer> &CurrentMasked = ClusterMaskedFeatures[c];
 		for (integer i = 0; i < nDims; i++)
 		{
-			if (ClusterMask[c*nDims + i])
+			if (ClusterMask[c*nDims + i]>=PointsForClusterMask)
 				CurrentUnmasked.push_back(i);
 			else
 				CurrentMasked.push_back(i);
