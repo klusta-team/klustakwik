@@ -539,7 +539,7 @@ void KK::MStep()
 			BlockPlusDiagonalMatrix &CurrentCov = DynamicCov[cc];
 			for (integer ii = 0; ii<CurrentCov.NumUnmasked; ii++)
 			{
-				i = CurrentCov.Unmasked[ii];
+				i = (*CurrentCov.Unmasked)[ii];
 				scalar ccf = 0.0; // class correction factor
 				for (integer q = 0; q<NumPointsInThisClass; q++)
 				{
@@ -550,7 +550,7 @@ void KK::MStep()
 			}
 			for (integer ii = 0; ii<CurrentCov.NumMasked; ii++)
 			{
-				i = CurrentCov.Masked[ii];
+				i = (*CurrentCov.Masked)[ii];
 				scalar ccf = 0.0; // class correction factor
 				for (integer q = 0; q<NumPointsInThisClass; q++)
 				{
@@ -567,9 +567,9 @@ void KK::MStep()
 			c = AliveIndex[cc];
 			BlockPlusDiagonalMatrix &CurrentCov = DynamicCov[cc];
 			for (integer ii = 0; ii < CurrentCov.NumUnmasked; ii++)
-				CurrentCov.Block[ii*CurrentCov.NumUnmasked + ii] += priorPoint*NoiseVariance[CurrentCov.Unmasked[ii]];
+				CurrentCov.Block[ii*CurrentCov.NumUnmasked + ii] += priorPoint*NoiseVariance[(*CurrentCov.Unmasked)[ii]];
 			for (integer ii = 0; ii < CurrentCov.NumMasked; ii++)
-				CurrentCov.Diagonal[ii] += priorPoint*NoiseVariance[CurrentCov.Masked[ii]];
+				CurrentCov.Diagonal[ii] += priorPoint*NoiseVariance[(*CurrentCov.Masked)[ii]];
 		}
 
 
@@ -678,7 +678,7 @@ void KK::EStep()
 				delete CholBPD;
 				CholBPD = NULL;
 			}
-			CholBPD = new BlockPlusDiagonalMatrix(CurrentCov->Masked, CurrentCov->Unmasked);
+			CholBPD = new BlockPlusDiagonalMatrix(*(CurrentCov->Masked), *(CurrentCov->Unmasked));
 			chol_return = BPDCholesky(*CurrentCov, *CholBPD);
 		}
 		else

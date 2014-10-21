@@ -14,6 +14,7 @@
 #include<stdlib.h>
 #include<stdarg.h>
 #include "numerics.h"
+#include<math.h>
 
 const scalar HugeScore = (scalar)1e32;
 
