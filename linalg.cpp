@@ -15,10 +15,11 @@
 using namespace std;
 
 BlockPlusDiagonalMatrix::BlockPlusDiagonalMatrix(vector<integer> &_Masked, vector<integer> &_Unmasked)
-	: Masked(_Masked), Unmasked(_Unmasked)
 {
-	NumUnmasked = Unmasked.size();
-	NumMasked = Masked.size();
+	Masked = &_Masked;
+	Unmasked = &_Unmasked;
+	NumUnmasked = Unmasked->size();
+	NumMasked = Masked->size();
 	Block.resize(NumUnmasked*NumUnmasked);
 	Diagonal.resize(NumMasked);
 }
@@ -32,10 +33,10 @@ void BlockPlusDiagonalMatrix::compare(scalar *Flat)
 	integer ntotal = 0;
 	for (integer ii = 0; ii < NumUnmasked; ii++)
 	{
-		integer i = Unmasked[ii];
+		integer i = (*Unmasked)[ii];
 		for (integer jj = 0; jj < NumUnmasked; jj++)
 		{
-			integer j = Unmasked[jj];
+			integer j = (*Unmasked)[jj];
 			scalar x = Block[ii*NumUnmasked + jj];
 			scalar y = Flat[i*nDims + j];
 			scalar err = fabs(x - y);
@@ -51,7 +52,7 @@ void BlockPlusDiagonalMatrix::compare(scalar *Flat)
 	}
 	for (integer ii = 0; ii < NumMasked; ii++)
 	{
-		integer i = Masked[ii];
+		integer i = (*Masked)[ii];
 		scalar x = Diagonal[ii];
 		scalar y = Flat[i*nDims + i];
 		scalar err = fabs(x - y);
@@ -306,7 +307,7 @@ void BPDTriSolve(BlockPlusDiagonalMatrix &M, SafeArray<scalar> &x,
 	scalar * __restrict ptr_Out = &(Out[0]);
 	if (NumUnmasked)
 	{
-		const integer * __restrict Unmasked = &(M.Unmasked[0]);
+		const integer * __restrict Unmasked = &((*M.Unmasked)[0]);
 		for (integer ii = 0; ii < NumUnmasked; ii++)
 		{
 			const integer i = Unmasked[ii];
@@ -322,7 +323,7 @@ void BPDTriSolve(BlockPlusDiagonalMatrix &M, SafeArray<scalar> &x,
 	}
 	if (NumMasked)
 	{
-		const integer * __restrict Masked = &(M.Masked[0]);
+		const integer * __restrict Masked = &((*M.Masked)[0]);
 		const scalar * __restrict Diagonal = &(M.Diagonal[0]);
 		for (integer ii = 0; ii < NumMasked; ii++)
 		{

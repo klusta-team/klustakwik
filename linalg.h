@@ -20,8 +20,8 @@ class BlockPlusDiagonalMatrix
 public:
 	vector<scalar> Block;
 	vector<scalar> Diagonal;
-	vector<integer> &Unmasked;
-	vector<integer> &Masked;
+	vector<integer> *Unmasked;
+	vector<integer> *Masked;
 	integer NumUnmasked, NumMasked;
 	BlockPlusDiagonalMatrix(vector<integer> &_Masked, vector<integer> &_Unmasked);
 	void compare(scalar *Flat);
