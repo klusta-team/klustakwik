@@ -1468,6 +1468,7 @@ scalar KK::Cluster(char *StartCluFile=NULL)
     Weight = KKSub.Weight;
     Mean = KKSub.Mean;
     Cov = KKSub.Cov;
+	DynamicCov = KKSub.DynamicCov;
     ClassAlive = KKSub.ClassAlive;
     nClustersAlive = KKSub.nClustersAlive;
     AliveIndex = KKSub.AliveIndex;
