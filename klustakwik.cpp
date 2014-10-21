@@ -1137,7 +1137,7 @@ scalar KK::ComputeScore()
         // Output("point %d: cumulative score " SCALARFMT " adding" SCALARFMT "\n", (int)p, Score, debugadd);
     }
     //Error("Score: " SCALARFMT " Penalty: " SCALARFMT "\n", Score, penalty);
-    Output("Score: Raw " SCALARFMT " + Penalty " SCALARFMT " = " SCALARFMT, Score-penalty, penalty, Score);
+    Output("  Score: Raw " SCALARFMT " + Penalty " SCALARFMT " = " SCALARFMT "\n", Score-penalty, penalty, Score);
 
     if (Debug) {
         integer c, cc;
@@ -1361,7 +1361,7 @@ scalar KK::CEM(char *CluFile, integer Recurse, integer InitRand,
         {
             if(Recurse==0) Output("\t\tSP:");
             if ((Recurse!=0)||(SplitInfo==1&&Recurse==0))
-                Output("Iteration %d%c (" SCALARFMT " sec): %d clusters ",
+                Output("Iteration %d%c (" SCALARFMT " sec): %d clusters\n",
 				       (int)Iter, FullStep ? 'F' : 'Q', timesofar, (int)nClustersAlive);
         }
         
@@ -1372,7 +1372,7 @@ scalar KK::CEM(char *CluFile, integer Recurse, integer InitRand,
         //Finish output to klg file with Score already returned via the ComputeScore() function
         if(Verbose>=1)
         {
-			Output(" nChanged %d\n", (int)nChanged);
+			Output("  nChanged %d\n", (int)nChanged);
         }
 
         //if(Verbose>=1)
