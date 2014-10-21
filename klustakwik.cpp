@@ -1055,7 +1055,7 @@ integer KK::TrySplits()
 			if (AlwaysSplitBimodal)
 			{
 				DidSplit = 1;
-				Output("\n We are always splitting biomodal clusters so it's getting split into cluster %d.\n", (int)UnusedCluster);
+				Output("\n We are always splitting bimodal clusters so it's getting split into cluster %d.\n", (int)UnusedCluster);
 				p2 = 0;
 				for (p = 0; p < nPoints; p++)
 				{
