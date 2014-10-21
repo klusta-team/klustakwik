@@ -29,6 +29,7 @@ void Output(char *fmt, ...) {
 
     if (Screen) printf("%s", str);
     if (Log) fprintf(logfp, "%s", str);
+	FlushLog();
 }
 
 // Print an error message and abort
@@ -43,6 +44,7 @@ void Error(char *fmt, ...) {
 
     if (Screen) fprintf(stderr, "%s", str);
     if (Log) fprintf(logfp, "%s", str);
+	FlushLog();
 }
 
 void FlushLog()

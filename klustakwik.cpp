@@ -968,22 +968,26 @@ integer KK::TrySplits()
 
     // set up K3 and remember to add the masks
     //KK K3(*this);
-	if (KK_split == NULL)
+	if (!AlwaysSplitBimodal)
 	{
-		KK_split = new KK(*this);
+		if (KK_split == NULL)
+		{
+			KK_split = new KK(*this);
+		}
+		else
+		{
+			// We have to clear these to bypass the debugging checks
+			// in precomputations.cpp
+			KK_split->Unmasked.clear();
+			KK_split->UnmaskedInd.clear();
+			KK_split->SortedMaskChange.clear();
+			KK_split->SortedIndices.clear();
+			// now we treat it as empty
+			KK_split->ConstructFrom(*this);
+		}
 	}
-	else
-	{
-		// We have to clear these to bypass the debugging checks
-		// in precomputations.cpp
-		KK_split->Unmasked.clear();
-		KK_split->UnmaskedInd.clear();
-		KK_split->SortedMaskChange.clear();
-		KK_split->SortedIndices.clear();
-		// now we treat it as empty
-		KK_split->ConstructFrom(*this);
-	}
-	KK &K3 = *KK_split;
+	//KK &K3 = *KK_split;
+#define K3 (*KK_split)
 
     Output("Compute initial score before splitting: ");
     Score = ComputeScore();
@@ -1048,49 +1052,71 @@ integer KK::TrySplits()
         // if(SplitScore<UnsplitScore) {
         if(K2.nClustersAlive<2) Output("\n Split failed - leaving alone\n");
         if((SplitScore<UnsplitScore)&&(K2.nClustersAlive>=2)) {
-            // will splitting improve the score in the whole data set?
+			if (AlwaysSplitBimodal)
+			{
+				DidSplit = 1;
+				Output("\n We are always splitting bimodal clusters so it's getting split into cluster %d.\n", (int)UnusedCluster);
+				p2 = 0;
+				for (p = 0; p < nPoints; p++)
+				{
+					if (Class[p] == c)
+					{
+						if (K2.Class[p2] == 1) Class[p] = c;
+						else if (K2.Class[p2] == 2) Class[p] = UnusedCluster;
+						else Error("split should only produce 2 clusters\n");
+						p2++;
+					}
+					ClassAlive[Class[p]] = 1;
+				}
+			}
+			else
+			{
+				// will splitting improve the score in the whole data set?
 
-            // assign clusters to K3
-            for(c2=0; c2<MaxPossibleClusters; c2++) K3.ClassAlive[c2]=0;
-         //   Output("%d Points in class %d in KKobject K3 ", (int)c2, (int)K3.nClassMembers[c2]);
-            p2 = 0;
-            for(p=0; p<nPoints; p++)
-            {
-                if(Class[p]==c)
-                {
-                    if(K2.Class[p2]==1) K3.Class[p] = c;
-                    else if(K2.Class[p2]==2) K3.Class[p] = UnusedCluster;
-                    else Error("split should only produce 2 clusters\n");
-                    p2++;
-                }
-                else K3.Class[p] = Class[p];
-                K3.ClassAlive[K3.Class[p]] = 1;
-            }
-            K3.Reindex();
+				// assign clusters to K3
+				for (c2 = 0; c2 < MaxPossibleClusters; c2++) K3.ClassAlive[c2] = 0;
+				//   Output("%d Points in class %d in KKobject K3 ", (int)c2, (int)K3.nClassMembers[c2]);
+				p2 = 0;
+				for (p = 0; p < nPoints; p++)
+				{
+					if (Class[p] == c)
+					{
+						if (K2.Class[p2] == 1) K3.Class[p] = c;
+						else if (K2.Class[p2] == 2) K3.Class[p] = UnusedCluster;
+						else Error("split should only produce 2 clusters\n");
+						p2++;
+					}
+					else K3.Class[p] = Class[p];
+					K3.ClassAlive[K3.Class[p]] = 1;
+				}
+				K3.Reindex();
 
-            // compute scores
+				// compute scores
 
-            K3.MStep();
-            K3.EStep();
-            //Output("About to compute K3 class penalties");
-            if (UseDistributional) K3.ComputeClassPenalties(); //SNK Fixed bug: Need to compute the cluster penalty properly, cluster penalty is only used in UseDistributional mode
-            NewScore = K3.ComputeScore();
-			Output("\nSplitting cluster %d changes total score from " SCALARFMT " to " SCALARFMT "\n", (int)c, Score, NewScore);
+				K3.MStep();
+				K3.EStep();
+				//Output("About to compute K3 class penalties");
+				if (UseDistributional) K3.ComputeClassPenalties(); //SNK Fixed bug: Need to compute the cluster penalty properly, cluster penalty is only used in UseDistributional mode
+				NewScore = K3.ComputeScore();
+				Output("\nSplitting cluster %d changes total score from " SCALARFMT " to " SCALARFMT "\n", (int)c, Score, NewScore);
 
-            if (NewScore<Score)
-            {
-                DidSplit = 1;
-				Output("\n So it's getting split into cluster %d.\n", (int)UnusedCluster);
-                // so put clusters from K3 back into main KK struct (K1)
-                for(c2=0; c2<MaxPossibleClusters; c2++) ClassAlive[c2] = K3.ClassAlive[c2];
-                for(p=0; p<nPoints; p++) Class[p] = K3.Class[p];
-            } else
-            {
-                Output("\n So it's not getting split.\n");
-            }
+				if (NewScore < Score)
+				{
+					DidSplit = 1;
+					Output("\n So it's getting split into cluster %d.\n", (int)UnusedCluster);
+					// so put clusters from K3 back into main KK struct (K1)
+					for (c2 = 0; c2 < MaxPossibleClusters; c2++) ClassAlive[c2] = K3.ClassAlive[c2];
+					for (p = 0; p < nPoints; p++) Class[p] = K3.Class[p];
+				}
+				else
+				{
+					Output("\n So it's not getting split.\n");
+				}
+			}
         }
     }
 	return DidSplit;
+#undef K3
 }
 
 // ComputeScore() - computes total score.  Requires M, E, and C steps to have been run
@@ -1442,6 +1468,7 @@ scalar KK::Cluster(char *StartCluFile=NULL)
     Weight = KKSub.Weight;
     Mean = KKSub.Mean;
     Cov = KKSub.Cov;
+	DynamicCov = KKSub.DynamicCov;
     ClassAlive = KKSub.ClassAlive;
     nClustersAlive = KKSub.nClustersAlive;
     AliveIndex = KKSub.AliveIndex;
