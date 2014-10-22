@@ -147,9 +147,9 @@ if __name__=='__main__':
     fname = sys.argv[1]
     
     compute_stats(fname, None, "all iteration types")
-#    compute_stats(fname, 0, "main iterations only")
-#    compute_stats(fname, 1, "K3 iterations only")
-#    compute_stats(fname, 2, "K2 iterations only")
+    compute_stats(fname, 0, "main iterations only")
+    compute_stats(fname, 1, "K3 iterations only")
+    compute_stats(fname, 2, "K2 iterations only")
 
     show()
     
