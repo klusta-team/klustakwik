@@ -104,7 +104,9 @@ enum type_t {FLOAT = 'f', INT = 'd',  BOOLEAN = 'b', STRING = 's'};
 	F("Always split bimodal clusters (can save time)",                         \
       BOOLEAN_PARAM,   AlwaysSplitBimodal,char AlwaysSplitBimodal,    false   )\
     F("Minimum number of points required for cluster mask.",                   \
-      FLOAT_PARAM,   PointsForClusterMask,  scalar PointsForClusterMask,0.001     )\
+      FLOAT_PARAM,   PointsForClusterMask,  scalar PointsForClusterMask,0.001 )\
+    F("Minimum point to cluster mask overlap.",                                \
+      FLOAT_PARAM,   MinMaskOverlap,      scalar MinMaskOverlap,      0.0     )\
 
 
 //TODO: Implement the two Debug modes, one less verbose than the other

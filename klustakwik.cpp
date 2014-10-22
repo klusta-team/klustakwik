@@ -634,7 +634,8 @@ void KK::EStep()
     scalar LogRootDet; // log of square root of covariance determinant
     scalar Mahal; // Mahalanobis distance of point from cluster center
     scalar correction_factor = (scalar)1; // for partial correction in distributional step
-    vector<scalar> Chol(nDims2); // to store choleski decomposition
+	scalar InverseClusterNorm;
+	vector<scalar> Chol(nDims2); // to store choleski decomposition
     vector<scalar> Vec2Mean(nDims); // stores data point minus class mean
     vector<scalar> Root(nDims); // stores result of Chol*Root = Vec
     vector<scalar> InvCovDiag;
@@ -679,6 +680,18 @@ void KK::EStep()
 			}
 			CholBPD = new BlockPlusDiagonalMatrix(*(CurrentCov->Masked), *(CurrentCov->Unmasked));
 			chol_return = BPDCholesky(*CurrentCov, *CholBPD);
+			if (MinMaskOverlap>0)
+			{
+				// compute the norm of the cluster mask (used for skipping points)
+				const scalar * __restrict cm = &(ClusterMask[c*nDims]);
+				scalar ClusterNorm = 0.0;
+				for (i = 0; i < nDims; i++)
+				{
+					scalar m = cm[i];
+					ClusterNorm += m*m;
+				}
+				InverseClusterNorm = 1.0 / sqrt(ClusterNorm);
+			}
 		}
 		else
 		{
@@ -744,6 +757,23 @@ void KK::EStep()
                 nSkipped++;
                 continue;
             }
+
+			// to save time, skip points with mask overlap below threshold
+			if (MinMaskOverlap > 0)
+			{
+				// compute dot product of point mask with cluster mask
+				const scalar * __restrict PointMask = &(FloatMasks[p*nDims]);
+				const scalar * __restrict cm = &(ClusterMask[c*nDims]);
+				scalar dotprod = 0.0;
+				for (i = 0; i < nDims; i++)
+					dotprod += cm[i] * PointMask[i];
+				dotprod *= InverseClusterNorm;
+				if (dotprod < MinMaskOverlap)
+				{
+					nSkipped++;
+					continue;
+				}
+			}
 
             // Compute Mahalanobis distance
             Mahal = 0;
