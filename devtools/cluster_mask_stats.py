@@ -138,7 +138,7 @@ if __name__=='__main__':
     
     # DEBUG mode, TODO: remove
     #sys.argv.append('../temp/testsmallish.klg.4')
-    sys.argv.append('../temp/20141008_10000.klg.1')
+    #sys.argv.append('../temp/20141008_10000.klg.1')
     
     if len(sys.argv)<=1:
         print 'Usage: cluster_mask_stats filename.klg'
