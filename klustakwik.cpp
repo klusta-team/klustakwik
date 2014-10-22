@@ -688,12 +688,13 @@ void KK::EStep()
 			//	for (i = 0; i < nDims; i++)
 			//	{
 			//		scalar m = cm[i];
-			//		if (m > ClusterNorm)
-			//			ClusterNorm = m;
-			//		//ClusterNorm += m*m;
+			//		//if (m > ClusterNorm)
+			//		//	ClusterNorm = m;
+			//		ClusterNorm += m*m;
 			//	}
-			//	InverseClusterNorm = 1.0 / ClusterNorm;
-			//	//InverseClusterNorm = 1.0 / sqrt(ClusterNorm);
+			//	//InverseClusterNorm = 1.0 / ClusterNorm;
+			//	InverseClusterNorm = 1.0 / sqrt(ClusterNorm);
+			//	//InverseClusterNorm = sqrt((scalar)nDims) / sqrt(ClusterNorm);
 			//}
 		}
 		else
@@ -766,15 +767,15 @@ void KK::EStep()
 			{
 				// compute dot product of point mask with cluster mask
 				const scalar * __restrict PointMask = &(FloatMasks[p*nDims]);
-				//const scalar * __restrict cm = &(ClusterMask[c*nDims]);
+				const scalar * __restrict cm = &(ClusterMask[c*nDims]);
 				scalar dotprod = 0.0;
-				// InverseClusterNorm is computed above, uncomment it if you uncomment any of this
-				/*for (i = 0; i < nDims; i++)
-				{
-					dotprod += cm[i] * PointMask[i] * InverseClusterNorm;
-					if (dotprod >= MinMaskOverlap)
-						break;
-				}*/
+				//// InverseClusterNorm is computed above, uncomment it if you uncomment any of this
+				//for (i = 0; i < nDims; i++)
+				//{
+				//	dotprod += cm[i] * PointMask[i] * InverseClusterNorm;
+				//	if (dotprod >= MinMaskOverlap)
+				//		break;
+				//}
 				const integer NumUnmasked = CurrentCov->NumUnmasked;
 				if (NumUnmasked)
 				{
@@ -786,12 +787,12 @@ void KK::EStep()
 						if (dotprod >= MinMaskOverlap)
 							break;
 					}
-					//dotprod *= InverseClusterNorm;
-					if (dotprod < MinMaskOverlap)
-					{
-						nSkipped++;
-						continue;
-					}
+				}
+				//dotprod *= InverseClusterNorm;
+				if (dotprod < MinMaskOverlap)
+				{
+					nSkipped++;
+					continue;
 				}
 			}
 

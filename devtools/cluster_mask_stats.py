@@ -66,14 +66,23 @@ def compute_stats(fname, itype_filter=None, title_addition="all",
     allhist = array(allhist)
     print allhist.shape
     
-    figure(figsize=(10, 8))
+    computation_time_estimate_trisolve = []
+    computation_time_estimate_estep = []
+    for u in xrange(maxunmasked):
+        a = sum(unmasked==u)
+        computation_time_estimate_trisolve.append(a*u**2)
+        computation_time_estimate_estep.append(a)
+    computation_time_estimate_trisolve = array(computation_time_estimate_trisolve)
+    computation_time_estimate_estep = array(computation_time_estimate_estep)
+    
+    figure(figsize=(10, 12))
 
     def barhist(U):
         n = amax(unmasked)+1
         b = bincount(U, minlength=n)[:n]
         bar(arange(n)-0.5, b, width=1.0, color='k')
     
-    subplot(311)
+    subplot(411)
     #hist(unmasked)
     barhist(unmasked)
     xlabel("Number of unmasked features")
@@ -81,22 +90,22 @@ def compute_stats(fname, itype_filter=None, title_addition="all",
     title("Frequency over entire run (%s)" % title_addition)
     axis('tight')
     
-    subplot(334)
+    subplot(434)
     barhist(unmasked[globaliter==0])
     title('Start')
     yticks([])
     
-    subplot(335)
+    subplot(435)
     barhist(unmasked[globaliter==numiter/2])
     title('Middle')
     yticks([])
     
-    subplot(336)
+    subplot(436)
     barhist(unmasked[globaliter==numiter-1])
     title('End')
     yticks([])
     
-    subplot(313)
+    subplot(413)
     imshow(-allhist.T, interpolation='nearest', aspect='auto', origin='lower left')
     gray()
     fill_between(iters, allmin, allmax, color='b', alpha=0.2)
@@ -107,6 +116,18 @@ def compute_stats(fname, itype_filter=None, title_addition="all",
     xlabel("Global iteration number")
     legend(loc='best', fontsize='x-small')
     axis('tight')
+    ylabel("Number of unmasked features")
+    
+    subplot(414)
+    plot(computation_time_estimate_trisolve*1.0/amax(computation_time_estimate_trisolve),
+         label='TriSolve')
+    plot(computation_time_estimate_estep*1.0/amax(computation_time_estimate_estep),
+         label='EStep')
+    xlabel('Number of unmasked features')
+    yticks([])
+    ylabel('Time')
+    title('Contribution of each cluster size to total computation time')
+    legend(loc='best', fontsize='x-small')
     
     tight_layout()
     
@@ -117,7 +138,7 @@ if __name__=='__main__':
     
     # DEBUG mode, TODO: remove
     #sys.argv.append('../temp/testsmallish.klg.4')
-    #sys.argv.append('../temp/20141008_10000.klg.1')
+    sys.argv.append('../temp/20141008_10000.klg.1')
     
     if len(sys.argv)<=1:
         print 'Usage: cluster_mask_stats filename.klg'
@@ -126,9 +147,9 @@ if __name__=='__main__':
     fname = sys.argv[1]
     
     compute_stats(fname, None, "all iteration types")
-    compute_stats(fname, 0, "main iterations only")
-    compute_stats(fname, 1, "K3 iterations only")
-    compute_stats(fname, 2, "K2 iterations only")
+#    compute_stats(fname, 0, "main iterations only")
+#    compute_stats(fname, 1, "K3 iterations only")
+#    compute_stats(fname, 2, "K2 iterations only")
 
     show()
     
