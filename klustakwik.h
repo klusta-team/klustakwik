@@ -132,7 +132,7 @@ public:
     vector<integer> AliveIndex; // a list of the alive classes to iterate over
 
     // Used for distributional optimisations
-    vector<char> ClusterMask;
+    vector<scalar> ClusterMask;
     vector< vector<integer> > ClusterUnmaskedFeatures;
     vector< vector<integer> > ClusterMaskedFeatures;
 

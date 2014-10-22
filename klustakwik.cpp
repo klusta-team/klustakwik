@@ -62,7 +62,7 @@ integer KK::NumBytesRequired()
 		sizeof(scalar)*nPoints*nDims +               // AllVector2Mean
 		// UseDistributional only
 		UseDistributional*sizeof(scalar)*MaxPossibleClusters +  // CorrectionTerm
-		(UseDistributional*MaxPossibleClusters*nDims) +       // ClusterMask (vector<char>)
+		sizeof(scalar)*(UseDistributional*MaxPossibleClusters*nDims) + // ClusterMask (vector<scalar>)
 		UseDistributional*sizeof(integer)*MaxPossibleClusters*nDims; // ClusterUnmaskedFeatures + ClusterMaskedFeatures
 
 	return num_bytes_allocated;
@@ -203,7 +203,7 @@ void KK::ComputeClusterMasks()
 
 	// Initialise cluster mask to 0
 	for(integer i=0; i<nDims*MaxPossibleClusters; i++)
-		ClusterMask[i] = false;
+		ClusterMask[i] = 0;
 
 	// Compute cluster mask
     for(integer p=0; p<nPoints; p++)
@@ -211,8 +211,7 @@ void KK::ComputeClusterMasks()
         integer c = Class[p];
 		for (integer i = 0; i < nDims; i++)
 		{
-			if (FloatMasks[p*nDims + i]>0)
-				ClusterMask[c*nDims + i] = true;
+			ClusterMask[c*nDims + i] += FloatMasks[p*nDims + i];
 		}
     }
 
@@ -231,7 +230,7 @@ void KK::ComputeClusterMasks()
 		vector<integer> &CurrentMasked = ClusterMaskedFeatures[c];
 		for (integer i = 0; i < nDims; i++)
 		{
-			if (ClusterMask[c*nDims + i])
+			if (ClusterMask[c*nDims + i]>=PointsForClusterMask)
 				CurrentUnmasked.push_back(i);
 			else
 				CurrentMasked.push_back(i);
@@ -635,7 +634,8 @@ void KK::EStep()
     scalar LogRootDet; // log of square root of covariance determinant
     scalar Mahal; // Mahalanobis distance of point from cluster center
     scalar correction_factor = (scalar)1; // for partial correction in distributional step
-    vector<scalar> Chol(nDims2); // to store choleski decomposition
+	scalar InverseClusterNorm;
+	vector<scalar> Chol(nDims2); // to store choleski decomposition
     vector<scalar> Vec2Mean(nDims); // stores data point minus class mean
     vector<scalar> Root(nDims); // stores result of Chol*Root = Vec
     vector<scalar> InvCovDiag;
@@ -680,6 +680,22 @@ void KK::EStep()
 			}
 			CholBPD = new BlockPlusDiagonalMatrix(*(CurrentCov->Masked), *(CurrentCov->Unmasked));
 			chol_return = BPDCholesky(*CurrentCov, *CholBPD);
+			//if (MinMaskOverlap>0)
+			//{
+			//	// compute the norm of the cluster mask (used for skipping points)
+			//	const scalar * __restrict cm = &(ClusterMask[c*nDims]);
+			//	scalar ClusterNorm = 0.0;
+			//	for (i = 0; i < nDims; i++)
+			//	{
+			//		scalar m = cm[i];
+			//		//if (m > ClusterNorm)
+			//		//	ClusterNorm = m;
+			//		ClusterNorm += m*m;
+			//	}
+			//	//InverseClusterNorm = 1.0 / ClusterNorm;
+			//	InverseClusterNorm = 1.0 / sqrt(ClusterNorm);
+			//	//InverseClusterNorm = sqrt((scalar)nDims) / sqrt(ClusterNorm);
+			//}
 		}
 		else
 		{
@@ -745,6 +761,40 @@ void KK::EStep()
                 nSkipped++;
                 continue;
             }
+
+			// to save time, skip points with mask overlap below threshold
+			if (MinMaskOverlap > 0)
+			{
+				// compute dot product of point mask with cluster mask
+				const scalar * __restrict PointMask = &(FloatMasks[p*nDims]);
+				const scalar * __restrict cm = &(ClusterMask[c*nDims]);
+				scalar dotprod = 0.0;
+				//// InverseClusterNorm is computed above, uncomment it if you uncomment any of this
+				//for (i = 0; i < nDims; i++)
+				//{
+				//	dotprod += cm[i] * PointMask[i] * InverseClusterNorm;
+				//	if (dotprod >= MinMaskOverlap)
+				//		break;
+				//}
+				const integer NumUnmasked = CurrentCov->NumUnmasked;
+				if (NumUnmasked)
+				{
+					const integer * __restrict cu = &((*(CurrentCov->Unmasked))[0]);
+					for (integer ii = 0; ii < NumUnmasked; ii++)
+					{
+						const integer i = cu[ii];
+						dotprod += PointMask[i];
+						if (dotprod >= MinMaskOverlap)
+							break;
+					}
+				}
+				//dotprod *= InverseClusterNorm;
+				if (dotprod < MinMaskOverlap)
+				{
+					nSkipped++;
+					continue;
+				}
+			}
 
             // Compute Mahalanobis distance
             Mahal = 0;
@@ -1138,7 +1188,7 @@ scalar KK::ComputeScore()
         // Output("point %d: cumulative score " SCALARFMT " adding" SCALARFMT "\n", (int)p, Score, debugadd);
     }
     //Error("Score: " SCALARFMT " Penalty: " SCALARFMT "\n", Score, penalty);
-    Output("Score: Raw " SCALARFMT " + Penalty " SCALARFMT " = " SCALARFMT, Score-penalty, penalty, Score);
+    Output("  Score: Raw " SCALARFMT " + Penalty " SCALARFMT " = " SCALARFMT "\n", Score-penalty, penalty, Score);
 
     if (Debug) {
         integer c, cc;
@@ -1362,7 +1412,7 @@ scalar KK::CEM(char *CluFile, integer Recurse, integer InitRand,
         {
             if(Recurse==0) Output("\t\tSP:");
             if ((Recurse!=0)||(SplitInfo==1&&Recurse==0))
-                Output("Iteration %d%c (" SCALARFMT " sec): %d clusters ",
+                Output("Iteration %d%c (" SCALARFMT " sec): %d clusters\n",
 				       (int)Iter, FullStep ? 'F' : 'Q', timesofar, (int)nClustersAlive);
         }
         
@@ -1373,7 +1423,7 @@ scalar KK::CEM(char *CluFile, integer Recurse, integer InitRand,
         //Finish output to klg file with Score already returned via the ComputeScore() function
         if(Verbose>=1)
         {
-			Output(" nChanged %d\n", (int)nChanged);
+			Output("  nChanged %d\n", (int)nChanged);
         }
 
         //if(Verbose>=1)
