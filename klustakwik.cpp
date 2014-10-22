@@ -680,18 +680,21 @@ void KK::EStep()
 			}
 			CholBPD = new BlockPlusDiagonalMatrix(*(CurrentCov->Masked), *(CurrentCov->Unmasked));
 			chol_return = BPDCholesky(*CurrentCov, *CholBPD);
-			if (MinMaskOverlap>0)
-			{
-				// compute the norm of the cluster mask (used for skipping points)
-				const scalar * __restrict cm = &(ClusterMask[c*nDims]);
-				scalar ClusterNorm = 0.0;
-				for (i = 0; i < nDims; i++)
-				{
-					scalar m = cm[i];
-					ClusterNorm += m*m;
-				}
-				InverseClusterNorm = 1.0 / sqrt(ClusterNorm);
-			}
+			//if (MinMaskOverlap>0)
+			//{
+			//	// compute the norm of the cluster mask (used for skipping points)
+			//	const scalar * __restrict cm = &(ClusterMask[c*nDims]);
+			//	scalar ClusterNorm = 0.0;
+			//	for (i = 0; i < nDims; i++)
+			//	{
+			//		scalar m = cm[i];
+			//		if (m > ClusterNorm)
+			//			ClusterNorm = m;
+			//		//ClusterNorm += m*m;
+			//	}
+			//	InverseClusterNorm = 1.0 / ClusterNorm;
+			//	//InverseClusterNorm = 1.0 / sqrt(ClusterNorm);
+			//}
 		}
 		else
 		{
@@ -763,15 +766,32 @@ void KK::EStep()
 			{
 				// compute dot product of point mask with cluster mask
 				const scalar * __restrict PointMask = &(FloatMasks[p*nDims]);
-				const scalar * __restrict cm = &(ClusterMask[c*nDims]);
+				//const scalar * __restrict cm = &(ClusterMask[c*nDims]);
 				scalar dotprod = 0.0;
-				for (i = 0; i < nDims; i++)
-					dotprod += cm[i] * PointMask[i];
-				dotprod *= InverseClusterNorm;
-				if (dotprod < MinMaskOverlap)
+				// InverseClusterNorm is computed above, uncomment it if you uncomment any of this
+				/*for (i = 0; i < nDims; i++)
 				{
-					nSkipped++;
-					continue;
+					dotprod += cm[i] * PointMask[i] * InverseClusterNorm;
+					if (dotprod >= MinMaskOverlap)
+						break;
+				}*/
+				const integer NumUnmasked = CurrentCov->NumUnmasked;
+				if (NumUnmasked)
+				{
+					const integer * __restrict cu = &((*(CurrentCov->Unmasked))[0]);
+					for (integer ii = 0; ii < NumUnmasked; ii++)
+					{
+						const integer i = cu[ii];
+						dotprod += PointMask[i];
+						if (dotprod >= MinMaskOverlap)
+							break;
+					}
+					//dotprod *= InverseClusterNorm;
+					if (dotprod < MinMaskOverlap)
+					{
+						nSkipped++;
+						continue;
+					}
 				}
 			}
 
