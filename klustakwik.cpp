@@ -9,6 +9,10 @@
 #define _USE_MATH_DEFINES
 #include<math.h>
 
+#ifdef _OPENMP
+#include<omp.h>
+#endif
+
 // GLOBAL VARIABLES
 FILE *Distfp;
 integer global_numiterations = 0;
@@ -1791,6 +1795,9 @@ int main(int argc, char **argv)
     
     //clock_t Clock0 = clock();
     Clock0 = clock();
+#ifdef _OPENMP
+	double start_time = omp_get_wtime();
+#endif
     
 
     // The main KK object, loads the data and does some precomputations
@@ -1845,7 +1852,12 @@ int main(int argc, char **argv)
 
     K1.SaveOutput();
 
-    scalar tottime = (clock()-Clock0)/(scalar) CLOCKS_PER_SEC;
+#ifdef _OPENMP
+	scalar tottime = omp_get_wtime() - start_time;
+#else
+	scalar tottime = (clock() - Clock0) / (scalar)CLOCKS_PER_SEC;
+#endif
+
 
     Output("Main iterations: %d (time per iteration =" SCALARFMT " ms)\n",
 		    (int)K1.numiterations,
