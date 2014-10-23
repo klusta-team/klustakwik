@@ -632,9 +632,8 @@ void KK::EStep()
     integer p, c, cc, i;
     integer nSkipped;
     scalar LogRootDet; // log of square root of covariance determinant
-    scalar Mahal; // Mahalanobis distance of point from cluster center
     scalar correction_factor = (scalar)1; // for partial correction in distributional step
-	scalar InverseClusterNorm;
+	//scalar InverseClusterNorm;
 	vector<scalar> Chol(nDims2); // to store choleski decomposition
     vector<scalar> Vec2Mean(nDims); // stores data point minus class mean
     vector<scalar> Root(nDims); // stores result of Chol*Root = Vec
@@ -749,16 +748,18 @@ void KK::EStep()
             }
         }
 
-        for(p=0; p<nPoints; p++)
+#pragma omp parallel for schedule(dynamic) firstprivate(Vec2Mean, Root) default(shared)
+        for(integer p=0; p<nPoints; p++)
         {
-            // to save time -- only recalculate if the last one was close
+			// to save time -- only recalculate if the last one was close
             if (
                 !FullStep
                 && (Class[p] == OldClass[p])
                 && (LogP[p*MaxPossibleClusters+c] - LogP[p*MaxPossibleClusters+Class[p]] > DistThresh)
                 )
             {
-                nSkipped++;
+#pragma omp atomic
+				nSkipped++;
                 continue;
             }
 
@@ -791,13 +792,17 @@ void KK::EStep()
 				//dotprod *= InverseClusterNorm;
 				if (dotprod < MinMaskOverlap)
 				{
+#pragma omp atomic
 					nSkipped++;
 					continue;
 				}
 			}
 
+			SafeArray<scalar> safeVec2Mean(Vec2Mean, "safeVec2Mean");
+			SafeArray<scalar> safeRoot(Root, "safeRoot");
+
             // Compute Mahalanobis distance
-            Mahal = 0;
+            scalar Mahal = 0;
 
 			// calculate data minus class mean
 			//for (i = 0; i<nDims; i++)
@@ -821,8 +826,8 @@ void KK::EStep()
             // if distributional E step, add correction term
 			if (UseDistributional)
 			{
-				scalar * __restrict ctp = &(CorrectionTerm[p*nDims]);
-				scalar * __restrict icd = &(InvCovDiag[0]);
+				const scalar * __restrict ctp = &(CorrectionTerm[p*nDims]);
+				const scalar * __restrict icd = &(InvCovDiag[0]);
 				scalar subMahal = 0.0;
 				for (i = 0; i < nDims; i++)
 					subMahal += ctp[i] * icd[i];

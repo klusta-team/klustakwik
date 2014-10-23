@@ -6,8 +6,8 @@ CC = g++
 DEBUG = -g
 PROFILE = -pg
 OPTIMISATIONS = -O3 -ffast-math -march=native
-CFLAGS = -Wall -c -Wno-write-strings $(OPTIMISATIONS)
-LFLAGS = -Wall
+CFLAGS = -Wall -c -Wno-write-strings $(OPTIMISATIONS) -fopenmp
+LFLAGS = -Wall -fopenmp
 
 all: executable
 
