@@ -22,15 +22,6 @@ void KK::MemoryCheck()
 {
 	integer num_bytes_required = 3 * NumBytesRequired();
 	scalar memory_required = (num_bytes_required*1.0) / (1024.0*1024.0*1024.0);
-	if (memory_required > memory_tracker.limit_gb)
-	{
-		Error("Running KlustaKwik on this data will use between %.2f and %.2f GB of RAM, and the limit is set at %.2f.\n", (double)(memory_required*2.0 / 3.0), (double)memory_required, (double)memory_tracker.limit_gb);
-		Error("Possible candidates are:\n");
-		Error("- nPoints = %d\n", (int)nPoints);
-		Error("- nDims = %d\n", (int)nDims);
-		Error("- MaxPossibleClusters = %d\n", (int)MaxPossibleClusters);
-		exit(EXIT_FAILURE);
-	}
 	Output("This run is expected to use between %.2f and %.2f GB of RAM.\n", (double)(memory_required*2.0 / 3.0), (double)memory_required);
 }
 
@@ -1659,23 +1650,8 @@ int main(int argc, char **argv)
     scalar BestScore = HugeScore;
     integer p, i;
     SetupParams((integer)argc, argv); // This function is defined in parameters.cpp
-	if (RamLimitGB == 0.0)
-	{
-		RamLimitGB = (1.0*available_physical_memory()) / (1024.0*1024.0*1024.0);
-#ifdef __APPLE__
-		Output("Setting RAM limit to total physical memory, %.2f GB.\n", (double)RamLimitGB);
-		Output("WARNING: Not all physical memory will be available, but on Macs it is not possible\n");
-		Output("         to get the available physical memory.\n");
-#else
-		Output("Setting RAM limit to available physical memory, %.2f GB.\n", (double)RamLimitGB);
-#endif
-	}
-	else if (RamLimitGB < 0.0)
-	{
-		RamLimitGB = 1e20;
-		Output("WARNING: You have chosen not to set a RAM limit, this may cause problems.\n");
-	}
-	memory_tracker.limit_gb = RamLimitGB;
+    
+	memory_tracker.limit_gb = 1e20;
     
     //clock_t Clock0 = clock();
     Clock0 = clock();
