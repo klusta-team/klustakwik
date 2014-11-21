@@ -49,7 +49,11 @@ integer KK::NumBytesRequired()
 	integer num_bytes_allocated =
 		sizeof(scalar)*nPoints*nDims +               // Data
 		sizeof(char)*nPoints*nDims +                 // Masks
+#ifdef STORE_FLOAT_MASK_AS_CHAR
+		sizeof(char)*nPoints*nDims +               // CharFloatMasks
+#else
 		sizeof(scalar)*nPoints*nDims +               // FloatMasks
+#endif
 		sizeof(scalar)*nPoints +                     // UnMaskDims
 		sizeof(scalar)*MaxPossibleClusters +         // Weight
 		sizeof(scalar)*MaxPossibleClusters*nDims +   // Mean
@@ -105,7 +109,11 @@ void KK::AllocateArrays() {
 	resize_and_fill_with_zeros(Data, nPoints * nDims);
     //SNK
 	resize_and_fill_with_zeros(Masks, nPoints * nDims);
+#ifdef STORE_FLOAT_MASK_AS_CHAR
+	resize_and_fill_with_zeros(CharFloatMasks, nPoints * nDims);
+#else
 	resize_and_fill_with_zeros(FloatMasks, nPoints * nDims);
+#endif
 	resize_and_fill_with_zeros(UnMaskDims, nPoints); //SNK Number of unmasked dimensions for each data point when using float masks $\sum m_i$
 	resize_and_fill_with_zeros(Weight, MaxPossibleClusters);
 	resize_and_fill_with_zeros(Mean, MaxPossibleClusters*nDims);
@@ -215,7 +223,11 @@ void KK::ComputeClusterMasks()
         integer c = Class[p];
 		for (integer i = 0; i < nDims; i++)
 		{
+#ifdef STORE_FLOAT_MASK_AS_CHAR
+			ClusterMask[c*nDims + i] += (scalar)(CharFloatMasks[p*nDims + i]/(scalar)255.0);
+#else
 			ClusterMask[c*nDims + i] += FloatMasks[p*nDims + i];
+#endif
 		}
     }
 
@@ -878,7 +890,11 @@ void KK::EStep()
 			if (MinMaskOverlap > 0)
 			{
 				// compute dot product of point mask with cluster mask
+#ifdef STORE_FLOAT_MASK_AS_CHAR
+				const unsigned char * __restrict CharPointMask = &(CharFloatMasks[p*nDims]);
+#else
 				const scalar * __restrict PointMask = &(FloatMasks[p*nDims]);
+#endif
 				//const scalar * __restrict cm = &(ClusterMask[c*nDims]);
 				scalar dotprod = 0.0;
 				//// InverseClusterNorm is computed above, uncomment it if you uncomment any of this
@@ -895,7 +911,11 @@ void KK::EStep()
 					for (integer ii = 0; ii < NumUnmasked; ii++)
 					{
 						const integer i = cu[ii];
+#ifdef STORE_FLOAT_MASK_AS_CHAR
+						dotprod += CharPointMask[i]/(scalar)255.0;
+#else
 						dotprod += PointMask[i];
+#endif
 						if (dotprod >= MinMaskOverlap)
 							break;
 					}
@@ -1718,7 +1738,11 @@ void KK::ConstructFrom(const KK &Source, const vector<integer> &Indices)
         {
             for (integer d=0; d<nDims; d++)
             //    CorrectionTerm[p*nDims + d] = Source.CorrectionTerm[psource*nDims + d];
+#ifdef STORE_FLOAT_MASK_AS_CHAR
+                CharFloatMasks[p*nDims + d] = Source.CharFloatMasks[psource*nDims + d];
+#else
                 FloatMasks[p*nDims + d] = Source.FloatMasks[psource*nDims + d];
+#endif
         }
         
         UnMaskDims[p] = Source.UnMaskDims[psource];

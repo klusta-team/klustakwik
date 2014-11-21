@@ -99,7 +99,11 @@ public:
     vector<integer> SortedIndices;
 
     vector<char> Masks; //SNK: Masks[p*nDims + d] = Input masks for point p, dimension d
+#ifdef STORE_FLOAT_MASK_AS_CHAR
+	vector<unsigned char> CharFloatMasks; // float mask that is stored in a char to save RAM
+#else
     vector<scalar> FloatMasks; // as above but for floating point masks
+#endif
     // We store just the indices of the unmasked points in this sparse array
     // structure. For point p, the segment Unmasked[UnmaskedInd[p]] to
     // Unmasked[UnmaskedInd[p+1]] contains the indices i where Masks[i]==1.
