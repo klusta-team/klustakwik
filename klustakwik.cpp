@@ -48,7 +48,7 @@ integer KK::NumBytesRequired()
 	// Compute required memory and check if it exceeds the limit set
 	integer num_bytes_allocated =
 		sizeof(scalar)*nPoints*nDims +               // Data
-		sizeof(integer)*nPoints*nDims +              // Masks
+		sizeof(char)*nPoints*nDims +                 // Masks
 		sizeof(scalar)*nPoints*nDims +               // FloatMasks
 		sizeof(scalar)*nPoints +                     // UnMaskDims
 		sizeof(scalar)*MaxPossibleClusters +         // Weight

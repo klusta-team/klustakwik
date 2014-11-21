@@ -98,7 +98,7 @@ public:
     // to be recomputed when we change the underlying data.
     vector<integer> SortedIndices;
 
-    vector<integer> Masks; //SNK: Masks[p*nDims + d] = Input masks for point p, dimension d
+    vector<char> Masks; //SNK: Masks[p*nDims + d] = Input masks for point p, dimension d
     vector<scalar> FloatMasks; // as above but for floating point masks
     // We store just the indices of the unmasked points in this sparse array
     // structure. For point p, the segment Unmasked[UnmaskedInd[p]] to
