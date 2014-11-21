@@ -96,13 +96,13 @@ void KK::ComputeSortedUnmaskedChangePoints()
     // first point, because we use the mask having changed to signal that
     // we should recompute the matrices that depend on the masks.
     safeSortedMaskChange[SortedIndices[0]] = true;
-    SafeArray<integer> oldmask(Masks, SortedIndices[0]*nDims,
+    SafeArray<char> oldmask(Masks, SortedIndices[0]*nDims,
             "ComputeSortedUnmaskedChangePoints:oldmask");
     integer numchanged = 0;
     for(integer q=1; q<nPoints; q++)
     {
         integer p = SortedIndices[q];
-        SafeArray<integer> newmask(Masks, p*nDims,
+        SafeArray<char> newmask(Masks, p*nDims,
                 "ComputeSortedUnmaskedChangePoints:newmask");
         bool changed = false;
         for(integer i=0; i<nDims; i++)
@@ -139,8 +139,8 @@ bool KKSort::operator()(const integer i, const integer j) const
     integer nDims = kk->nDims;
     for(integer k=0; k<nDims; k++)
     {
-        integer x = kk->Masks[i*nDims+k];
-        integer y = kk->Masks[j*nDims+k];
+        char x = kk->Masks[i*nDims+k];
+        char y = kk->Masks[j*nDims+k];
         if(x<y) return true;
         if(x>y) return false;
     }
