@@ -48,7 +48,11 @@ integer KK::NumBytesRequired()
 	// Compute required memory and check if it exceeds the limit set
 	integer num_bytes_allocated =
 		sizeof(scalar)*nPoints*nDims +               // Data
+#ifdef COMPUTED_BINARY_MASK
+		(!UseDistributional)*sizeof(char)*nPoints*nDims + // Masks
+#else
 		sizeof(char)*nPoints*nDims +                 // Masks
+#endif
 #ifdef STORE_FLOAT_MASK_AS_CHAR
 		sizeof(char)*nPoints*nDims +               // CharFloatMasks
 #else
@@ -108,7 +112,12 @@ void KK::AllocateArrays() {
     // Set sizes for arrays
 	resize_and_fill_with_zeros(Data, nPoints * nDims);
     //SNK
+#ifdef COMPUTED_BINARY_MASK
+	if(!UseDistributional)
+		resize_and_fill_with_zeros(Masks, nPoints * nDims);
+#else
 	resize_and_fill_with_zeros(Masks, nPoints * nDims);
+#endif
 #ifdef STORE_FLOAT_MASK_AS_CHAR
 	resize_and_fill_with_zeros(CharFloatMasks, nPoints * nDims);
 #else
@@ -1438,7 +1447,7 @@ void KK::StartingConditionsFromMasks()
                     // compute mask distance
                     integer curdistance = 0;
                     for(integer i=0; i<nDims; i++)
-                        if(Masks[p*nDims+i]!=Masks[mip*nDims+i])
+                        if(GetMasks(p*nDims+i)!=GetMasks(mip*nDims+i))
                             curdistance++;
                     if(curdistance<distance)
                     {
@@ -1719,8 +1728,11 @@ void KK::ConstructFrom(const KK &Source, const vector<integer> &Indices)
         //copy data and masks
         for (integer d=0; d<nDims; d++)
             Data[p*nDims + d] = Source.Data[psource*nDims + d];
-        for (integer d=0; d<nDims; d++)
-            Masks[p*nDims + d] = Source.Masks[psource*nDims + d];
+		if(Source.Masks.size()>0)
+		{
+			for (integer d=0; d<nDims; d++)
+				Masks[p*nDims + d] = Source.Masks[psource*nDims + d];
+		}
         if(UseDistributional)
         {
             for (integer d=0; d<nDims; d++)

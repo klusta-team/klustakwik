@@ -142,38 +142,6 @@ void KK::LoadData(char *FileBase, integer ElecNo, char *UseFeatures)
         }
     }
 
-    //if(usemasks)
-    //{
-//        // rewind file
-//        fseek(fpmask, 0, SEEK_SET);
-
-//        // read in number of features
-//        fscanf(fpmask, "%d", &nmaskFeatures);
-
-//        if (nFeatures != nmaskFeatures)
-//            Error("Error: Mask file and Fet file incompatible");
-
-//        // load masks
-//        for (p=0; p<nPoints; p++) {
-//            j=0;
-//            for(i=0; i<nFeatures; i++) {
-//                maskstatus = fscanf(fpmask, "%d", &maskval);
-//                if (maskstatus==EOF) Error("Error reading mask file");
-
-//                if (i<UseLen && UseFeatures[i]=='1') {
-//                    Masks[p*nDims + j] = maskval;
-//                    j++;
-//                }
-//            }
-//        }
-//    }
-//    else  //Case for Classical KlustaKwik
-//    {
-//        for(p=0; p<nPoints; p++)
-//            for(i=0; i<nDims; i++)
-//                Masks[p*nDims+i] = 1;
-//    }
-
     if(UseDistributional) //replaces if(UseFloatMasks)
     {
         // rewind file
@@ -223,6 +191,7 @@ void KK::LoadData(char *FileBase, integer ElecNo, char *UseFeatures)
         }
     }    
 
+#ifndef COMPUTED_BINARY_MASK
     if(UseDistributional)
     {
         for(p=0; p<nPoints; p++)
@@ -239,6 +208,9 @@ void KK::LoadData(char *FileBase, integer ElecNo, char *UseFeatures)
             }
     }
     else  //Case for Classical EM KlustaKwik
+#else
+	if(!UseDistributional)
+#endif
     {
         for(p=0; p<nPoints; p++)
             for(i=0; i<nDims; i++)
@@ -411,7 +383,7 @@ void KK::SaveSortedData()
     {
         integer p = SortedIndices[q];
         for(integer i=0; i<nDims; i++)
-            fprintf(fp, "%d ", (int)Masks[p*nDims+i]);
+            fprintf(fp, "%d ", (int)GetMasks(p*nDims+i));
         fprintf(fp, "\n");
     }
     fclose(fp);

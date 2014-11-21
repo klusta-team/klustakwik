@@ -99,6 +99,21 @@ public:
     vector<integer> SortedIndices;
 
     vector<char> Masks; //SNK: Masks[p*nDims + d] = Input masks for point p, dimension d
+#ifdef COMPUTED_BINARY_MASK
+	inline char GetMasks(integer i)
+	{
+		if(!UseDistributional)
+			return Masks[i];
+#ifdef STORE_FLOAT_MASK_AS_CHAR
+		return CharFloatMasks[i]==(unsigned char)255;
+#else
+		return FloatMasks[i]==(scalar)1;
+#endif
+	}
+#else
+	inline char GetMasks(integer i) { return Masks[i]; }
+#endif
+
 #ifdef STORE_FLOAT_MASK_AS_CHAR
 	vector<unsigned char> CharFloatMasks; // float mask that is stored in a char to save RAM
 #else
