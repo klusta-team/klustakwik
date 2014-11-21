@@ -276,7 +276,9 @@ void KK::ComputeCorrectionTermsAndReplaceData()
             scalar sigma2 = NoiseVariance[i];
             scalar y = w*x+(1-w)*nu;
             scalar z = w*x*x+(1-w)*(nu*nu+sigma2);
+#ifndef COMPUTED_CORRECTION_TERM
             CorrectionTerm[p*nDims+i] = z-y*y;
+#endif
             Data[p*nDims+i] = y;
         }
 }
