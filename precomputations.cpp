@@ -263,7 +263,11 @@ void KK::ComputeCorrectionTermsAndReplaceData()
         for(integer i=0; i<nDims; i++)
         {
             scalar x = Data[p*nDims+i];
+#ifdef STORE_FLOAT_MASK_AS_CHAR
+            scalar w = CharFloatMasks[p*nDims+i]/(scalar)255.0;
+#else
             scalar w = FloatMasks[p*nDims+i];
+#endif
             scalar nu = NoiseMean[i];
             scalar sigma2 = NoiseVariance[i];
             scalar y = w*x+(1-w)*nu;
@@ -285,7 +289,11 @@ void KK::PointMaskDimension()
         UnMaskDims[p]=0;
         for (i=0;i<nDims;i++)
         {
+#ifdef STORE_FLOAT_MASK_AS_CHAR
+            UnMaskDims[p] += CharFloatMasks[p*nDims+i]/(scalar)255.0;
+#else
             UnMaskDims[p] += FloatMasks[p*nDims+i];
+#endif
         }
         if (Debug)
         {

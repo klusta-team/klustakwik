@@ -13,6 +13,14 @@
 #include "klustakwik.h"
 #include "numerics.h"
 
+unsigned char convert_to_char(scalar x)
+{
+	integer y = (integer)(x*255.0);
+	if(y<0) y = 0;
+	if(y>255) y= 255;
+	return (unsigned char)y;
+}
+
 // Loads in Fet file.  Also allocates storage for other arrays
 void KK::LoadData(char *FileBase, integer ElecNo, char *UseFeatures)
 {
@@ -191,9 +199,11 @@ void KK::LoadData(char *FileBase, integer ElecNo, char *UseFeatures)
                 {
                     if(i<UseLen )
                     {
-                      //                                  Output("j = %d, i = %d \n", (int)i, (int)j);
+#ifdef STORE_FLOAT_MASK_AS_CHAR
+						CharFloatMasks[p*nDims+j] = convert_to_char(val);
+#else
                         FloatMasks[p*nDims + j] = val;
-                     //                                   printf("Data = " SCALARFMT "",Data[p*nDims+j]);
+#endif
                         j++;
                     }
                 }
@@ -201,34 +211,28 @@ void KK::LoadData(char *FileBase, integer ElecNo, char *UseFeatures)
                 {
                     if(i<UseLen && UseFeatures[i]=='1'  ) //To Do: implement DropLastNFeatures
                     {
+#ifdef STORE_FLOAT_MASK_AS_CHAR
+						CharFloatMasks[p*nDims+j] = convert_to_char(val);
+#else
                         FloatMasks[p*nDims + j] = val;
-                      //                                 printf("Data = " SCALARFMT "",Data[p*nDims+j]);
+#endif
                         j++;
                     }
                 }
-               // if (i<UseLen && UseFeatures[i]=='1') {
-               //     FloatMasks[p*nDims + j] = val;
-               //     j++;
-               // }
             }
         }
-    }
-    //else if(UseDistributional)
-    //{
-    //    for(p=0; p<nPoints; p++)
-    //        for(i=0; i<nDims; i++)
-    //        {
-    //            FloatMasks[p*nDims+i] = (scalar)Masks[p*nDims+i];
-    //        }
-    //}
-    
+    }    
 
     if(UseDistributional)
     {
         for(p=0; p<nPoints; p++)
             for(i=0; i<nDims; i++)
             {
+#ifdef STORE_FLOAT_MASK_AS_CHAR
+                if(CharFloatMasks[p*nDims+i]==(unsigned char)255) //changed so that this gives the connected component masks
+#else
                 if(FloatMasks[p*nDims+i]==(scalar)1) //changed so that this gives the connected component masks
+#endif
                     Masks[p*nDims+i] = 1;
                 else
                     Masks[p*nDims+i] = 0;
@@ -242,8 +246,6 @@ void KK::LoadData(char *FileBase, integer ElecNo, char *UseFeatures)
     }
 
     fclose(fp);
-    //if(usemasks)
-    //    fclose(fpmask);
     if(UseDistributional)
         fclose(fpfmask);
 
