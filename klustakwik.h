@@ -98,8 +98,27 @@ public:
     // to be recomputed when we change the underlying data.
     vector<integer> SortedIndices;
 
-    vector<integer> Masks; //SNK: Masks[p*nDims + d] = Input masks for point p, dimension d
+    vector<char> Masks; //SNK: Masks[p*nDims + d] = Input masks for point p, dimension d
+#ifdef COMPUTED_BINARY_MASK
+	inline char GetMasks(integer i)
+	{
+		if(!UseDistributional)
+			return Masks[i];
+#ifdef STORE_FLOAT_MASK_AS_CHAR
+		return CharFloatMasks[i]==(unsigned char)255;
+#else
+		return FloatMasks[i]==(scalar)1;
+#endif
+	}
+#else
+	inline char GetMasks(integer i) { return Masks[i]; }
+#endif
+
+#ifdef STORE_FLOAT_MASK_AS_CHAR
+	vector<unsigned char> CharFloatMasks; // float mask that is stored in a char to save RAM
+#else
     vector<scalar> FloatMasks; // as above but for floating point masks
+#endif
     // We store just the indices of the unmasked points in this sparse array
     // structure. For point p, the segment Unmasked[UnmaskedInd[p]] to
     // Unmasked[UnmaskedInd[p+1]] contains the indices i where Masks[i]==1.
@@ -143,7 +162,35 @@ public:
     vector<scalar> NoiseVariance;
     vector<integer> nMasked;
     // used in distribution EM steps
+
+#ifdef COMPUTED_CORRECTION_TERM
+	inline scalar GetCorrectionTerm(integer p, integer i)
+	{
+            // scalar x = Data[p*nDims+i];
+#ifdef STORE_FLOAT_MASK_AS_CHAR
+            scalar w = CharFloatMasks[p*nDims+i]/(scalar)255.0;
+#else
+            scalar w = FloatMasks[p*nDims+i];
+#endif
+            scalar nu = NoiseMean[i];
+            scalar sigma2 = NoiseVariance[i];
+            //scalar y = w*x+(1-w)*nu;
+            //scalar z = w*x*x+(1-w)*(nu*nu+sigma2);
+			scalar y = Data[p*nDims+i];
+			if(w==(scalar)0.0)
+			{
+				scalar z = nu*nu+sigma2;
+				return z-y*y;
+			} else
+			{
+				scalar x = (y-(1-w)*nu)/w;
+				scalar z = w*x*x+(1-w)*(nu*nu+sigma2);
+				return z-y*y;
+			}
+	};
+#else
     vector<scalar> CorrectionTerm;
+#endif
     // used in ComputeScore and ConsiderDeletion
     vector<scalar> ClassPenalty;
     // debugging info

@@ -9,6 +9,10 @@
 #define _USE_MATH_DEFINES
 #include<math.h>
 
+#ifdef _OPENMP
+#include<omp.h>
+#endif
+
 // GLOBAL VARIABLES
 FILE *Distfp;
 integer global_numiterations = 0;
@@ -44,8 +48,16 @@ integer KK::NumBytesRequired()
 	// Compute required memory and check if it exceeds the limit set
 	integer num_bytes_allocated =
 		sizeof(scalar)*nPoints*nDims +               // Data
-		sizeof(integer)*nPoints*nDims +              // Masks
+#ifdef COMPUTED_BINARY_MASK
+		(!UseDistributional)*sizeof(char)*nPoints*nDims + // Masks
+#else
+		sizeof(char)*nPoints*nDims +                 // Masks
+#endif
+#ifdef STORE_FLOAT_MASK_AS_CHAR
+		sizeof(char)*nPoints*nDims +               // CharFloatMasks
+#else
 		sizeof(scalar)*nPoints*nDims +               // FloatMasks
+#endif
 		sizeof(scalar)*nPoints +                     // UnMaskDims
 		sizeof(scalar)*MaxPossibleClusters +         // Weight
 		sizeof(scalar)*MaxPossibleClusters*nDims +   // Mean
@@ -61,7 +73,9 @@ integer KK::NumBytesRequired()
 		sizeof(integer)*MaxPossibleClusters +        // nClassMembers
 		sizeof(scalar)*nPoints*nDims +               // AllVector2Mean
 		// UseDistributional only
-		UseDistributional*sizeof(scalar)*MaxPossibleClusters +  // CorrectionTerm
+#ifndef COMPUTED_CORRECTION_TERM
+		UseDistributional*sizeof(scalar)*nPoints*nDims +  // CorrectionTerm
+#endif
 		sizeof(scalar)*(UseDistributional*MaxPossibleClusters*nDims) + // ClusterMask (vector<scalar>)
 		UseDistributional*sizeof(integer)*MaxPossibleClusters*nDims; // ClusterUnmaskedFeatures + ClusterMaskedFeatures
 
@@ -100,8 +114,17 @@ void KK::AllocateArrays() {
     // Set sizes for arrays
 	resize_and_fill_with_zeros(Data, nPoints * nDims);
     //SNK
+#ifdef COMPUTED_BINARY_MASK
+	if(!UseDistributional)
+		resize_and_fill_with_zeros(Masks, nPoints * nDims);
+#else
 	resize_and_fill_with_zeros(Masks, nPoints * nDims);
+#endif
+#ifdef STORE_FLOAT_MASK_AS_CHAR
+	resize_and_fill_with_zeros(CharFloatMasks, nPoints * nDims);
+#else
 	resize_and_fill_with_zeros(FloatMasks, nPoints * nDims);
+#endif
 	resize_and_fill_with_zeros(UnMaskDims, nPoints); //SNK Number of unmasked dimensions for each data point when using float masks $\sum m_i$
 	resize_and_fill_with_zeros(Weight, MaxPossibleClusters);
 	resize_and_fill_with_zeros(Mean, MaxPossibleClusters*nDims);
@@ -118,7 +141,9 @@ void KK::AllocateArrays() {
 	resize_and_fill_with_zeros(nClassMembers, MaxPossibleClusters);
     if(UseDistributional)
     {
+#ifndef COMPUTED_CORRECTION_TERM
 		resize_and_fill_with_zeros(CorrectionTerm, nPoints * nDims);
+#endif
 		resize_and_fill_with_zeros(ClusterMask, MaxPossibleClusters*nDims);
     }
 }
@@ -211,7 +236,11 @@ void KK::ComputeClusterMasks()
         integer c = Class[p];
 		for (integer i = 0; i < nDims; i++)
 		{
+#ifdef STORE_FLOAT_MASK_AS_CHAR
+			ClusterMask[c*nDims + i] += (scalar)(CharFloatMasks[p*nDims + i]/(scalar)255.0);
+#else
 			ClusterMask[c*nDims + i] += FloatMasks[p*nDims + i];
+#endif
 		}
     }
 
@@ -394,102 +423,216 @@ void KK::MStep()
 		// Empty the dynamic covariance matrices (we will fill it up as we go)
 		DynamicCov.clear();
 
-		for (cc = 0; cc<nClustersAlive; cc++)
+		for (cc = 0; cc < nClustersAlive; cc++)
 		{
 			c = AliveIndex[cc];
-			vector<integer> &PointsInThisClass = PointsInClass[c];
 			vector<integer> &CurrentUnmasked = ClusterUnmaskedFeatures[c];
 			vector<integer> &CurrentMasked = ClusterMaskedFeatures[c];
 			DynamicCov.push_back(BlockPlusDiagonalMatrix(CurrentMasked, CurrentUnmasked));
-			BlockPlusDiagonalMatrix &CurrentCov = DynamicCov.back();
-			if (CurrentUnmasked.size() == 0)
-				continue;
+		}
 
-			//// Correct version for dynamic cov matrix
-			//for (integer q = 0; q < (integer)PointsInThisClass.size(); q++)
-			//{
-			//	p = PointsInThisClass[q];
-			//	for (integer ii = 0; ii < (integer)CurrentUnmasked.size(); ii++)
-			//	{
-			//		i = CurrentUnmasked[ii];
-			//		for (integer jj = 0; jj < (integer)CurrentUnmasked.size(); jj++)
-			//		{
-			//			j = CurrentUnmasked[jj];
-			//			//Cov[c*nDims2 + i*nDims + j] += AllVector2Mean[p*nDims + i] * AllVector2Mean[p*nDims + j];
-			//			CurrentCov.Block[ii*CurrentCov.NumUnmasked + jj] += AllVector2Mean[p*nDims + i] * AllVector2Mean[p*nDims + j];
-			//		}
-			//	}
-			//}
-			// Fast version for dynamic cov matrix
-			const integer npoints = (integer)PointsInThisClass.size();
-			const integer nunmasked = (integer)CurrentUnmasked.size();
-			if (npoints > 0 && nunmasked > 0)
+#pragma omp parallel for schedule(dynamic)
+		for (integer cc = 0; cc<nClustersAlive; cc++)
+		{
+			const integer c = AliveIndex[cc];
+			const vector<integer> &PointsInThisClass = PointsInClass[c];
+			const integer NumPointsInThisClass = PointsInThisClass.size();
+			const vector<integer> &CurrentUnmasked = ClusterUnmaskedFeatures[c];
+			//const vector<integer> &CurrentMasked = ClusterMaskedFeatures[c];
+			BlockPlusDiagonalMatrix &CurrentCov = DynamicCov[cc];
+			if (CurrentUnmasked.size() > 0)
 			{
-				const integer * __restrict pitc = &(PointsInThisClass[0]);
-				const integer * __restrict cu = &(CurrentUnmasked[0]);
-				for (integer q = 0; q < npoints; q++)
+				const integer npoints = (integer)PointsInThisClass.size();
+				const integer nunmasked = (integer)CurrentUnmasked.size();
+				if (npoints > 0 && nunmasked > 0)
 				{
-					const integer p = pitc[q];
-					const scalar * __restrict av2mp = &(AllVector2Mean[p*nDims]);
-					for (integer ii = 0; ii < nunmasked; ii++)
+					const integer * __restrict pitc = &(PointsInThisClass[0]);
+					const integer * __restrict cu = &(CurrentUnmasked[0]);
+					for (integer q = 0; q < npoints; q++)
 					{
-						const integer i = cu[ii];
-						const scalar av2mp_i = av2mp[i];
-						scalar * __restrict row = &(CurrentCov.Block[ii*nunmasked]);
-						for (integer jj = 0; jj < nunmasked; jj++)
+						const integer p = pitc[q];
+						const scalar * __restrict av2mp = &(AllVector2Mean[p*nDims]);
+						for (integer ii = 0; ii < nunmasked; ii++)
 						{
-							const integer j = cu[jj];
-							//Cov[c*nDims2 + i*nDims + j] += AllVector2Mean[p*nDims + i] * AllVector2Mean[p*nDims + j];
-							row[jj] += av2mp_i * av2mp[j];
+							const integer i = cu[ii];
+							const scalar av2mp_i = av2mp[i];
+							scalar * __restrict row = &(CurrentCov.Block[ii*nunmasked]);
+							for (integer jj = 0; jj < nunmasked; jj++)
+							{
+								const integer j = cu[jj];
+								//Cov[c*nDims2 + i*nDims + j] += AllVector2Mean[p*nDims + i] * AllVector2Mean[p*nDims + j];
+								row[jj] += av2mp_i * av2mp[j];
+							}
 						}
 					}
 				}
 			}
 
-			// Correct version
-			//for (integer q = 0; q < (integer)PointsInThisClass.size(); q++)
-			//{
-			//	p = PointsInThisClass[q];
-			//	for (integer ii = 0; ii < (integer)CurrentUnmasked.size(); ii++)
-			//	{
-			//		i = CurrentUnmasked[ii];
-			//		for (integer jj = 0; jj < (integer)CurrentUnmasked.size(); jj++)
-			//		{
-			//			j = CurrentUnmasked[jj];
-			//			Cov[c*nDims2 + i*nDims + j] += AllVector2Mean[p*nDims + i] * AllVector2Mean[p*nDims + j];
-			//		}
-			//	}
-			//}
-			// Faster version (equivalent)
-			// Doesn't make any use of cache structure, but no need to upgrade now because
-			// we will move to a sparse block matrix structure that will make this more
-			// natural
-			/*
-			const integer * __restrict cu = &(CurrentUnmasked[0]);
-			const integer ncu = (integer)CurrentUnmasked.size();
-			scalar * __restrict cov_c = &(Cov[c*nDims2]);
-			const integer * __restrict pitc = &(PointsInThisClass[0]);
-			const integer npitc = (integer)PointsInThisClass.size();
-			const scalar * __restrict av2m = &(AllVector2Mean[0]);
-			for (integer q = 0; q < npitc; q++)
+			//
+
+			for (integer ii = 0; ii<CurrentCov.NumUnmasked; ii++)
 			{
-				const integer p = pitc[q];
-				const scalar * __restrict av2m_p = av2m + p*nDims;
-				for (integer ii = 0; ii < ncu; ii++)
+				const integer i = (*CurrentCov.Unmasked)[ii];
+				scalar ccf = 0.0; // class correction factor
+				for (integer q = 0; q<NumPointsInThisClass; q++)
 				{
-					const integer i = cu[ii];
-					const scalar av2m_p_i = av2m_p[i];
-					scalar * __restrict cov_c_i = cov_c + i*nDims;
-					for (integer jj = 0; jj < ncu; jj++)
-					{
-						const integer j = cu[jj];
-						cov_c_i[j] += av2m_p_i*av2m_p[j];
-						//Cov[c*nDims2 + i*nDims + j] += AllVector2Mean[p*nDims + i] * AllVector2Mean[p*nDims + j];
-					}
+					const integer p = PointsInThisClass[q];
+#ifdef COMPUTED_CORRECTION_TERM
+					ccf += GetCorrectionTerm(p, i);
+#else
+					ccf += CorrectionTerm[p*nDims + i];
+#endif
 				}
+				CurrentCov.Block[ii*CurrentCov.NumUnmasked + ii] += ccf;
 			}
-			*/
+			for (integer ii = 0; ii<CurrentCov.NumMasked; ii++)
+			{
+				const integer i = (*CurrentCov.Masked)[ii];
+				scalar ccf = 0.0; // class correction factor
+				for (integer q = 0; q<NumPointsInThisClass; q++)
+				{
+					const integer p = PointsInThisClass[q];
+#ifdef COMPUTED_CORRECTION_TERM
+					ccf += GetCorrectionTerm(p, i);
+#else
+					ccf += CorrectionTerm[p*nDims + i];
+#endif
+				}
+				CurrentCov.Diagonal[ii] += ccf;
+			}
+
+			//
+
+			for (integer ii = 0; ii < CurrentCov.NumUnmasked; ii++)
+				CurrentCov.Block[ii*CurrentCov.NumUnmasked + ii] += priorPoint*NoiseVariance[(*CurrentCov.Unmasked)[ii]];
+			for (integer ii = 0; ii < CurrentCov.NumMasked; ii++)
+				CurrentCov.Diagonal[ii] += priorPoint*NoiseVariance[(*CurrentCov.Masked)[ii]];
+
+			//
+
+			const scalar factor = 1.0 / (nClassMembers[c] + priorPoint - 1);
+			for (i = 0; i < (integer)CurrentCov.Block.size(); i++)
+				CurrentCov.Block[i] *= factor;
+			for (i = 0; i < (integer)CurrentCov.Diagonal.size(); i++)
+				CurrentCov.Diagonal[i] *= factor;
+
 		}
+
+	}
+
+	if (UseDistributional)
+	{
+//		// Compute the cluster masks, used below to optimise the computation
+//		ComputeClusterMasks();
+//		// Empty the dynamic covariance matrices (we will fill it up as we go)
+//		DynamicCov.clear();
+//
+//		for (cc = 0; cc < nClustersAlive; cc++)
+//		{
+//			c = AliveIndex[cc];
+//			vector<integer> &PointsInThisClass = PointsInClass[c];
+//			vector<integer> &CurrentUnmasked = ClusterUnmaskedFeatures[c];
+//			vector<integer> &CurrentMasked = ClusterMaskedFeatures[c];
+//			DynamicCov.push_back(BlockPlusDiagonalMatrix(CurrentMasked, CurrentUnmasked));
+//		}
+//
+//#pragma omp parallel for
+//		for (integer cc = 0; cc<nClustersAlive; cc++)
+//		{
+//			integer c = AliveIndex[cc];
+//			vector<integer> &PointsInThisClass = PointsInClass[c];
+//			vector<integer> &CurrentUnmasked = ClusterUnmaskedFeatures[c];
+//			vector<integer> &CurrentMasked = ClusterMaskedFeatures[c];
+//			//DynamicCov.push_back(BlockPlusDiagonalMatrix(CurrentMasked, CurrentUnmasked));
+//			BlockPlusDiagonalMatrix &CurrentCov = DynamicCov[cc];
+//			if (CurrentUnmasked.size() == 0)
+//				continue;
+//
+//			//// Correct version for dynamic cov matrix
+//			//for (integer q = 0; q < (integer)PointsInThisClass.size(); q++)
+//			//{
+//			//	p = PointsInThisClass[q];
+//			//	for (integer ii = 0; ii < (integer)CurrentUnmasked.size(); ii++)
+//			//	{
+//			//		i = CurrentUnmasked[ii];
+//			//		for (integer jj = 0; jj < (integer)CurrentUnmasked.size(); jj++)
+//			//		{
+//			//			j = CurrentUnmasked[jj];
+//			//			//Cov[c*nDims2 + i*nDims + j] += AllVector2Mean[p*nDims + i] * AllVector2Mean[p*nDims + j];
+//			//			CurrentCov.Block[ii*CurrentCov.NumUnmasked + jj] += AllVector2Mean[p*nDims + i] * AllVector2Mean[p*nDims + j];
+//			//		}
+//			//	}
+//			//}
+//			// Fast version for dynamic cov matrix
+//			const integer npoints = (integer)PointsInThisClass.size();
+//			const integer nunmasked = (integer)CurrentUnmasked.size();
+//			if (npoints > 0 && nunmasked > 0)
+//			{
+//				const integer * __restrict pitc = &(PointsInThisClass[0]);
+//				const integer * __restrict cu = &(CurrentUnmasked[0]);
+//				for (integer q = 0; q < npoints; q++)
+//				{
+//					const integer p = pitc[q];
+//					const scalar * __restrict av2mp = &(AllVector2Mean[p*nDims]);
+//					for (integer ii = 0; ii < nunmasked; ii++)
+//					{
+//						const integer i = cu[ii];
+//						const scalar av2mp_i = av2mp[i];
+//						scalar * __restrict row = &(CurrentCov.Block[ii*nunmasked]);
+//						for (integer jj = 0; jj < nunmasked; jj++)
+//						{
+//							const integer j = cu[jj];
+//							//Cov[c*nDims2 + i*nDims + j] += AllVector2Mean[p*nDims + i] * AllVector2Mean[p*nDims + j];
+//							row[jj] += av2mp_i * av2mp[j];
+//						}
+//					}
+//				}
+//			}
+//
+//			// Correct version
+//			//for (integer q = 0; q < (integer)PointsInThisClass.size(); q++)
+//			//{
+//			//	p = PointsInThisClass[q];
+//			//	for (integer ii = 0; ii < (integer)CurrentUnmasked.size(); ii++)
+//			//	{
+//			//		i = CurrentUnmasked[ii];
+//			//		for (integer jj = 0; jj < (integer)CurrentUnmasked.size(); jj++)
+//			//		{
+//			//			j = CurrentUnmasked[jj];
+//			//			Cov[c*nDims2 + i*nDims + j] += AllVector2Mean[p*nDims + i] * AllVector2Mean[p*nDims + j];
+//			//		}
+//			//	}
+//			//}
+//			// Faster version (equivalent)
+//			// Doesn't make any use of cache structure, but no need to upgrade now because
+//			// we will move to a sparse block matrix structure that will make this more
+//			// natural
+//			/*
+//			const integer * __restrict cu = &(CurrentUnmasked[0]);
+//			const integer ncu = (integer)CurrentUnmasked.size();
+//			scalar * __restrict cov_c = &(Cov[c*nDims2]);
+//			const integer * __restrict pitc = &(PointsInThisClass[0]);
+//			const integer npitc = (integer)PointsInThisClass.size();
+//			const scalar * __restrict av2m = &(AllVector2Mean[0]);
+//			for (integer q = 0; q < npitc; q++)
+//			{
+//				const integer p = pitc[q];
+//				const scalar * __restrict av2m_p = av2m + p*nDims;
+//				for (integer ii = 0; ii < ncu; ii++)
+//				{
+//					const integer i = cu[ii];
+//					const scalar av2m_p_i = av2m_p[i];
+//					scalar * __restrict cov_c_i = cov_c + i*nDims;
+//					for (integer jj = 0; jj < ncu; jj++)
+//					{
+//						const integer j = cu[jj];
+//						cov_c_i[j] += av2m_p_i*av2m_p[j];
+//						//Cov[c*nDims2 + i*nDims + j] += AllVector2Mean[p*nDims + i] * AllVector2Mean[p*nDims + j];
+//					}
+//				}
+//			}
+//			*/
+//		}
 	}
 	else
 	{
@@ -528,68 +671,8 @@ void KK::MStep()
 		}
 	}
 
-    if(UseDistributional)
-    {
-        for(cc=0; cc<nClustersAlive; cc++)
-        {
-            c = AliveIndex[cc];
-            vector<integer> &PointsInThisClass = PointsInClass[c];
-			integer NumPointsInThisClass = PointsInThisClass.size();
-			BlockPlusDiagonalMatrix &CurrentCov = DynamicCov[cc];
-			for (integer ii = 0; ii<CurrentCov.NumUnmasked; ii++)
-			{
-				i = (*CurrentCov.Unmasked)[ii];
-				scalar ccf = 0.0; // class correction factor
-				for (integer q = 0; q<NumPointsInThisClass; q++)
-				{
-					p = PointsInThisClass[q];
-					ccf += CorrectionTerm[p*nDims + i];
-				}
-				CurrentCov.Block[ii*CurrentCov.NumUnmasked + ii] += ccf;
-			}
-			for (integer ii = 0; ii<CurrentCov.NumMasked; ii++)
-			{
-				i = (*CurrentCov.Masked)[ii];
-				scalar ccf = 0.0; // class correction factor
-				for (integer q = 0; q<NumPointsInThisClass; q++)
-				{
-					p = PointsInThisClass[q];
-					ccf += CorrectionTerm[p*nDims + i];
-				}
-				CurrentCov.Diagonal[ii] += ccf;
-			}
-		}
-
-    // Add a diagonal matrix of Noise variances to the covariance matrix for renormalization
-		for (cc = 0; cc < nClustersAlive; cc++)
-		{
-			c = AliveIndex[cc];
-			BlockPlusDiagonalMatrix &CurrentCov = DynamicCov[cc];
-			for (integer ii = 0; ii < CurrentCov.NumUnmasked; ii++)
-				CurrentCov.Block[ii*CurrentCov.NumUnmasked + ii] += priorPoint*NoiseVariance[(*CurrentCov.Unmasked)[ii]];
-			for (integer ii = 0; ii < CurrentCov.NumMasked; ii++)
-				CurrentCov.Diagonal[ii] += priorPoint*NoiseVariance[(*CurrentCov.Masked)[ii]];
-		}
-
-
-    }
-
     // and normalize
-    if(UseDistributional)
-	{
-        for (cc=0; cc<nClustersAlive; cc++)
-        {
-            c = AliveIndex[cc];
-			BlockPlusDiagonalMatrix &CurrentCov = DynamicCov[cc];
-			scalar factor = 1.0 / (nClassMembers[c] + priorPoint - 1);
-			for (i = 0; i < (integer)CurrentCov.Block.size(); i++)
-				CurrentCov.Block[i] *= factor;
-			for (i = 0; i < (integer)CurrentCov.Diagonal.size(); i++)
-				CurrentCov.Diagonal[i] *= factor;
-		}
-
-    }
-    else
+    if(!UseDistributional)
 	{    //For original KlustaKwik classical EM
         for (cc=0; cc<nClustersAlive; cc++)
         {
@@ -632,9 +715,8 @@ void KK::EStep()
     integer p, c, cc, i;
     integer nSkipped;
     scalar LogRootDet; // log of square root of covariance determinant
-    scalar Mahal; // Mahalanobis distance of point from cluster center
     scalar correction_factor = (scalar)1; // for partial correction in distributional step
-	scalar InverseClusterNorm;
+	//scalar InverseClusterNorm;
 	vector<scalar> Chol(nDims2); // to store choleski decomposition
     vector<scalar> Vec2Mean(nDims); // stores data point minus class mean
     vector<scalar> Root(nDims); // stores result of Chol*Root = Vec
@@ -749,16 +831,18 @@ void KK::EStep()
             }
         }
 
-        for(p=0; p<nPoints; p++)
+#pragma omp parallel for schedule(dynamic) firstprivate(Vec2Mean, Root) default(shared)
+        for(integer p=0; p<nPoints; p++)
         {
-            // to save time -- only recalculate if the last one was close
+			// to save time -- only recalculate if the last one was close
             if (
                 !FullStep
                 && (Class[p] == OldClass[p])
                 && (LogP[p*MaxPossibleClusters+c] - LogP[p*MaxPossibleClusters+Class[p]] > DistThresh)
                 )
             {
-                nSkipped++;
+#pragma omp atomic
+				nSkipped++;
                 continue;
             }
 
@@ -766,8 +850,12 @@ void KK::EStep()
 			if (MinMaskOverlap > 0)
 			{
 				// compute dot product of point mask with cluster mask
+#ifdef STORE_FLOAT_MASK_AS_CHAR
+				const unsigned char * __restrict CharPointMask = &(CharFloatMasks[p*nDims]);
+#else
 				const scalar * __restrict PointMask = &(FloatMasks[p*nDims]);
-				const scalar * __restrict cm = &(ClusterMask[c*nDims]);
+#endif
+				//const scalar * __restrict cm = &(ClusterMask[c*nDims]);
 				scalar dotprod = 0.0;
 				//// InverseClusterNorm is computed above, uncomment it if you uncomment any of this
 				//for (i = 0; i < nDims; i++)
@@ -783,7 +871,11 @@ void KK::EStep()
 					for (integer ii = 0; ii < NumUnmasked; ii++)
 					{
 						const integer i = cu[ii];
+#ifdef STORE_FLOAT_MASK_AS_CHAR
+						dotprod += CharPointMask[i]/(scalar)255.0;
+#else
 						dotprod += PointMask[i];
+#endif
 						if (dotprod >= MinMaskOverlap)
 							break;
 					}
@@ -791,13 +883,17 @@ void KK::EStep()
 				//dotprod *= InverseClusterNorm;
 				if (dotprod < MinMaskOverlap)
 				{
+#pragma omp atomic
 					nSkipped++;
 					continue;
 				}
 			}
 
+			SafeArray<scalar> safeVec2Mean(Vec2Mean, "safeVec2Mean");
+			SafeArray<scalar> safeRoot(Root, "safeRoot");
+
             // Compute Mahalanobis distance
-            Mahal = 0;
+            scalar Mahal = 0;
 
 			// calculate data minus class mean
 			//for (i = 0; i<nDims; i++)
@@ -821,11 +917,45 @@ void KK::EStep()
             // if distributional E step, add correction term
 			if (UseDistributional)
 			{
-				scalar * __restrict ctp = &(CorrectionTerm[p*nDims]);
-				scalar * __restrict icd = &(InvCovDiag[0]);
+				const scalar * __restrict icd = &(InvCovDiag[0]);
 				scalar subMahal = 0.0;
+#ifdef COMPUTED_CORRECTION_TERM
+#ifdef STORE_FLOAT_MASK_AS_CHAR
+				const unsigned char * __restrict ptr_char_w = &(CharFloatMasks[p*nDims]);
+#else
+				const scalar * __restrict ptr_w = &(FloatMasks[p*nDims]);
+#endif
+				const scalar * __restrict ptr_nu = &(NoiseMean[0]);
+				const scalar * __restrict ptr_sigma2 = &(NoiseVariance[0]);
+				const scalar * __restrict ptr_y = &(Data[p*nDims]);
+				for (i = 0; i < nDims; i++)
+				{
+#ifdef STORE_FLOAT_MASK_AS_CHAR
+				    const scalar w = ptr_char_w[i]/(scalar)255.0;
+#else
+		            const scalar w = ptr_w[i];
+#endif
+		            const scalar nu = ptr_nu[i];
+				    const scalar sigma2 = ptr_sigma2[i];
+					const scalar y = ptr_y[i];
+					scalar eta;
+					if(w==(scalar)0.0)
+					{
+						const scalar z = nu*nu+sigma2;
+						eta = z-y*y;
+					} else
+					{
+						const scalar x = (y-(1-w)*nu)/w;
+						const scalar z = w*x*x+(1-w)*(nu*nu+sigma2);
+						eta = z-y*y;
+					}
+					subMahal += eta * icd[i];
+				}
+#else
+				const scalar * __restrict ctp = &(CorrectionTerm[p*nDims]);
 				for (i = 0; i < nDims; i++)
 					subMahal += ctp[i] * icd[i];
+#endif
 				Mahal += subMahal*correction_factor;
 			}
             // Score is given by Mahal/2 + log RootDet - log weight
@@ -1302,7 +1432,7 @@ void KK::StartingConditionsFromMasks()
                     // compute mask distance
                     integer curdistance = 0;
                     for(integer i=0; i<nDims; i++)
-                        if(Masks[p*nDims+i]!=Masks[mip*nDims+i])
+                        if(GetMasks(p*nDims+i)!=GetMasks(mip*nDims+i))
                             curdistance++;
                     if(curdistance<distance)
                     {
@@ -1583,13 +1713,21 @@ void KK::ConstructFrom(const KK &Source, const vector<integer> &Indices)
         //copy data and masks
         for (integer d=0; d<nDims; d++)
             Data[p*nDims + d] = Source.Data[psource*nDims + d];
-        for (integer d=0; d<nDims; d++)
-            Masks[p*nDims + d] = Source.Masks[psource*nDims + d];
+		if(Source.Masks.size()>0)
+		{
+			for (integer d=0; d<nDims; d++)
+				Masks[p*nDims + d] = Source.Masks[psource*nDims + d];
+		}
         if(UseDistributional)
         {
             for (integer d=0; d<nDims; d++)
-            //    CorrectionTerm[p*nDims + d] = Source.CorrectionTerm[psource*nDims + d];
+			{
+#ifdef STORE_FLOAT_MASK_AS_CHAR
+                CharFloatMasks[p*nDims + d] = Source.CharFloatMasks[psource*nDims + d];
+#else
                 FloatMasks[p*nDims + d] = Source.FloatMasks[psource*nDims + d];
+#endif
+			}
         }
         
         UnMaskDims[p] = Source.UnMaskDims[psource];
@@ -1679,6 +1817,9 @@ int main(int argc, char **argv)
     
     //clock_t Clock0 = clock();
     Clock0 = clock();
+#ifdef _OPENMP
+	double start_time = omp_get_wtime();
+#endif
     
 
     // The main KK object, loads the data and does some precomputations
@@ -1733,7 +1874,12 @@ int main(int argc, char **argv)
 
     K1.SaveOutput();
 
-    scalar tottime = (clock()-Clock0)/(scalar) CLOCKS_PER_SEC;
+#ifdef _OPENMP
+	scalar tottime = omp_get_wtime() - start_time;
+#else
+	scalar tottime = (clock() - Clock0) / (scalar)CLOCKS_PER_SEC;
+#endif
+
 
     Output("Main iterations: %d (time per iteration =" SCALARFMT " ms)\n",
 		    (int)K1.numiterations,

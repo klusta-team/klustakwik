@@ -13,6 +13,14 @@
 #include "klustakwik.h"
 #include "numerics.h"
 
+unsigned char convert_to_char(scalar x)
+{
+	integer y = (integer)(x*255.0);
+	if(y<0) y = 0;
+	if(y>255) y= 255;
+	return (unsigned char)y;
+}
+
 // Loads in Fet file.  Also allocates storage for other arrays
 void KK::LoadData(char *FileBase, integer ElecNo, char *UseFeatures)
 {
@@ -134,38 +142,6 @@ void KK::LoadData(char *FileBase, integer ElecNo, char *UseFeatures)
         }
     }
 
-    //if(usemasks)
-    //{
-//        // rewind file
-//        fseek(fpmask, 0, SEEK_SET);
-
-//        // read in number of features
-//        fscanf(fpmask, "%d", &nmaskFeatures);
-
-//        if (nFeatures != nmaskFeatures)
-//            Error("Error: Mask file and Fet file incompatible");
-
-//        // load masks
-//        for (p=0; p<nPoints; p++) {
-//            j=0;
-//            for(i=0; i<nFeatures; i++) {
-//                maskstatus = fscanf(fpmask, "%d", &maskval);
-//                if (maskstatus==EOF) Error("Error reading mask file");
-
-//                if (i<UseLen && UseFeatures[i]=='1') {
-//                    Masks[p*nDims + j] = maskval;
-//                    j++;
-//                }
-//            }
-//        }
-//    }
-//    else  //Case for Classical KlustaKwik
-//    {
-//        for(p=0; p<nPoints; p++)
-//            for(i=0; i<nDims; i++)
-//                Masks[p*nDims+i] = 1;
-//    }
-
     if(UseDistributional) //replaces if(UseFloatMasks)
     {
         // rewind file
@@ -191,9 +167,11 @@ void KK::LoadData(char *FileBase, integer ElecNo, char *UseFeatures)
                 {
                     if(i<UseLen )
                     {
-                      //                                  Output("j = %d, i = %d \n", (int)i, (int)j);
+#ifdef STORE_FLOAT_MASK_AS_CHAR
+						CharFloatMasks[p*nDims+j] = convert_to_char(val);
+#else
                         FloatMasks[p*nDims + j] = val;
-                     //                                   printf("Data = " SCALARFMT "",Data[p*nDims+j]);
+#endif
                         j++;
                     }
                 }
@@ -201,40 +179,38 @@ void KK::LoadData(char *FileBase, integer ElecNo, char *UseFeatures)
                 {
                     if(i<UseLen && UseFeatures[i]=='1'  ) //To Do: implement DropLastNFeatures
                     {
+#ifdef STORE_FLOAT_MASK_AS_CHAR
+						CharFloatMasks[p*nDims+j] = convert_to_char(val);
+#else
                         FloatMasks[p*nDims + j] = val;
-                      //                                 printf("Data = " SCALARFMT "",Data[p*nDims+j]);
+#endif
                         j++;
                     }
                 }
-               // if (i<UseLen && UseFeatures[i]=='1') {
-               //     FloatMasks[p*nDims + j] = val;
-               //     j++;
-               // }
             }
         }
-    }
-    //else if(UseDistributional)
-    //{
-    //    for(p=0; p<nPoints; p++)
-    //        for(i=0; i<nDims; i++)
-    //        {
-    //            FloatMasks[p*nDims+i] = (scalar)Masks[p*nDims+i];
-    //        }
-    //}
-    
+    }    
 
+#ifndef COMPUTED_BINARY_MASK
     if(UseDistributional)
     {
         for(p=0; p<nPoints; p++)
             for(i=0; i<nDims; i++)
             {
+#ifdef STORE_FLOAT_MASK_AS_CHAR
+                if(CharFloatMasks[p*nDims+i]==(unsigned char)255) //changed so that this gives the connected component masks
+#else
                 if(FloatMasks[p*nDims+i]==(scalar)1) //changed so that this gives the connected component masks
+#endif
                     Masks[p*nDims+i] = 1;
                 else
                     Masks[p*nDims+i] = 0;
             }
     }
     else  //Case for Classical EM KlustaKwik
+#else
+	if(!UseDistributional)
+#endif
     {
         for(p=0; p<nPoints; p++)
             for(i=0; i<nDims; i++)
@@ -242,8 +218,6 @@ void KK::LoadData(char *FileBase, integer ElecNo, char *UseFeatures)
     }
 
     fclose(fp);
-    //if(usemasks)
-    //    fclose(fpmask);
     if(UseDistributional)
         fclose(fpfmask);
 
@@ -409,7 +383,7 @@ void KK::SaveSortedData()
     {
         integer p = SortedIndices[q];
         for(integer i=0; i<nDims; i++)
-            fprintf(fp, "%d ", (int)Masks[p*nDims+i]);
+            fprintf(fp, "%d ", (int)GetMasks(p*nDims+i));
         fprintf(fp, "\n");
     }
     fclose(fp);
