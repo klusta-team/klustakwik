@@ -1463,9 +1463,10 @@ scalar KK::CEM(char *CluFile, integer Recurse, integer InitRand,
             break;
         }
         
-        if (Recurse ==0)
+        if (Recurse)
 	{
 	    SaveTempOutput(); //SNK Saves a temporary output clu file 
+        Output("Writing temp clu file \n");
 	}
 	
         // try splitting
@@ -1474,8 +1475,8 @@ scalar KK::CEM(char *CluFile, integer Recurse, integer InitRand,
         //Output("Iter-SplitFirst %d \n",(int)(Iter-SplitFirst));
         if ((Recurse && SplitEvery>0) && ( Iter==SplitFirst  ||( Iter>=SplitFirst+1 && (Iter-SplitFirst)%SplitEvery==SplitEvery-1 )  || (nChanged==0 && LastStepFull) ) )
         {
-            SaveTempOutput(); //SNK Saves a temporary output clu file before each split
-            Output("Writing temp clu file \n");
+          //  SaveTempOutput(); //SNK Saves a temporary output clu file before each split
+          //  Output("Writing temp clu file \n");
             DidSplit = TrySplits();
         } else DidSplit = 0;
 
