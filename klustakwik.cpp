@@ -1462,7 +1462,12 @@ scalar KK::CEM(char *CluFile, integer Recurse, integer InitRand,
             Output("Maximum iterations exceeded\n");
             break;
         }
-
+        
+        if (Recurse ==0)
+	{
+	    SaveTempOutput(); //SNK Saves a temporary output clu file 
+	}
+	
         // try splitting
         //integer mod = (abs(Iter-SplitFirst))%SplitEvery;
         //Output("\n Iter mod SplitEvery = %d\n",(int)mod);
@@ -1707,29 +1712,31 @@ int main(int argc, char **argv)
             K1.BestClass[p] = K1.Class[p];
         K1.SaveOutput();
     }
-
+    else
+    {
     // loop through numbers of clusters ...
-    for(K1.nStartingClusters=(int)MinClusters; K1.nStartingClusters<=(int)MaxClusters; K1.nStartingClusters++)
-        for(i=0; i<nStarts; i++)
-        {
-            // do CEM iteration
-			Output("\nStarting from %d clusters...\n", (int)K1.nStartingClusters);
-            scalar iterationtime = (scalar)clock();
-            Score = K1.Cluster(); //Main computation
-            iterationtime = (clock()-iterationtime)/(scalar) CLOCKS_PER_SEC;
-            Output("Time taken for this iteration:" SCALARFMT " seconds.\n", iterationtime);
+      for(K1.nStartingClusters=(int)MinClusters; K1.nStartingClusters<=(int)MaxClusters; K1.nStartingClusters++)
+	  for(i=0; i<nStarts; i++)
+	  {
+	      // do CEM iteration
+			  Output("\nStarting from %d clusters...\n", (int)K1.nStartingClusters);
+	      scalar iterationtime = (scalar)clock();
+	      Score = K1.Cluster(); //Main computation
+	      iterationtime = (clock()-iterationtime)/(scalar) CLOCKS_PER_SEC;
+	      Output("Time taken for this iteration:" SCALARFMT " seconds.\n", iterationtime);
 
-			Output(" %d->%d Clusters: Score " SCALARFMT ", best is " SCALARFMT "\n", (int)K1.nStartingClusters, (int)K1.nClustersAlive, Score, BestScore);
-            if (Score < BestScore)
-            {
-                Output("THE BEST YET!\n"); // New best classification found
-                BestScore = Score;
-                for(p=0; p<K1.nPoints; p++)
-                    K1.BestClass[p] = K1.Class[p];
-                K1.SaveOutput();
-            }
-            Output("\n");
-        }
+			  Output(" %d->%d Clusters: Score " SCALARFMT ", best is " SCALARFMT "\n", (int)K1.nStartingClusters, (int)K1.nClustersAlive, Score, BestScore);
+	      if (Score < BestScore)
+	      {
+		  Output("THE BEST YET!\n"); // New best classification found
+		  BestScore = Score;
+		  for(p=0; p<K1.nPoints; p++)
+		      K1.BestClass[p] = K1.Class[p];
+		  K1.SaveOutput();
+	      }
+	      Output("\n");
+	  }
+    }
 
     K1.SaveOutput();
 
