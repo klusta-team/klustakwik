@@ -1464,10 +1464,12 @@ scalar KK::CEM(char *CluFile, integer Recurse, integer InitRand,
         }
         
 		//Save a temporary clu file when not splitting
-		if (SaveTempCluEveryIter && Recurse)
+		if ((SaveTempCluEveryIter && Recurse) && (OldScore> Score))
 		{
+      
             SaveTempOutput(); //SNK Saves a temporary output clu file on each iteration
-            Output("Writing temp and besttemp clu file \n");	
+            Output("Writing temp clu file \n");	
+	    Output("Because OldScore, %f, is greater than current (better) Score,%f  \n ", OldScore, Score);
 		}
 		
         // try splitting
@@ -1475,10 +1477,13 @@ scalar KK::CEM(char *CluFile, integer Recurse, integer InitRand,
         //Output("\n Iter mod SplitEvery = %d\n",(int)mod);
         //Output("Iter-SplitFirst %d \n",(int)(Iter-SplitFirst));
         if ((Recurse && SplitEvery>0) && ( Iter==SplitFirst  ||( Iter>=SplitFirst+1 && (Iter-SplitFirst)%SplitEvery==SplitEvery-1 )  || (nChanged==0 && LastStepFull) ) )
-        {   
-			SaveTempOutput(); //SNK Saves a temporary output clu file before each split
-		    Output("Writing temp and besttemp clu file \n");	
-            
+        {    
+	    if (OldScore> Score) //This should be trivially true for the first run of KlustaKwik
+	    {
+	            SaveTempOutput(); //SNK Saves a temporary output clu file before each split
+		    Output("Writing temp clu file \n");	
+		    Output("Because OldScore, %f, is greater than current (better) Score,%f \n ", OldScore, Score);
+	    }
             DidSplit = TrySplits();
         } else DidSplit = 0;
 
