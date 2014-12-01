@@ -313,33 +313,57 @@ void KK::SaveTempOutput()
     uinteger p;
     char fname[STRLEN];
     FILE *fp;
+	FILE *fpb;
     integer MaxClass = 0;
+	integer BestMaxClass =0;
+	vector<integer> BestNotEmpty(MaxPossibleClusters);
     vector<integer> NotEmpty(MaxPossibleClusters);
-    vector<integer> NewLabel(MaxPossibleClusters);
+    vector<integer> BestNewLabel(MaxPossibleClusters);
+	vector<integer> NewLabel(MaxPossibleClusters);
     
     // find non-empty clusters
     for(c=0;c<MaxPossibleClusters;c++) NewLabel[c] = NotEmpty[c] = 0;
-    for(p=0; p<BestClass.size(); p++) NotEmpty[BestClass[p]] = 1;
+    for(p=0; p<BestClass.size(); p++) BestNotEmpty[BestClass[p]] = 1;
+	// We are merely storing the results of the current iteration, 
+	//it may not be the best so far
+	for(p=0; p<Class.size(); p++) NotEmpty[Class[p]] = 1;
     
     // make new cluster labels so we don't have empty ones
     NewLabel[0] = 1;
+	BestNewLabel[0] = 1;
     MaxClass = 1;
+	BestMaxClass =1;
     for(c=1;c<MaxPossibleClusters;c++) {
         if (NotEmpty[c]) {
             MaxClass++;
             NewLabel[c] = MaxClass;
         }
+        if (BestNotEmpty[c]) {
+            BestMaxClass++;
+            BestNewLabel[c] = BestMaxClass;
+        }
     }
     
-    // print file
+    // print temp.clu file
+	//This is the clu for the current iteration
+	//This fixes the bug of having a trivial temp.clu file if there is only one iteration
     sprintf(fname, "%s.temp.clu.%d", FileBase, (int)ElecNo);
     fp = fopen_safe(fname, "w");
     
     fprintf(fp, "%d\n", (int)MaxClass);
-    for (p=0; p<BestClass.size(); p++) fprintf(fp, "%d\n", (int)NewLabel[BestClass[p]]);
-    
+    for (p=0; p<Class.size(); p++) fprintf(fp, "%d\n", (int)NewLabel[Class[p]]);
     fclose(fp);
     
+    // print besttemp.clu file
+	//This is the best so far
+    sprintf(fname, "%s.besttemp.clu.%d", FileBase, (int)ElecNo);
+    fpb = fopen_safe(fname, "w");
+    
+    fprintf(fpb, "%d\n", (int)BestMaxClass);
+    for (p=0; p<BestClass.size(); p++) fprintf(fpb, "%d\n", (int)BestNewLabel[BestClass[p]]);
+    fclose(fpb);
+	
+	
     if(SaveCovarianceMeans)
         SaveCovMeans();
     if(SaveSorted&&UseDistributional)
