@@ -87,6 +87,8 @@ enum type_t {FLOAT = 'f', INT = 'd',  BOOLEAN = 'b', STRING = 's'};
       FLOAT_PARAM,   ChangedThresh,       scalar ChangedThresh,      .05      )\
     F("Whether or not to save information to a log file.",                     \
       BOOLEAN_PARAM, Log,                 char Log,                  1        )\
+    F("Whether or not to save temp clu files on every iteration instead of before every split.",\
+      BOOLEAN_PARAM, SaveTempCluEveryIter,   char SaveTempCluEveryIter,    0        )\
     F("Log output to screen.",                                                 \
       BOOLEAN_PARAM, Screen,              char Screen,               1        )\
     F("Number of 'PriorPoints'",                                               \
