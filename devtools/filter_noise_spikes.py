@@ -44,13 +44,14 @@ def filter_spikes(fname, max_unmasked):
     fmask = loadtxt(fmask_fname_in, skiprows=1, dtype=float)
     
     numspikes, numfeatures = fet.shape
+        
     sum_fmask = sum(fmask, axis=1)
     cond = sum_fmask<=max_unmasked
     indices_removed, = (sum_fmask>max_unmasked).nonzero()
     num_removed = len(indices_removed)
     num_kept = numspikes-num_removed
     
-    savetxt(removed_fname_out, indices_removed, '%d')
+    savetxt(removed_fname_out, hstack([numspikes, numfeatures, indices_removed]), '%d')
     savetxt(fet_fname_out, fet[cond, :], '%d', header=str(numfeatures), comments='')
     savetxt(fmask_fname_out, fmask[cond, :], '%d', header=str(numfeatures), comments='')
     
@@ -66,17 +67,24 @@ def convert_clu(fname):
     removed_fname_in = basefname+'.filtered.removed.'+shanknum
     clu_fname_in = basefname+'.filtered.clu.'+shanknum
     clu_fname_out = basefname+'.clu.'+shanknum
+    fet_fname_in = basefname+'.fet.'+shanknum
     
     removed_indices = loadtxt(removed_fname_in, dtype=int)
-    clu = loadtxt(clu_fname_in, dtype=int)
-    # TODO: finish this
-    #clu_out = zeros
-    
+    (numspikes, numfeatures), removed_indices = removed_indices[:2], removed_indices[2:]
+    clu = loadtxt(clu_fname_in, skiprows=1, dtype=int)
+
+    cond = ones(numspikes, dtype=bool)
+    cond[removed_indices] = False
+
+    clu_out = zeros(numspikes)
+    clu_out[cond] = clu
+    savetxt(clu_fname_out, clu_out, '%d', header=str(amax(clu)), comments='')
+        
 
 if __name__=='__main__':
     # DEBUG mode, TODO: remove
     #sys.argv.extend(['../temp/testsmallish.fet.4', '11'])
-    sys.argv.append('../temp/testsmallish.filtered.clu.4')
+    #sys.argv.append('../temp/testsmallish.filtered.clu.4')
 
     if len(sys.argv)==2:
         fname = sys.argv[1]
