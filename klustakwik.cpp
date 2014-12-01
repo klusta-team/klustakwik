@@ -1464,10 +1464,12 @@ scalar KK::CEM(char *CluFile, integer Recurse, integer InitRand,
         }
         
 		//Save a temporary clu file when not splitting
-		if (SaveTempCluEveryIter && Recurse)
+		if ((SaveTempCluEveryIter && Recurse) && (OldScore> Score))
 		{
+      
             SaveTempOutput(); //SNK Saves a temporary output clu file on each iteration
-            Output("Writing temp and besttemp clu file \n");	
+            Output("Writing temp clu file \n");	
+	    Output("Because OldScore, %f, is greater than current better Score,%f \n ", OldScore, Score);
 		}
 		
         // try splitting
