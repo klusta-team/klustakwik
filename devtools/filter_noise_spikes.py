@@ -1,7 +1,7 @@
 '''Usage:
 
 To remove noise spikes (defined as those spikes which have more than
-max_unmasked unmasked channels):
+max_unmasked unmasked features):
 
   python filter_noise_spikes.py filename.fet.n max_unmasked
   
