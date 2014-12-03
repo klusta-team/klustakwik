@@ -19,6 +19,11 @@
 #include <string.h>
 #include "numerics.h"
 
+// to get around Windows' alternative definition of nonstandard strcasecmp()
+#if defined(_WIN32) || defined(_WIN64) 
+  #define strcasecmp _stricmp 
+#endif
+
 // See parameters.h for an explanation
 PARAMETERS_TABLE(DEFINE_PARAMETERS)
 
