@@ -102,7 +102,7 @@ integer change_param(char *name, char *value)
     entry *e;
     integer changed = 0;
 
-    for(e=bottom; e; e = e->next) if (!strcmp(name, e->name)) {
+    for(e=bottom; e; e = e->next) if (!strcasecmp(name, e->name)) {
         switch (e->t) {
         case FLOAT:
             *((scalar *) e->addr) = atof(value); break;
@@ -135,9 +135,9 @@ void search_command_line(char *name)
     integer i;
 
     for(i=0; i<argc-1; i++)
-        if (argv[i][0] == '-' && !strcmp(argv[i]+1, name))
+        if (argv[i][0] == '-' && !strcasecmp(argv[i]+1, name))
             change_param(argv[i] + 1, argv[i+1]);
-    if (argv[argc-1][0] == '-' && !strcmp(argv[argc-1]+1, name))
+    if (argv[argc-1][0] == '-' && !strcasecmp(argv[argc-1]+1, name))
         change_param(argv[argc-1] + 1, "");
 }
 
