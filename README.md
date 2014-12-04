@@ -61,11 +61,11 @@ KlustaKwik runs from the command line, and takes a large number of options. We p
 
 The first two arguments are the filebase and shank number, after which come optional parameters. For example if you wanted to cluster the 4th shank from a file called "recording" in masked mode (96-dimensional data with one time dimension that you want to omit), you would run something like this:
 
-    [yourterminal]$./KlustaKwik recording 4 -UseDistributional 1 -MaxPossibleClusters 500 -MaskStarts 300 -PenaltyK 1 -PenaltyKLogN 0 -DropLastNFeatures 1
+    [yourterminal]$./KlustaKwik recording 4 -UseDistributional 1 -MaxPossibleClusters 500 -MaskStarts 300 -PenaltyK 0 -PenaltyKLogN 1 -DropLastNFeatures 1
 
 This command is equivalent to the more detailed command, which advanced users may still use, if they want to be more specific:
 
-    [yourterminal]$./KlustaKwik recording 4 -UseDistributional 1 -UseMaskedInitialConditions 1 -AssignToFirstClosestMask 1 -MaxPossibleClusters 500 -MinClusters 300 -MaxClusters 300 -PenaltyK 1 -PenaltyKLogN 0 -UseFeatures 111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111110
+    [yourterminal]$./KlustaKwik recording 4 -UseDistributional 1 -UseMaskedInitialConditions 1 -AssignToFirstClosestMask 1 -MaxPossibleClusters 500 -MinClusters 300 -MaxClusters 300 -PenaltyK 0 -PenaltyKLogN 1 -UseFeatures 111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111110
 
 You will probably want to write a script to generate such these commands. An example Python script could read as follows:
 
@@ -82,8 +82,8 @@ You will probably want to write a script to generate such these commands. An exa
             +'filebase ' +'shank_num' + -DropLastNFeatures 1 '
             '-MaskStarts 300 '
             '-MaxPossibleClusters 500 '
-            '-PenaltyK 1.0 '
-            '-PenaltyKLogN 0.0 '
+            '-PenaltyK 0.0 '
+            '-PenaltyKLogN 1.0 '
             '-SplitFirst 20 '
             '-SplitEvery 100'
             '-UseDistributional 1 '
@@ -164,9 +164,9 @@ This is an integer N when used in combination with the empty string for *UseFeat
 
 KlustaKwik uses penalties to reduce the number of clusters fit. The parameters PenaltyK and PenaltyKLogN are given positive values. The higher the values, the fewer clusters you obtain. Higher penalties discourage cluster splitting. PenaltyKLogN also increases penalty when there are more points.
 
--PenaltyK 0 -PenaltyKLogN 1 is the default, corresponding to the "Bayesian Information Criterion". This is recommended for classic mode.
+-PenaltyK 0 -PenaltyKLogN 1 is the default, corresponding to the "Bayesian Information Criterion". 
 
--PenaltyK 1 -PenaltyKLogN 0  corresponds to "Akaike's Information Criterion". This is recommended for large probes and masked mode.
+-PenaltyK 1 -PenaltyKLogN 0  corresponds to "Akaike's Information Criterion". This produces a larger number of clusters, and is recommended if you are find that clusters corresponding to different neurons are incorrectly merged.
 
 + **UseDistributional** (*default* 0)
 

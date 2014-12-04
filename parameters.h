@@ -87,6 +87,8 @@ enum type_t {FLOAT = 'f', INT = 'd',  BOOLEAN = 'b', STRING = 's'};
       FLOAT_PARAM,   ChangedThresh,       scalar ChangedThresh,      .05      )\
     F("Whether or not to save information to a log file.",                     \
       BOOLEAN_PARAM, Log,                 char Log,                  1        )\
+    F("Whether or not to save temp clu files on every iteration instead of before every split.",\
+      BOOLEAN_PARAM, SaveTempCluEveryIter,   char SaveTempCluEveryIter,    0        )\
     F("Log output to screen.",                                                 \
       BOOLEAN_PARAM, Screen,              char Screen,               1        )\
     F("Number of 'PriorPoints'",                                               \
@@ -104,7 +106,7 @@ enum type_t {FLOAT = 'f', INT = 'd',  BOOLEAN = 'b', STRING = 's'};
 	F("Always split bimodal clusters (can save time)",                         \
       BOOLEAN_PARAM,   AlwaysSplitBimodal,char AlwaysSplitBimodal,    false   )\
     F("Minimum number of points required for cluster mask.",                   \
-      FLOAT_PARAM,   PointsForClusterMask,  scalar PointsForClusterMask,0.001 )\
+      FLOAT_PARAM,   PointsForClusterMask,  scalar PointsForClusterMask, 10 )\
     F("Minimum point to cluster mask overlap.",                                \
       FLOAT_PARAM,   MinMaskOverlap,      scalar MinMaskOverlap,      0.0     )\
 
