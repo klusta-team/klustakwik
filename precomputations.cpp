@@ -213,7 +213,7 @@ void KK::ComputeNoiseMeansAndVariances()
         for(integer i=0; i<nDims; i++)
             if(!GetMasks(p*nDims+i))
             {
-                scalar thisdata = Data[p*nDims+i];
+                scalar thisdata = GetData(p, i);
                 NoiseMean[i] += thisdata;
             //    NoiseVariance[i] += thisdata*thisdata; // sum of squares
                 nMasked[i]++;
@@ -237,7 +237,7 @@ void KK::ComputeNoiseMeansAndVariances()
     for(integer p=0; p<nPoints; p++)
         for(integer i=0; i<nDims; i++)
             if(!GetMasks(p*nDims+i))
-            {    scalar thisdata = Data[p*nDims+i];
+            {    scalar thisdata = GetData(p, i);
                 NoiseVariance[i] += (thisdata-NoiseMean[i])*(thisdata-NoiseMean[i]); 
                 
             }
@@ -266,7 +266,7 @@ void KK::ComputeCorrectionTermsAndReplaceData()
     for(integer p=0; p<nPoints; p++)
         for(integer i=0; i<nDims; i++)
         {
-            scalar x = Data[p*nDims+i];
+            scalar x = GetData(p, i);
 #ifdef STORE_FLOAT_MASK_AS_CHAR
             scalar w = CharFloatMasks[p*nDims+i]/(scalar)255.0;
 #else
@@ -279,7 +279,11 @@ void KK::ComputeCorrectionTermsAndReplaceData()
 #ifndef COMPUTED_CORRECTION_TERM
             CorrectionTerm[p*nDims+i] = z-y*y;
 #endif
+#ifdef STORE_DATA_AS_INTEGER
+            Data[p*nDims+i] = data_int_from_scalar(y);
+#else
             Data[p*nDims+i] = y;
+#endif
         }
 }
 

@@ -47,7 +47,11 @@ integer KK::NumBytesRequired()
 	nDims2 = nDims*nDims;
 	// Compute required memory and check if it exceeds the limit set
 	integer num_bytes_allocated =
+#ifdef STORE_DATA_AS_INTEGER
+		sizeof(data_int)*nPoints*nDims +             // Data
+#else
 		sizeof(scalar)*nPoints*nDims +               // Data
+#endif
 #ifdef COMPUTED_BINARY_MASK
 		(!UseDistributional)*sizeof(char)*nPoints*nDims + // Masks
 #else
@@ -377,7 +381,7 @@ void KK::MStep()
         c = Class[p];
         for(i=0; i<nDims; i++)
         {
-            Mean[c*nDims + i] += Data[p*nDims + i];
+            Mean[c*nDims + i] += GetData(p, i);
         }
     }
 
@@ -413,7 +417,7 @@ void KK::MStep()
         c = Class[p];
         PointsInClass[c].push_back(p);
 		for (i = 0; i < nDims; i++)
-			AllVector2Mean[p*nDims + i] = Data[p*nDims + i] - Mean[c*nDims + i];
+			AllVector2Mean[p*nDims + i] = GetData(p, i) - Mean[c*nDims + i];
     }
 
 	if (UseDistributional)
@@ -898,11 +902,11 @@ void KK::EStep()
 			// calculate data minus class mean
 			//for (i = 0; i<nDims; i++)
 			//	Vec2Mean[i] = Data[p*nDims + i] - Mean[c*nDims + i];
-			scalar * __restrict Data_p = &(Data[p*nDims]);
+			restricted_data_pointer Data_p = &(Data[p*nDims]);
 			scalar * __restrict Mean_c = &(Mean[c*nDims]);
 			scalar * __restrict v2m = &(Vec2Mean[0]);
 			for (i = 0; i < nDims; i++)
-				v2m[i] = Data_p[i] - Mean_c[i];
+				v2m[i] = get_data_from_pointer(Data_p, i) - Mean_c[i];
 
             // calculate Root vector - by Chol*Root = Vec2Mean
 			if (UseDistributional)
@@ -927,7 +931,7 @@ void KK::EStep()
 #endif
 				const scalar * __restrict ptr_nu = &(NoiseMean[0]);
 				const scalar * __restrict ptr_sigma2 = &(NoiseVariance[0]);
-				const scalar * __restrict ptr_y = &(Data[p*nDims]);
+				restricted_data_pointer ptr_y = &(Data[p*nDims]);
 				for (i = 0; i < nDims; i++)
 				{
 #ifdef STORE_FLOAT_MASK_AS_CHAR
@@ -937,7 +941,7 @@ void KK::EStep()
 #endif
 		            const scalar nu = ptr_nu[i];
 				    const scalar sigma2 = ptr_sigma2[i];
-					const scalar y = ptr_y[i];
+					const scalar y = get_data_from_pointer(ptr_y, i);
 					scalar eta;
 					if(w==(scalar)0.0)
 					{
