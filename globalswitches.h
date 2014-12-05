@@ -22,8 +22,9 @@
 ////////////////////////////////////////////////////////////////////////////
 #define STORE_FLOAT_MASK_AS_CHAR // reduces precision
 #define COMPUTED_BINARY_MASK
-#define STORE_DATA_AS_SHORT // reduces precision in time variable // TODO: not yet implemented
-#define COMPUTED_CORRECTION_TERM // reduces precision in principle, but seems not to matter, can slow down computation?
+#define STORE_DATA_AS_INTEGER // reduces precision
+typedef unsigned short data_int; // change the data type of the integer used to store the data (only used if STORE_DATA_AS_INTEGER is set)
+#define COMPUTED_CORRECTION_TERM // reduces precision, slows down computation
 
 // Format for printing data
 #define SCALARFMT "%f"

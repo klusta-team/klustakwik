@@ -89,7 +89,12 @@ public:
     integer NoisePoint; // number of fake points always in noise cluster to ensure noise weight>0
     integer FullStep; // Indicates that the next E-step should be a full step (no time saving)
     scalar penaltyK, penaltyKLogN;
+
+#ifdef STORE_DATA_AS_INTEGER
+    vector<data_int> Data; // Data[p*nDims + d] = Input data for point p, dimension d
+#else
     vector<scalar> Data; // Data[p*nDims + d] = Input data for point p, dimension d
+#endif
     
     // We sort the points into an order where the corresponding mask changes as
     // infrequently as possible, this vector is used to store the sorted indices,
@@ -176,7 +181,7 @@ public:
             scalar sigma2 = NoiseVariance[i];
             //scalar y = w*x+(1-w)*nu;
             //scalar z = w*x*x+(1-w)*(nu*nu+sigma2);
-			scalar y = Data[p*nDims+i];
+			scalar y = GetData(p, i);
 			if(w==(scalar)0.0)
 			{
 				scalar z = nu*nu+sigma2;
@@ -191,6 +196,18 @@ public:
 #else
     vector<scalar> CorrectionTerm;
 #endif
+#ifdef STORE_DATA_AS_INTEGER
+	inline scalar GetData(integer p, integer i)
+	{
+		return data_scalar_from_int(Data[p*nDims+i]);
+	};
+#else
+	inline scalar GetData(integer p, integer i)
+	{
+		return Data[p*nDims+i];
+	};
+#endif
+
     // used in ComputeScore and ConsiderDeletion
     vector<scalar> ClassPenalty;
     // debugging info
