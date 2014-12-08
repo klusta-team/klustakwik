@@ -1578,15 +1578,28 @@ scalar KK::CEM(char *CluFile, integer Recurse, integer InitRand,
             Output("Maximum iterations exceeded\n");
             break;
         }
-
+        
+		//Save a temporary clu file when not splitting
+		if ((SaveTempCluEveryIter && Recurse) && (OldScore> Score))
+		{
+      
+            SaveTempOutput(); //SNK Saves a temporary output clu file on each iteration
+            Output("Writing temp clu file \n");	
+	    Output("Because OldScore, %f, is greater than current (better) Score,%f  \n ", OldScore, Score);
+		}
+		
         // try splitting
         //integer mod = (abs(Iter-SplitFirst))%SplitEvery;
         //Output("\n Iter mod SplitEvery = %d\n",(int)mod);
         //Output("Iter-SplitFirst %d \n",(int)(Iter-SplitFirst));
         if ((Recurse && SplitEvery>0) && ( Iter==SplitFirst  ||( Iter>=SplitFirst+1 && (Iter-SplitFirst)%SplitEvery==SplitEvery-1 )  || (nChanged==0 && LastStepFull) ) )
-        {
-            SaveTempOutput(); //SNK Saves a temporary output clu file before each split
-            Output("Writing temp clu file \n");
+        {    
+	    if (OldScore> Score) //This should be trivially true for the first run of KlustaKwik
+	    {
+	            SaveTempOutput(); //SNK Saves a temporary output clu file before each split
+		    Output("Writing temp clu file \n");	
+		    Output("Because OldScore, %f, is greater than current (better) Score,%f \n ", OldScore, Score);
+	    }
             DidSplit = TrySplits();
         } else DidSplit = 0;
 
@@ -1824,9 +1837,10 @@ int main(int argc, char **argv)
 		Output(" %d->%d Clusters: Score " SCALARFMT "\n\n", (int)K1.nStartingClusters, (int)K1.nClustersAlive, BestScore);
         for(p=0; p<K1.nPoints; p++)
             K1.BestClass[p] = K1.Class[p];
-        K1.SaveOutput();
+	    K1.SaveOutput();
     }
-
+    else
+	{
     // loop through numbers of clusters ...
     for(K1.nStartingClusters=(int)MinClusters; K1.nStartingClusters<=(int)MaxClusters; K1.nStartingClusters++)
         for(i=0; i<nStarts; i++)
@@ -1849,6 +1863,7 @@ int main(int argc, char **argv)
             }
             Output("\n");
         }
+	}	
 
     K1.SaveOutput();
 
