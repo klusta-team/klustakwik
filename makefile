@@ -15,6 +15,9 @@ endif
 
 CFLAGS = -Wall -c -Wno-write-strings $(OPTIMISATIONS) $(OPENMPFLAG)
 LFLAGS = -Wall $(OPENMPFLAG)
+GIT_VERSION := $(shell git describe --abbrev=4 --dirty --always --tags)
+CFLAGS = -Wall -c -Wno-write-strings $(OPTIMISATIONS) -DVERSION=\"$(GIT_VERSION)\"
+LFLAGS = -Wall
 
 all: executable
 

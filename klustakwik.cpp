@@ -1814,6 +1814,7 @@ int main(int argc, char **argv)
     scalar BestScore = HugeScore;
     integer p, i;
     SetupParams((integer)argc, argv); // This function is defined in parameters.cpp
+	Output("Starting KlustaKwik. Version: %s\n", VERSION);
 	if (RamLimitGB == 0.0)
 	{
 		RamLimitGB = (1.0*available_physical_memory()) / (1024.0*1024.0*1024.0);
