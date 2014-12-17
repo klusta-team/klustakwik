@@ -107,8 +107,6 @@ public:
 #ifdef COMPUTED_BINARY_MASK
 	inline char GetMasks(integer i)
 	{
-		if(!UseDistributional)
-			return Masks[i];
 #ifdef STORE_FLOAT_MASK_AS_CHAR
 		return CharFloatMasks[i]==(unsigned char)255;
 #else
@@ -144,8 +142,6 @@ public:
     
     vector<scalar> Weight; // Weight[c] = Class weight for class c
     vector<scalar> Mean; // Mean[c*nDims + d] = cluster mean for cluster c in dimension d
-    vector<scalar> Cov; // Cov[c*nDims*nDims + i*nDims + j] = Covariance for cluster C, entry i,j
-                    // NB covariances are stored in upper triangle (j>=i)
 	vector<BlockPlusDiagonalMatrix> DynamicCov; // Covariance matrices, DynamicCov[cc] where cc is alive cluster index
     vector<scalar> LogP; // LogP[p*MaxClusters + c] = minus log likelihood for point p in cluster c
     vector<integer> Class; // Class[p] = best cluster for point p

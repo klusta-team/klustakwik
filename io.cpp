@@ -25,34 +25,20 @@ unsigned char convert_to_char(scalar x)
 void KK::LoadData(char *FileBase, integer ElecNo, char *UseFeatures)
 {
     char fname[STRLEN];
-    //char fnamemask[STRLEN];
     char fnamefmask[STRLEN];
     char line[STRLEN];
     integer p, i, j;
 	// nFeatures is read as a %d so it has to be int type, not integer type
     int nFeatures, nmaskFeatures; // not the same as nDims! we don't use all features.
     FILE *fp;
-    //FILE *fpmask;
     FILE *fpfmask;
     integer status;
-    //integer maskstatus;
     scalar val;
-    //int maskval; // use int rather than integer because it is read as %d
     integer UseLen;
-    scalar max, min;
-    //bool usemasks = (UseDistributional && !UseFloatMasks);
 
     // open file
     sprintf(fname, "%s.fet.%d", FileBase, (int)ElecNo);
     fp = fopen_safe(fname, "r");
-    //if(usemasks)
-    //{
-    //    sprintf(fnamemask,"%s.mask.%d", FileBase, (int)ElecNo);
-    //    fpmask = fopen_safe(fnamemask, "r");
-    //} else
-    //{
-    //    fpmask = NULL;
-    //}
     
     if((MaskStarts > 0)&& UseDistributional)
     {
@@ -320,35 +306,24 @@ void KK::SaveTempOutput()
     uinteger p;
     char fname[STRLEN];
     FILE *fp;
-// FILE *fpb;
     integer MaxClass = 0;
-// integer BestMaxClass =0;
-// vector<integer> BestNotEmpty(MaxPossibleClusters);
     vector<integer> NotEmpty(MaxPossibleClusters);
-//    vector<integer> BestNewLabel(MaxPossibleClusters);
    vector<integer> NewLabel(MaxPossibleClusters);
     
     // find non-empty clusters
     for(c=0;c<MaxPossibleClusters;c++) NewLabel[c] = NotEmpty[c] = 0;
-//    for(p=0; p<BestClass.size(); p++) BestNotEmpty[BestClass[p]] = 1;
    // We are merely storing the results of the current iteration, 
    //it may not be the best so far
    for(p=0; p<Class.size(); p++) NotEmpty[Class[p]] = 1;
     
     // make new cluster labels so we don't have empty ones
     NewLabel[0] = 1;
-// BestNewLabel[0] = 1;
     MaxClass = 1;
-// BestMaxClass =1;
     for(c=1;c<MaxPossibleClusters;c++) {
         if (NotEmpty[c]) {
             MaxClass++;
             NewLabel[c] = MaxClass;
         }
-//        if (BestNotEmpty[c]) {
-//            BestMaxClass++;
- //           BestNewLabel[c] = BestMaxClass;
- //       }
     }
     
     // print temp.clu file
@@ -381,25 +356,25 @@ void KK::SaveCovMeans()
 {
     char fname[STRLEN];
     FILE *fp;
-    // print covariance to file
-    sprintf(fname, "%s.cov.%d", FileBase, (int)ElecNo);
-    fp = fopen_safe(fname, "w");
-    for (integer cc=0; cc<nClustersAlive; cc++)
-    {
-        integer c = AliveIndex[cc];
-        for(integer i=0; i<nDims; i++)
-        {
-            for(integer j=0; j<nDims; j++)
-            {
-				// TODO: update Cov output for distributional
-				if (!UseDistributional)
-					fprintf(fp, SCALARFMT " ", Cov[c*nDims2+i*nDims+j]);
-            }
-            fprintf(fp, "\n");
-        }
-        fprintf(fp, "\n");
-    }
-    fclose(fp);
+    //// print covariance to file
+    //sprintf(fname, "%s.cov.%d", FileBase, (int)ElecNo);
+    //fp = fopen_safe(fname, "w");
+    //for (integer cc=0; cc<nClustersAlive; cc++)
+    //{
+    //    integer c = AliveIndex[cc];
+    //    for(integer i=0; i<nDims; i++)
+    //    {
+    //        for(integer j=0; j<nDims; j++)
+    //        {
+				//// TODO: update Cov output for distributional
+				//if (!UseDistributional)
+				//	fprintf(fp, SCALARFMT " ", Cov[c*nDims2+i*nDims+j]);
+    //        }
+    //        fprintf(fp, "\n");
+    //    }
+    //    fprintf(fp, "\n");
+    //}
+    //fclose(fp);
     // print mean to file
     sprintf(fname, "%s.mean.%d", FileBase, (int)ElecNo);
     fp = fopen_safe(fname, "w");
