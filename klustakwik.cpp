@@ -47,9 +47,21 @@ integer KK::NumBytesRequired()
 	nDims2 = nDims*nDims;
 	// Compute required memory and check if it exceeds the limit set
 	integer num_bytes_allocated =
+#ifdef STORE_DATA_AS_INTEGER
+		sizeof(data_int)*nPoints*nDims +             // Data
+#else
 		sizeof(scalar)*nPoints*nDims +               // Data
-		sizeof(integer)*nPoints*nDims +              // Masks
+#endif
+#ifdef COMPUTED_BINARY_MASK
+		(!UseDistributional)*sizeof(char)*nPoints*nDims + // Masks
+#else
+		sizeof(char)*nPoints*nDims +                 // Masks
+#endif
+#ifdef STORE_FLOAT_MASK_AS_CHAR
+		sizeof(char)*nPoints*nDims +               // CharFloatMasks
+#else
 		sizeof(scalar)*nPoints*nDims +               // FloatMasks
+#endif
 		sizeof(scalar)*nPoints +                     // UnMaskDims
 		sizeof(scalar)*MaxPossibleClusters +         // Weight
 		sizeof(scalar)*MaxPossibleClusters*nDims +   // Mean
@@ -65,7 +77,9 @@ integer KK::NumBytesRequired()
 		sizeof(integer)*MaxPossibleClusters +        // nClassMembers
 		sizeof(scalar)*nPoints*nDims +               // AllVector2Mean
 		// UseDistributional only
-		UseDistributional*sizeof(scalar)*MaxPossibleClusters +  // CorrectionTerm
+#ifndef COMPUTED_CORRECTION_TERM
+		UseDistributional*sizeof(scalar)*nPoints*nDims +  // CorrectionTerm
+#endif
 		sizeof(scalar)*(UseDistributional*MaxPossibleClusters*nDims) + // ClusterMask (vector<scalar>)
 		UseDistributional*sizeof(integer)*MaxPossibleClusters*nDims; // ClusterUnmaskedFeatures + ClusterMaskedFeatures
 
@@ -104,8 +118,17 @@ void KK::AllocateArrays() {
     // Set sizes for arrays
 	resize_and_fill_with_zeros(Data, nPoints * nDims);
     //SNK
+#ifdef COMPUTED_BINARY_MASK
+	if(!UseDistributional)
+		resize_and_fill_with_zeros(Masks, nPoints * nDims);
+#else
 	resize_and_fill_with_zeros(Masks, nPoints * nDims);
+#endif
+#ifdef STORE_FLOAT_MASK_AS_CHAR
+	resize_and_fill_with_zeros(CharFloatMasks, nPoints * nDims);
+#else
 	resize_and_fill_with_zeros(FloatMasks, nPoints * nDims);
+#endif
 	resize_and_fill_with_zeros(UnMaskDims, nPoints); //SNK Number of unmasked dimensions for each data point when using float masks $\sum m_i$
 	resize_and_fill_with_zeros(Weight, MaxPossibleClusters);
 	resize_and_fill_with_zeros(Mean, MaxPossibleClusters*nDims);
@@ -122,7 +145,9 @@ void KK::AllocateArrays() {
 	resize_and_fill_with_zeros(nClassMembers, MaxPossibleClusters);
     if(UseDistributional)
     {
+#ifndef COMPUTED_CORRECTION_TERM
 		resize_and_fill_with_zeros(CorrectionTerm, nPoints * nDims);
+#endif
 		resize_and_fill_with_zeros(ClusterMask, MaxPossibleClusters*nDims);
     }
 }
@@ -215,7 +240,11 @@ void KK::ComputeClusterMasks()
         integer c = Class[p];
 		for (integer i = 0; i < nDims; i++)
 		{
+#ifdef STORE_FLOAT_MASK_AS_CHAR
+			ClusterMask[c*nDims + i] += (scalar)(CharFloatMasks[p*nDims + i]/(scalar)255.0);
+#else
 			ClusterMask[c*nDims + i] += FloatMasks[p*nDims + i];
+#endif
 		}
     }
 
@@ -352,7 +381,7 @@ void KK::MStep()
         c = Class[p];
         for(i=0; i<nDims; i++)
         {
-            Mean[c*nDims + i] += Data[p*nDims + i];
+            Mean[c*nDims + i] += GetData(p, i);
         }
     }
 
@@ -388,7 +417,7 @@ void KK::MStep()
         c = Class[p];
         PointsInClass[c].push_back(p);
 		for (i = 0; i < nDims; i++)
-			AllVector2Mean[p*nDims + i] = Data[p*nDims + i] - Mean[c*nDims + i];
+			AllVector2Mean[p*nDims + i] = GetData(p, i) - Mean[c*nDims + i];
     }
 
 	if (UseDistributional)
@@ -452,7 +481,11 @@ void KK::MStep()
 				for (integer q = 0; q<NumPointsInThisClass; q++)
 				{
 					const integer p = PointsInThisClass[q];
+#ifdef COMPUTED_CORRECTION_TERM
+					ccf += GetCorrectionTerm(p, i);
+#else
 					ccf += CorrectionTerm[p*nDims + i];
+#endif
 				}
 				CurrentCov.Block[ii*CurrentCov.NumUnmasked + ii] += ccf;
 			}
@@ -463,7 +496,11 @@ void KK::MStep()
 				for (integer q = 0; q<NumPointsInThisClass; q++)
 				{
 					const integer p = PointsInThisClass[q];
+#ifdef COMPUTED_CORRECTION_TERM
+					ccf += GetCorrectionTerm(p, i);
+#else
 					ccf += CorrectionTerm[p*nDims + i];
+#endif
 				}
 				CurrentCov.Diagonal[ii] += ccf;
 			}
@@ -638,69 +675,8 @@ void KK::MStep()
 		}
 	}
 
-    if(UseDistributional)
-    {
-//#pragma omp parallel for
-//		for (integer cc = 0; cc<nClustersAlive; cc++)
-//        {
-//            integer c = AliveIndex[cc];
-//            vector<integer> &PointsInThisClass = PointsInClass[c];
-//			integer NumPointsInThisClass = PointsInThisClass.size();
-//			BlockPlusDiagonalMatrix &CurrentCov = DynamicCov[cc];
-//			for (integer ii = 0; ii<CurrentCov.NumUnmasked; ii++)
-//			{
-//				const integer i = (*CurrentCov.Unmasked)[ii];
-//				scalar ccf = 0.0; // class correction factor
-//				for (integer q = 0; q<NumPointsInThisClass; q++)
-//				{
-//					const integer p = PointsInThisClass[q];
-//					ccf += CorrectionTerm[p*nDims + i];
-//				}
-//				CurrentCov.Block[ii*CurrentCov.NumUnmasked + ii] += ccf;
-//			}
-//			for (integer ii = 0; ii<CurrentCov.NumMasked; ii++)
-//			{
-//				const integer i = (*CurrentCov.Masked)[ii];
-//				scalar ccf = 0.0; // class correction factor
-//				for (integer q = 0; q<NumPointsInThisClass; q++)
-//				{
-//					const integer p = PointsInThisClass[q];
-//					ccf += CorrectionTerm[p*nDims + i];
-//				}
-//				CurrentCov.Diagonal[ii] += ccf;
-//			}
-//		}
-//
-//    // Add a diagonal matrix of Noise variances to the covariance matrix for renormalization
-//#pragma omp parallel for
-//		for (integer cc = 0; cc < nClustersAlive; cc++)
-//		{
-//			const integer c = AliveIndex[cc];
-//			BlockPlusDiagonalMatrix &CurrentCov = DynamicCov[cc];
-//			for (integer ii = 0; ii < CurrentCov.NumUnmasked; ii++)
-//				CurrentCov.Block[ii*CurrentCov.NumUnmasked + ii] += priorPoint*NoiseVariance[(*CurrentCov.Unmasked)[ii]];
-//			for (integer ii = 0; ii < CurrentCov.NumMasked; ii++)
-//				CurrentCov.Diagonal[ii] += priorPoint*NoiseVariance[(*CurrentCov.Masked)[ii]];
-//		}
-	}
-
     // and normalize
-    if(UseDistributional)
-	{
-//#pragma omp parallel for
-//        for (integer cc=0; cc<nClustersAlive; cc++)
-//        {
-//            const integer c = AliveIndex[cc];
-//			BlockPlusDiagonalMatrix &CurrentCov = DynamicCov[cc];
-//			scalar factor = 1.0 / (nClassMembers[c] + priorPoint - 1);
-//			for (i = 0; i < (integer)CurrentCov.Block.size(); i++)
-//				CurrentCov.Block[i] *= factor;
-//			for (i = 0; i < (integer)CurrentCov.Diagonal.size(); i++)
-//				CurrentCov.Diagonal[i] *= factor;
-//		}
-
-    }
-    else
+    if(!UseDistributional)
 	{    //For original KlustaKwik classical EM
         for (cc=0; cc<nClustersAlive; cc++)
         {
@@ -878,7 +854,11 @@ void KK::EStep()
 			if (MinMaskOverlap > 0)
 			{
 				// compute dot product of point mask with cluster mask
+#ifdef STORE_FLOAT_MASK_AS_CHAR
+				const unsigned char * __restrict CharPointMask = &(CharFloatMasks[p*nDims]);
+#else
 				const scalar * __restrict PointMask = &(FloatMasks[p*nDims]);
+#endif
 				//const scalar * __restrict cm = &(ClusterMask[c*nDims]);
 				scalar dotprod = 0.0;
 				//// InverseClusterNorm is computed above, uncomment it if you uncomment any of this
@@ -895,7 +875,11 @@ void KK::EStep()
 					for (integer ii = 0; ii < NumUnmasked; ii++)
 					{
 						const integer i = cu[ii];
+#ifdef STORE_FLOAT_MASK_AS_CHAR
+						dotprod += CharPointMask[i]/(scalar)255.0;
+#else
 						dotprod += PointMask[i];
+#endif
 						if (dotprod >= MinMaskOverlap)
 							break;
 					}
@@ -918,11 +902,11 @@ void KK::EStep()
 			// calculate data minus class mean
 			//for (i = 0; i<nDims; i++)
 			//	Vec2Mean[i] = Data[p*nDims + i] - Mean[c*nDims + i];
-			scalar * __restrict Data_p = &(Data[p*nDims]);
+			restricted_data_pointer Data_p = &(Data[p*nDims]);
 			scalar * __restrict Mean_c = &(Mean[c*nDims]);
 			scalar * __restrict v2m = &(Vec2Mean[0]);
 			for (i = 0; i < nDims; i++)
-				v2m[i] = Data_p[i] - Mean_c[i];
+				v2m[i] = get_data_from_pointer(Data_p, i) - Mean_c[i];
 
             // calculate Root vector - by Chol*Root = Vec2Mean
 			if (UseDistributional)
@@ -937,11 +921,45 @@ void KK::EStep()
             // if distributional E step, add correction term
 			if (UseDistributional)
 			{
-				const scalar * __restrict ctp = &(CorrectionTerm[p*nDims]);
 				const scalar * __restrict icd = &(InvCovDiag[0]);
 				scalar subMahal = 0.0;
+#ifdef COMPUTED_CORRECTION_TERM
+#ifdef STORE_FLOAT_MASK_AS_CHAR
+				const unsigned char * __restrict ptr_char_w = &(CharFloatMasks[p*nDims]);
+#else
+				const scalar * __restrict ptr_w = &(FloatMasks[p*nDims]);
+#endif
+				const scalar * __restrict ptr_nu = &(NoiseMean[0]);
+				const scalar * __restrict ptr_sigma2 = &(NoiseVariance[0]);
+				restricted_data_pointer ptr_y = &(Data[p*nDims]);
+				for (i = 0; i < nDims; i++)
+				{
+#ifdef STORE_FLOAT_MASK_AS_CHAR
+				    const scalar w = ptr_char_w[i]/(scalar)255.0;
+#else
+		            const scalar w = ptr_w[i];
+#endif
+		            const scalar nu = ptr_nu[i];
+				    const scalar sigma2 = ptr_sigma2[i];
+					const scalar y = get_data_from_pointer(ptr_y, i);
+					scalar eta;
+					if(w==(scalar)0.0)
+					{
+						const scalar z = nu*nu+sigma2;
+						eta = z-y*y;
+					} else
+					{
+						const scalar x = (y-(1-w)*nu)/w;
+						const scalar z = w*x*x+(1-w)*(nu*nu+sigma2);
+						eta = z-y*y;
+					}
+					subMahal += eta * icd[i];
+				}
+#else
+				const scalar * __restrict ctp = &(CorrectionTerm[p*nDims]);
 				for (i = 0; i < nDims; i++)
 					subMahal += ctp[i] * icd[i];
+#endif
 				Mahal += subMahal*correction_factor;
 			}
             // Score is given by Mahal/2 + log RootDet - log weight
@@ -1418,7 +1436,7 @@ void KK::StartingConditionsFromMasks()
                     // compute mask distance
                     integer curdistance = 0;
                     for(integer i=0; i<nDims; i++)
-                        if(Masks[p*nDims+i]!=Masks[mip*nDims+i])
+                        if(GetMasks(p*nDims+i)!=GetMasks(mip*nDims+i))
                             curdistance++;
                     if(curdistance<distance)
                     {
@@ -1712,13 +1730,21 @@ void KK::ConstructFrom(const KK &Source, const vector<integer> &Indices)
         //copy data and masks
         for (integer d=0; d<nDims; d++)
             Data[p*nDims + d] = Source.Data[psource*nDims + d];
-        for (integer d=0; d<nDims; d++)
-            Masks[p*nDims + d] = Source.Masks[psource*nDims + d];
+		if(Source.Masks.size()>0)
+		{
+			for (integer d=0; d<nDims; d++)
+				Masks[p*nDims + d] = Source.Masks[psource*nDims + d];
+		}
         if(UseDistributional)
         {
             for (integer d=0; d<nDims; d++)
-            //    CorrectionTerm[p*nDims + d] = Source.CorrectionTerm[psource*nDims + d];
+			{
+#ifdef STORE_FLOAT_MASK_AS_CHAR
+                CharFloatMasks[p*nDims + d] = Source.CharFloatMasks[psource*nDims + d];
+#else
                 FloatMasks[p*nDims + d] = Source.FloatMasks[psource*nDims + d];
+#endif
+			}
         }
         
         UnMaskDims[p] = Source.UnMaskDims[psource];

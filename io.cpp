@@ -13,6 +13,14 @@
 #include "klustakwik.h"
 #include "numerics.h"
 
+unsigned char convert_to_char(scalar x)
+{
+	integer y = (integer)(x*255.0);
+	if(y<0) y = 0;
+	if(y>255) y= 255;
+	return (unsigned char)y;
+}
+
 // Loads in Fet file.  Also allocates storage for other arrays
 void KK::LoadData(char *FileBase, integer ElecNo, char *UseFeatures)
 {
@@ -101,70 +109,69 @@ void KK::LoadData(char *FileBase, integer ElecNo, char *UseFeatures)
 	MemoryCheck();
     AllocateArrays();
 
+#ifdef STORE_DATA_AS_INTEGER
+	// we need to scan through the data to find the min and max of each dimension before we save to memory
+	vector<scalar> dmin(nFeatures);
+	vector<scalar> dmax(nFeatures);
+	for(p=0; p<nPoints; p++)
+	{
+		for(i=0; i<nFeatures; i++)
+		{
+            float readfloatval;
+            status = fscanf(fp, "%f", &readfloatval);
+            val = (scalar)readfloatval;
+            if (status==EOF) Error("Error reading feature file");
+			if(p==0)
+			{
+				dmin[i] = val;
+				dmax[i] = val;
+			}
+			else
+			{
+				if(val<dmin[i]) dmin[i] = val;
+				if(val>dmax[i]) dmax[i] = val;
+			}
+		}
+	}
+	// We reset the file to the position expected
+    // rewind file
+    fseek(fp, 0, SEEK_SET);
+    // read in number of features
+    fscanf(fp, "%d", &nFeatures);
+#endif
+
     // load data
     for (p=0; p<nPoints; p++) {
         j=0;
         for(i=0; i<nFeatures; i++) {
             float readfloatval;
-            //status = fscanf(fp, SCALARFMT, &val);
             status = fscanf(fp, "%f", &readfloatval);
             val = (scalar)readfloatval;
             if (status==EOF) Error("Error reading feature file");
+#ifdef STORE_DATA_AS_INTEGER
+			val = (val-dmin[i])/(dmax[i]-dmin[i]);
+#endif
 
             if (UseFeatures[0] == 0) //when we want all the features
-            {
-                if(i<UseLen  ) //
-                {
-                    //        Output("j = %d, i = %d \n", (int)i, (int)j);
-                    Data[p*nDims + j] = val;
-               //             printf("Data = " SCALARFMT "",Data[p*nDims+j]);
-                j++;
-                }
+			{
+                if(i<UseLen)
+#ifdef STORE_DATA_AS_INTEGER
+                    Data[p*nDims + j++] = data_int_from_scalar(val);
+#else
+                    Data[p*nDims + j++] = val;
+#endif
             }
             else  // When we want the subset specified by the binary string UseFeatures, e.g. 111000111010101
             {
-                if(i<UseLen && UseFeatures[i]=='1' ) 
-                {
-                    //     Output("j = %d, i = %d \n", (int)i, (int)j);
-                    Data[p*nDims + j] = val;
-                //               printf("Data = " SCALARFMT "",Data[p*nDims+j]);
-                    j++;
-                }
+                if(i<UseLen && UseFeatures[i]=='1') 
+#ifdef STORE_DATA_AS_INTEGER
+                    Data[p*nDims + j++] = data_int_from_scalar(val);
+#else
+                    Data[p*nDims + j++] = val;
+#endif
             }
         }
     }
-
-    //if(usemasks)
-    //{
-//        // rewind file
-//        fseek(fpmask, 0, SEEK_SET);
-
-//        // read in number of features
-//        fscanf(fpmask, "%d", &nmaskFeatures);
-
-//        if (nFeatures != nmaskFeatures)
-//            Error("Error: Mask file and Fet file incompatible");
-
-//        // load masks
-//        for (p=0; p<nPoints; p++) {
-//            j=0;
-//            for(i=0; i<nFeatures; i++) {
-//                maskstatus = fscanf(fpmask, "%d", &maskval);
-//                if (maskstatus==EOF) Error("Error reading mask file");
-
-//                if (i<UseLen && UseFeatures[i]=='1') {
-//                    Masks[p*nDims + j] = maskval;
-//                    j++;
-//                }
-//            }
-//        }
-//    }
-//    else  //Case for Classical KlustaKwik
-//    {
-//        for(p=0; p<nPoints; p++)
-//            for(i=0; i<nDims; i++)
-//                Masks[p*nDims+i] = 1;
-//    }
 
     if(UseDistributional) //replaces if(UseFloatMasks)
     {
@@ -191,9 +198,11 @@ void KK::LoadData(char *FileBase, integer ElecNo, char *UseFeatures)
                 {
                     if(i<UseLen )
                     {
-                      //                                  Output("j = %d, i = %d \n", (int)i, (int)j);
+#ifdef STORE_FLOAT_MASK_AS_CHAR
+						CharFloatMasks[p*nDims+j] = convert_to_char(val);
+#else
                         FloatMasks[p*nDims + j] = val;
-                     //                                   printf("Data = " SCALARFMT "",Data[p*nDims+j]);
+#endif
                         j++;
                     }
                 }
@@ -201,40 +210,38 @@ void KK::LoadData(char *FileBase, integer ElecNo, char *UseFeatures)
                 {
                     if(i<UseLen && UseFeatures[i]=='1'  ) //To Do: implement DropLastNFeatures
                     {
+#ifdef STORE_FLOAT_MASK_AS_CHAR
+						CharFloatMasks[p*nDims+j] = convert_to_char(val);
+#else
                         FloatMasks[p*nDims + j] = val;
-                      //                                 printf("Data = " SCALARFMT "",Data[p*nDims+j]);
+#endif
                         j++;
                     }
                 }
-               // if (i<UseLen && UseFeatures[i]=='1') {
-               //     FloatMasks[p*nDims + j] = val;
-               //     j++;
-               // }
             }
         }
-    }
-    //else if(UseDistributional)
-    //{
-    //    for(p=0; p<nPoints; p++)
-    //        for(i=0; i<nDims; i++)
-    //        {
-    //            FloatMasks[p*nDims+i] = (scalar)Masks[p*nDims+i];
-    //        }
-    //}
-    
+    }    
 
+#ifndef COMPUTED_BINARY_MASK
     if(UseDistributional)
     {
         for(p=0; p<nPoints; p++)
             for(i=0; i<nDims; i++)
             {
+#ifdef STORE_FLOAT_MASK_AS_CHAR
+                if(CharFloatMasks[p*nDims+i]==(unsigned char)255) //changed so that this gives the connected component masks
+#else
                 if(FloatMasks[p*nDims+i]==(scalar)1) //changed so that this gives the connected component masks
+#endif
                     Masks[p*nDims+i] = 1;
                 else
                     Masks[p*nDims+i] = 0;
             }
     }
     else  //Case for Classical EM KlustaKwik
+#else
+	if(!UseDistributional)
+#endif
     {
         for(p=0; p<nPoints; p++)
             for(i=0; i<nDims; i++)
@@ -242,11 +249,10 @@ void KK::LoadData(char *FileBase, integer ElecNo, char *UseFeatures)
     }
 
     fclose(fp);
-    //if(usemasks)
-    //    fclose(fpmask);
     if(UseDistributional)
         fclose(fpfmask);
 
+#ifndef STORE_DATA_AS_INTEGER
     // normalize data so that range is 0 to 1: This is useful in case of v. large inputs
     for(i=0; i<nDims; i++) {
 
@@ -261,6 +267,7 @@ void KK::LoadData(char *FileBase, integer ElecNo, char *UseFeatures)
         // now normalize
         for(p=0; p<nPoints; p++) Data[p*nDims+i] = (Data[p*nDims+i] - min) / (max-min);
     }
+#endif
 
     Output("----------------------------------------------------------\nLoaded %d data points of dimension %d.\n", (int)nPoints, (int)nDims);
     Output("MEMO: A lower score indicates a better clustering \n ");
@@ -421,7 +428,7 @@ void KK::SaveSortedData()
     {
         integer p = SortedIndices[q];
         for(integer i=0; i<nDims; i++)
-            fprintf(fp, SCALARFMT " ", Data[p*nDims+i]);
+            fprintf(fp, SCALARFMT " ", GetData(p, i));
         fprintf(fp, "\n");
     }
     fclose(fp);
@@ -433,7 +440,7 @@ void KK::SaveSortedData()
     {
         integer p = SortedIndices[q];
         for(integer i=0; i<nDims; i++)
-            fprintf(fp, "%d ", (int)Masks[p*nDims+i]);
+            fprintf(fp, "%d ", (int)GetMasks(p*nDims+i));
         fprintf(fp, "\n");
     }
     fclose(fp);
