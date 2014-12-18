@@ -12,3 +12,4 @@
 /klustakwik.vcxproj.user
 /ipch/
 /klustakwik.suo
+*.pyc
