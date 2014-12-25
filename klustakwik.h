@@ -89,7 +89,12 @@ public:
     integer NoisePoint; // number of fake points always in noise cluster to ensure noise weight>0
     integer FullStep; // Indicates that the next E-step should be a full step (no time saving)
     scalar penaltyK, penaltyKLogN;
+
+#ifdef STORE_DATA_AS_INTEGER
+    vector<data_int> Data; // Data[p*nDims + d] = Input data for point p, dimension d
+#else
     vector<scalar> Data; // Data[p*nDims + d] = Input data for point p, dimension d
+#endif
     
     // We sort the points into an order where the corresponding mask changes as
     // infrequently as possible, this vector is used to store the sorted indices,
@@ -98,8 +103,25 @@ public:
     // to be recomputed when we change the underlying data.
     vector<integer> SortedIndices;
 
-    vector<integer> Masks; //SNK: Masks[p*nDims + d] = Input masks for point p, dimension d
+    vector<char> Masks; //SNK: Masks[p*nDims + d] = Input masks for point p, dimension d
+#ifdef COMPUTED_BINARY_MASK
+	inline char GetMasks(integer i)
+	{
+#ifdef STORE_FLOAT_MASK_AS_CHAR
+		return CharFloatMasks[i]==(unsigned char)255;
+#else
+		return FloatMasks[i]==(scalar)1;
+#endif
+	}
+#else
+	inline char GetMasks(integer i) { return Masks[i]; }
+#endif
+
+#ifdef STORE_FLOAT_MASK_AS_CHAR
+	vector<unsigned char> CharFloatMasks; // float mask that is stored in a char to save RAM
+#else
     vector<scalar> FloatMasks; // as above but for floating point masks
+#endif
     // We store just the indices of the unmasked points in this sparse array
     // structure. For point p, the segment Unmasked[UnmaskedInd[p]] to
     // Unmasked[UnmaskedInd[p+1]] contains the indices i where Masks[i]==1.
@@ -120,8 +142,6 @@ public:
     
     vector<scalar> Weight; // Weight[c] = Class weight for class c
     vector<scalar> Mean; // Mean[c*nDims + d] = cluster mean for cluster c in dimension d
-    vector<scalar> Cov; // Cov[c*nDims*nDims + i*nDims + j] = Covariance for cluster C, entry i,j
-                    // NB covariances are stored in upper triangle (j>=i)
 	vector<BlockPlusDiagonalMatrix> DynamicCov; // Covariance matrices, DynamicCov[cc] where cc is alive cluster index
     vector<scalar> LogP; // LogP[p*MaxClusters + c] = minus log likelihood for point p in cluster c
     vector<integer> Class; // Class[p] = best cluster for point p
@@ -143,7 +163,47 @@ public:
     vector<scalar> NoiseVariance;
     vector<integer> nMasked;
     // used in distribution EM steps
+
+#ifdef COMPUTED_CORRECTION_TERM
+	inline scalar GetCorrectionTerm(integer p, integer i)
+	{
+            // scalar x = Data[p*nDims+i];
+#ifdef STORE_FLOAT_MASK_AS_CHAR
+            scalar w = CharFloatMasks[p*nDims+i]/(scalar)255.0;
+#else
+            scalar w = FloatMasks[p*nDims+i];
+#endif
+            scalar nu = NoiseMean[i];
+            scalar sigma2 = NoiseVariance[i];
+            //scalar y = w*x+(1-w)*nu;
+            //scalar z = w*x*x+(1-w)*(nu*nu+sigma2);
+			scalar y = GetData(p, i);
+			if(w==(scalar)0.0)
+			{
+				scalar z = nu*nu+sigma2;
+				return z-y*y;
+			} else
+			{
+				scalar x = (y-(1-w)*nu)/w;
+				scalar z = w*x*x+(1-w)*(nu*nu+sigma2);
+				return z-y*y;
+			}
+	};
+#else
     vector<scalar> CorrectionTerm;
+#endif
+#ifdef STORE_DATA_AS_INTEGER
+	inline scalar GetData(integer p, integer i)
+	{
+		return data_scalar_from_int(Data[p*nDims+i]);
+	};
+#else
+	inline scalar GetData(integer p, integer i)
+	{
+		return Data[p*nDims+i];
+	};
+#endif
+
     // used in ComputeScore and ConsiderDeletion
     vector<scalar> ClassPenalty;
     // debugging info

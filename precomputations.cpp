@@ -16,21 +16,18 @@ using namespace std;
 // the class.
 void KK::DoInitialPrecomputations()
 {
-    if(UseDistributional)
-    {
-        // Precompute the indices of the unmasked dimensions for each point
-        ComputeUnmasked();
-        // Compute the order of points to consider that minimises the number of
-        // times the mask changes
-        ComputeSortIndices();
-        // Now compute the points at which the mask changes in sorted order
-        ComputeSortedUnmaskedChangePoints();
-        // Compute the sum of the masks/float masks for each point (used for computing the cluster penalty)
-        PointMaskDimension(); 
-        // Precompute the noise means and variances
-        ComputeNoiseMeansAndVariances();
-        ComputeCorrectionTermsAndReplaceData();
-    }
+	// Precompute the indices of the unmasked dimensions for each point
+	ComputeUnmasked();
+	// Compute the order of points to consider that minimises the number of
+	// times the mask changes
+	ComputeSortIndices();
+	// Now compute the points at which the mask changes in sorted order
+	ComputeSortedUnmaskedChangePoints();
+	// Compute the sum of the masks/float masks for each point (used for computing the cluster penalty)
+	PointMaskDimension();
+	// Precompute the noise means and variances
+	ComputeNoiseMeansAndVariances();
+	ComputeCorrectionTermsAndReplaceData();
 }
 
 // Handles doing all the precomputations once the data has been loaded into
@@ -39,41 +36,38 @@ void KK::DoInitialPrecomputations()
 
 void KK::DoPrecomputations()
 {
-    if(UseDistributional)
-    {
-        // Precompute the indices of the unmasked dimensions for each point
-        ComputeUnmasked();
-        // Compute the order of points to consider that minimises the number of
-        // times the mask changes
-        ComputeSortIndices();
-        // Now compute the points at which the mask changes in sorted order
-        ComputeSortedUnmaskedChangePoints();
-        ComputeCorrectionTermsAndReplaceData();
-    }
+	// Precompute the indices of the unmasked dimensions for each point
+	ComputeUnmasked();
+	// Compute the order of points to consider that minimises the number of
+	// times the mask changes
+	ComputeSortIndices();
+	// Now compute the points at which the mask changes in sorted order
+	ComputeSortedUnmaskedChangePoints();
+	ComputeCorrectionTermsAndReplaceData();
 }
 
 void KK::ComputeUnmasked()
 {
-    integer i=0;
-    if(Unmasked.size() || UnmaskedInd.size())
-    {
-        Error("Precomputations have already been done, this indicates a bug.\n");
-        Error("Error occurred in ComputeUnmasked().\n");
-        abort();
-    }
-    for(integer p=0; p<nPoints; p++)
-    {
-        UnmaskedInd.push_back(i);
-        for(integer j=0; j<nDims; j++)
-        {
-            if(Masks[p*nDims+j])
-            {
-                Unmasked.push_back(j);
-                i++;
-            }
-        }
-    }
-    UnmaskedInd.push_back(i);
+	integer i = 0;
+	if (Unmasked.size() || UnmaskedInd.size())
+	{
+		Error("Precomputations have already been done, this indicates a bug.\n");
+		Error("Error occurred in ComputeUnmasked().\n");
+		abort();
+	}
+	for (integer p = 0; p < nPoints; p++)
+	{
+		UnmaskedInd.push_back(i);
+		for (integer j = 0; j < nDims; j++)
+		{
+			if (GetMasks(p*nDims + j))
+			{
+				Unmasked.push_back(j);
+				i++;
+			}
+		}
+	}
+	UnmaskedInd.push_back(i);
 }
 
 // This function computes the points at which the mask changes if we iterate
@@ -83,40 +77,38 @@ void KK::ComputeUnmasked()
 // SortedIndices[q-1]
 void KK::ComputeSortedUnmaskedChangePoints()
 {
-    if(SortedMaskChange.size()>0)
-    {
-        Error("Precomputations have already been done, this indicates a bug.\n");
-        Error("Error occurred in ComputeSortedUnmaskedChangePoints().\n");
-        abort();
-    }
-    SortedMaskChange.resize(nPoints);
-    SafeArray<integer> safeSortedMaskChange(SortedMaskChange, "CSUCP:SMC");
-    // The first point when we iterate through the points in sorted order is
-    // SortedIndices[0] and we consider the mask as having 'changed' for this
-    // first point, because we use the mask having changed to signal that
-    // we should recompute the matrices that depend on the masks.
-    safeSortedMaskChange[SortedIndices[0]] = true;
-    SafeArray<integer> oldmask(Masks, SortedIndices[0]*nDims,
-            "ComputeSortedUnmaskedChangePoints:oldmask");
-    integer numchanged = 0;
-    for(integer q=1; q<nPoints; q++)
-    {
-        integer p = SortedIndices[q];
-        SafeArray<integer> newmask(Masks, p*nDims,
-                "ComputeSortedUnmaskedChangePoints:newmask");
-        bool changed = false;
-        for(integer i=0; i<nDims; i++)
-        {
-            if(newmask[i]!=oldmask[i])
-            {
-                oldmask = newmask;
-                changed = true;
-                numchanged++;
-                break;
-            }
-        }
-        safeSortedMaskChange[p] = changed;
-    }
+	if (SortedMaskChange.size()>0)
+	{
+		Error("Precomputations have already been done, this indicates a bug.\n");
+		Error("Error occurred in ComputeSortedUnmaskedChangePoints().\n");
+		abort();
+	}
+	SortedMaskChange.resize(nPoints);
+	SafeArray<integer> safeSortedMaskChange(SortedMaskChange, "CSUCP:SMC");
+	// The first point when we iterate through the points in sorted order is
+	// SortedIndices[0] and we consider the mask as having 'changed' for this
+	// first point, because we use the mask having changed to signal that
+	// we should recompute the matrices that depend on the masks.
+	safeSortedMaskChange[SortedIndices[0]] = true;
+	integer oldmask_offset = SortedIndices[0] * nDims;
+	integer numchanged = 0;
+	for (integer q = 1; q < nPoints; q++)
+	{
+		integer p = SortedIndices[q];
+		integer newmask_offset = p*nDims;
+		bool changed = false;
+		for (integer i = 0; i < nDims; i++)
+		{
+			if (GetMasks(newmask_offset + i) != GetMasks(oldmask_offset + i))
+			{
+				oldmask_offset = newmask_offset;
+				changed = true;
+				numchanged++;
+				break;
+			}
+		}
+		safeSortedMaskChange[p] = changed;
+	}
 }
 
 ///////////////// SORTING /////////////////////////////////////////////////
@@ -128,23 +120,23 @@ void KK::ComputeSortedUnmaskedChangePoints()
 class KKSort
 {
 public:
-    KK *kk;
-    KKSort(KK *kk) : kk(kk) {};
-    bool operator()(const integer i, const integer j) const;
+	KK *kk;
+	KKSort(KK *kk) : kk(kk) {};
+	bool operator()(const integer i, const integer j) const;
 };
 
 // Less than operator for KK.Masks, it's just a lexicographical comparison
 bool KKSort::operator()(const integer i, const integer j) const
 {
-    integer nDims = kk->nDims;
-    for(integer k=0; k<nDims; k++)
-    {
-        integer x = kk->Masks[i*nDims+k];
-        integer y = kk->Masks[j*nDims+k];
-        if(x<y) return true;
-        if(x>y) return false;
-    }
-    return false;
+	integer nDims = kk->nDims;
+	for (integer k = 0; k < nDims; k++)
+	{
+		char x = kk->GetMasks(i*nDims + k);
+		char y = kk->GetMasks(j*nDims + k);
+		if (x < y) return true;
+		if (x > y) return false;
+	}
+	return false;
 }
 
 /*
@@ -161,137 +153,123 @@ bool KKSort::operator()(const integer i, const integer j) const
  */
 void KK::ComputeSortIndices()
 {
-    KKSort kksorter(this);
-    if(SortedIndices.size())
-    {
-        Error("Precomputations have already been done, this indicates a bug.\n");
-        Error("Error occurred in ComputeSortIndices().\n");
-        abort();
-    }
-    SortedIndices.resize(nPoints);
-    for(integer i=0; i<nPoints; i++)
-        SortedIndices[i] = i;
-    stable_sort(SortedIndices.begin(), SortedIndices.end(), kksorter);
+	KKSort kksorter(this);
+	if (SortedIndices.size())
+	{
+		Error("Precomputations have already been done, this indicates a bug.\n");
+		Error("Error occurred in ComputeSortIndices().\n");
+		abort();
+	}
+	SortedIndices.resize(nPoints);
+	for (integer i = 0; i < nPoints; i++)
+		SortedIndices[i] = i;
+	stable_sort(SortedIndices.begin(), SortedIndices.end(), kksorter);
 }
-
-//void KK::ComputeNoiseMeansAndVariances()
-//{
-    //For TrySplits
-    //maintain noise mean and variance of each channel
-    // maintain number of masked points in each channel
-//    Output("ComputeNoiseMeansandVariances ");
-
-//    NoiseMean.resize(nDims);
-//    NoiseVariance.resize(nDims);
-//    nMasked.resize(nDims);
-
-//}
 
 
 void KK::ComputeNoiseMeansAndVariances()
 {
-    // compute noise mean and variance of each channel
-    // compute number of masked points in each channel
-    Output("Masked EM: Computing Noise Means and Variances \n -----------------------------------------");
+	// compute noise mean and variance of each channel
+	// compute number of masked points in each channel
+	Output("Masked EM: Computing Noise Means and Variances \n -----------------------------------------");
 
-    NoiseMean.resize(nDims);
-    NoiseVariance.resize(nDims);
-    nMasked.resize(nDims);
-    
-//    for(integer i=0; i<nDims; i++)
-//    {    NoiseMean[i] = 0;
-//        NoiseVariance[i] = 0;
-//        nMasked[i] = 0;
-//    }
-        
-    
-    for(integer p=0; p<nPoints; p++)
-        for(integer i=0; i<nDims; i++)
-            if(!Masks[p*nDims+i])
-            {
-                scalar thisdata = Data[p*nDims+i];
-                NoiseMean[i] += thisdata;
-            //    NoiseVariance[i] += thisdata*thisdata; // sum of squares
-                nMasked[i]++;
-            }
-    for(integer i=0; i<nDims; i++)
-    {
-        if(nMasked[i]==0)
-        {
-            NoiseMean[i] = 0.0;
-            NoiseVariance[i] = 0;
-    //        NoiseVariance[i] = 1.0;
-        } else
-        {
-            NoiseMean[i] /= (scalar)nMasked[i];
-        //    NoiseVariance[i] /= (scalar)nMasked[i]; // E[X^2]
-        //    NoiseVariance[i] -= NoiseMean[i]*NoiseMean[i]; // -E[X]^2
-        }
-    }
-    
-    
-    for(integer p=0; p<nPoints; p++)
-        for(integer i=0; i<nDims; i++)
-            if(!Masks[p*nDims+i])
-            {    scalar thisdata = Data[p*nDims+i];
-                NoiseVariance[i] += (thisdata-NoiseMean[i])*(thisdata-NoiseMean[i]); 
-                
-            }
-    
-    for(integer i=0; i<nDims; i++)
-    {   
-        if(nMasked[i]==0)
-        {    NoiseVariance[i]= 0;
-            
-        }else {
-            NoiseVariance[i] /= (scalar)nMasked[i];
-        }
+	NoiseMean.resize(nDims);
+	NoiseVariance.resize(nDims);
+	nMasked.resize(nDims);
 
-    }
-    
-//    for(integer i=0; i<nDims; i++)
-//    {    Output(" NoiseMean[%d] = %f",(int)i,NoiseMean[i]);
-//        Output(" NoiseVariance[%d] = %f",(int)i,NoiseVariance[i]);
-//        Output(" nMasked[%d] = %d",(int)i,(int)nMasked[i]);
-        
-//    }
+	for (integer p = 0; p < nPoints; p++)
+		for (integer i = 0; i < nDims; i++)
+			if (!GetMasks(p*nDims + i))
+			{
+				scalar thisdata = GetData(p, i);
+				NoiseMean[i] += thisdata;
+				nMasked[i]++;
+			}
+	for (integer i = 0; i < nDims; i++)
+	{
+		if (nMasked[i] == 0)
+		{
+			NoiseMean[i] = 0.0;
+			NoiseVariance[i] = 0;
+		}
+		else
+		{
+			NoiseMean[i] /= (scalar)nMasked[i];
+		}
+	}
+	for (integer p = 0; p < nPoints; p++)
+		for (integer i = 0; i < nDims; i++)
+			if (!GetMasks(p*nDims + i))
+			{
+				scalar thisdata = GetData(p, i);
+				NoiseVariance[i] += (thisdata - NoiseMean[i])*(thisdata - NoiseMean[i]);
+
+			}
+
+	for (integer i = 0; i < nDims; i++)
+	{
+		if (nMasked[i] == 0)
+		{
+			NoiseVariance[i] = 0;
+
+		}
+		else {
+			NoiseVariance[i] /= (scalar)nMasked[i];
+		}
+
+	}
+
 }
 
 void KK::ComputeCorrectionTermsAndReplaceData()
 {
-    for(integer p=0; p<nPoints; p++)
-        for(integer i=0; i<nDims; i++)
-        {
-            scalar x = Data[p*nDims+i];
-            scalar w = FloatMasks[p*nDims+i];
-            scalar nu = NoiseMean[i];
-            scalar sigma2 = NoiseVariance[i];
-            scalar y = w*x+(1-w)*nu;
-            scalar z = w*x*x+(1-w)*(nu*nu+sigma2);
-            CorrectionTerm[p*nDims+i] = z-y*y;
-            Data[p*nDims+i] = y;
-        }
+	for (integer p = 0; p < nPoints; p++)
+		for (integer i = 0; i < nDims; i++)
+		{
+			scalar x = GetData(p, i);
+#ifdef STORE_FLOAT_MASK_AS_CHAR
+			scalar w = CharFloatMasks[p*nDims + i] / (scalar)255.0;
+#else
+			scalar w = FloatMasks[p*nDims+i];
+#endif
+			scalar nu = NoiseMean[i];
+			scalar sigma2 = NoiseVariance[i];
+			scalar y = w*x + (1 - w)*nu;
+			scalar z = w*x*x + (1 - w)*(nu*nu + sigma2);
+#ifndef COMPUTED_CORRECTION_TERM
+			CorrectionTerm[p*nDims+i] = z-y*y;
+#endif
+#ifdef STORE_DATA_AS_INTEGER
+			Data[p*nDims + i] = data_int_from_scalar(y);
+#else
+			Data[p*nDims+i] = y;
+#endif
+		}
 }
 
 //SNK PointMaskDimension() computes the sum of the masks/float masks for each point 
-void KK::PointMaskDimension() 
+void KK::PointMaskDimension()
 {
-    integer i,p;
-    
-    
-    
-    for (p=0; p<nPoints; p++) 
-    {
-        UnMaskDims[p]=0;
-        for (i=0;i<nDims;i++)
-        {
-            UnMaskDims[p] += FloatMasks[p*nDims+i];
-        }
-        if (Debug)
-        {
+	integer i, p;
+
+
+
+	for (p = 0; p < nPoints; p++)
+	{
+		UnMaskDims[p] = 0;
+		for (i = 0; i < nDims; i++)
+		{
+#ifdef STORE_FLOAT_MASK_AS_CHAR
+			UnMaskDims[p] += CharFloatMasks[p*nDims + i] / (scalar)255.0;
+#else
+			UnMaskDims[p] += FloatMasks[p*nDims+i];
+#endif
+		}
+		if (Debug)
+		{
 			Output("UnMaskDims[%d] = %f ", (int)p, UnMaskDims[p]);
-        }
-        
-    }    
-    
+		}
+
+	}
+
 }

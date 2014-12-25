@@ -16,6 +16,16 @@
 ////////////////////////////////////////////////////////////////////////////
 #define USE_DOUBLE_PRECISION
 
+////////////////////////////////////////////////////////////////////////////
+// Whether or not to use reduced amounts of RAM, depending on the data this
+// may reduce the precision and either speed up or slow down the computation
+////////////////////////////////////////////////////////////////////////////
+#define STORE_FLOAT_MASK_AS_CHAR // reduces precision
+#define COMPUTED_BINARY_MASK
+#define STORE_DATA_AS_INTEGER // reduces precision
+typedef unsigned short data_int; // change the data type of the integer used to store the data (only used if STORE_DATA_AS_INTEGER is set)
+#define COMPUTED_CORRECTION_TERM // reduces precision, slows down computation
+
 // Format for printing data
 #define SCALARFMT "%f"
 
@@ -23,11 +33,5 @@
 // when constructing a SafeArray, bounds checking is still performed when
 // constructing from a vector.
 //#define SAFEARRAY_BOUNDSCHECKING
-
-///////////////// CACHE OPTIMISATION PARAMETERS ////////////////////////////
-// TODO: this value probably not optimal for larger numbers of dimensions, need
-// to profile on a larger example. Somewhere around 90 might be optimal for
-// larger data sets, but not for the one I'm testing on (nDims=97).
-#define COVARIANCE_BLOCKSIZE 128
 
 #endif /* GLOBALSWITCHES_H_ */

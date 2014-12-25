@@ -18,6 +18,7 @@
 #include<stdlib.h>
 #include<iostream>
 #include<stdint.h>
+#include<limits>
 
 using namespace std;
 
@@ -31,6 +32,23 @@ typedef uintptr_t uinteger;
 typedef double scalar;
 #else
 typedef float scalar;
+#endif
+
+// helper functions when storing data as integer
+inline scalar data_scalar_from_int(const data_int x)
+{
+	return ((scalar)x-numeric_limits<data_int>::min())/(numeric_limits<data_int>::max()-numeric_limits<data_int>::min());
+}
+inline data_int data_int_from_scalar(const scalar x)
+{
+	return (data_int)(x*(numeric_limits<data_int>::max()-numeric_limits<data_int>::min())+numeric_limits<data_int>::min());
+}
+#ifdef STORE_DATA_AS_INTEGER
+#define restricted_data_pointer data_int * __restrict
+#define get_data_from_pointer(dataptr, i) (data_scalar_from_int(dataptr[i]))
+#else
+#define restricted_data_pointer scalar * __restrict
+#define get_data_from_pointer(dataptr, i) (dataptr[i])
 #endif
 
 /*
