@@ -7,7 +7,7 @@ DEBUG = -g
 PROFILE = -pg
 OPTIMISATIONS = -O3 -ffast-math -march=native
 
-ifneq "$(findstring noopenmp, $(MAKECMDGOALS))" ""
+ifdef NOOPENMP
 OPENMPFLAG =
 else
 OPENMPFLAG = -fopenmp
