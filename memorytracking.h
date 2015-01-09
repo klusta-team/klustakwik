@@ -6,7 +6,7 @@ Memory tracking utilities: used to warn the user that the memory they are reques
 
 #include "numerics.h"
 
-size_t available_physical_memory();
+size_t total_physical_memory();
 
 class KKMemoryRequest;
 

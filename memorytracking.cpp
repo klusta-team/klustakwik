@@ -7,9 +7,9 @@
 // Unix way
 #include <unistd.h>
 
-size_t available_physical_memory()
+size_t total_physical_memory()
 {
-	long pages = sysconf(_SC_AVPHYS_PAGES);
+	long pages = sysconf(_SC_PHYS_PAGES);
 	long page_size = sysconf(_SC_PAGE_SIZE);
 	return pages * page_size;
 }
@@ -17,15 +17,12 @@ size_t available_physical_memory()
 #endif
 
 #ifdef __APPLE__
-// Mac way only returns total, not available physical memory because of the
-// way the Mac uses memory to cache some data meaning that almost all memory
-// is used at all times
 #include <stdio.h>
 #include <stdint.h>
 #include <sys/types.h>
 #include <sys/sysctl.h>
 
-size_t available_physical_memory()
+size_t total_physical_memory()
 {
 	int mib [] = { CTL_HW, HW_MEMSIZE };
 	uint64_t value = 0;
@@ -45,12 +42,12 @@ size_t available_physical_memory()
 
 #include <windows.h>
 
-size_t available_physical_memory()
+size_t total_physical_memory()
 {
 	MEMORYSTATUSEX status;
 	status.dwLength = sizeof(status);
 	GlobalMemoryStatusEx(&status);
-	return status.ullAvailPhys;
+	return status.ullTotalPhys;
 }
 
 #endif
