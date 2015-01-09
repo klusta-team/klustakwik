@@ -6,10 +6,21 @@ CC = g++
 DEBUG = -g
 PROFILE = -pg
 OPTIMISATIONS = -O3 -ffast-math -march=native
-CFLAGS = -Wall -c -Wno-write-strings $(OPTIMISATIONS)
-LFLAGS = -Wall
+
+ifdef NOOPENMP
+OPENMPFLAG =
+else
+OPENMPFLAG = -fopenmp
+endif
+
+CFLAGS = -Wall -c -Wno-write-strings $(OPTIMISATIONS) $(OPENMPFLAG)
+LFLAGS = -Wall $(OPENMPFLAG)
 
 all: executable
+
+# Remove -march=native from optimisations for older gcc versions
+oldgcc: OPTIMISATIONS = -O3 -ffast-math
+oldgcc: executable
 
 # Adds debug flags
 debug: CFLAGS += $(DEBUG)
@@ -21,11 +32,7 @@ profile: CFLAGS += $(PROFILE)
 profile: LFLAGS += $(PROFILE)
 profile: executable
 
-# Remove -march=native from optimisations for older gcc versions
-oldgcc: OPTIMISATIONS = -O3 -ffast-math
-oldgcc: executable
-
-.PHONY: all debug native executable clean
+.PHONY: all debug native executable clean noopenmp
 
 executable: $(OBJS)
 	$(CC) $(LFLAGS) $(OBJS) -o $(PROGRAM)

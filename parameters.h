@@ -82,7 +82,7 @@ enum type_t {FLOAT = 'f', INT = 'd',  BOOLEAN = 'b', STRING = 's'};
     F("???",                                                                   \
       INT_PARAM,     DistDump,            integer DistDump,              0        )\
     F("Points this far from best do not get an E step recomputation.",         \
-      FLOAT_PARAM,   DistThresh,          scalar DistThresh,         (scalar)log(1000))\
+      FLOAT_PARAM,   DistThresh,          scalar DistThresh,         (scalar)log(1000.0))\
     F("If this fraction of points changed class last time, do a full step.",   \
       FLOAT_PARAM,   ChangedThresh,       scalar ChangedThresh,      .05      )\
     F("Whether or not to save information to a log file.",                     \
