@@ -39,7 +39,6 @@ public:
 	~KK();
     /////////////// FUNCTIONS //////////////////////////////////////////////////
 	void MemoryCheck();
-	integer NumBytesRequired();
     void AllocateArrays();
     void Reindex();
     // Random initial starting conditions functions
