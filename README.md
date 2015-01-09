@@ -30,7 +30,8 @@ Installation
   
 ### Other systems
 
-KlustaKwik is written in C++, and provided as source code. A makefile is provided. It is a plain-text program that runs from the command line, so compilation should be straightforward. 
+KlustaKwik is written in C++, and provided as source code. A makefile is provided.
+It is a plain-text program that runs from the command line, so compilation should be straightforward. 
 
 On Linux and Mac OS X simply unzip the source folder, open a command line terminal in the unzipped folder and type:
 
@@ -38,7 +39,16 @@ On Linux and Mac OS X simply unzip the source folder, open a command line termin
     
 This will create the executable: KlustaKwik.
 
-KlustaKwik can be compiled on Windows using either [MinGW](http://www.mingw.org/) or Microsoft Visual C++. With Visual C++, you may need to add `_USE_MATH_DEFINES` in preprocessor definitions, and compile it with /MT rather than /MD to avoid the DLL Hell.
+Note that on some Mac versions, there is no OpenMP support in the default
+compiler and so compilation will fail. In this case, build with the command:
+
+    make NOOPENMP=1
+
+KlustaKwik can be compiled on Windows using either [MinGW](http://www.mingw.org/) or
+Microsoft Visual C++. With Visual C++, you may need to add `_USE_MATH_DEFINES` in
+preprocessor definitions, and compile it with /MT rather than /MD to avoid the DLL Hell.
+
+Project files for MSVC 2013 are provided.
 
 
 Usage
