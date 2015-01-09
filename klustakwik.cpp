@@ -26,9 +26,10 @@ void KK::MemoryCheck()
 {
 	integer num_bytes_required = 3 * NumBytesRequired();
 	scalar memory_required = (num_bytes_required*1.0) / (1024.0*1024.0*1024.0);
-	if (memory_required > memory_tracker.limit_gb)
+
+	if (memory_required > RamLimitGB)
 	{
-		Error("Running KlustaKwik on this data will use between %.2f and %.2f GB of RAM, and the limit is set at %.2f.\n", (double)(memory_required*2.0 / 3.0), (double)memory_required, (double)memory_tracker.limit_gb);
+		Error("Running KlustaKwik on this data will use between %.2f and %.2f GB of RAM, and the limit is set at %.2f.\n", (double)(memory_required*2.0 / 3.0), (double)memory_required, (double)RamLimitGB);
 		Error("Possible candidates are:\n");
 		Error("- nPoints = %d\n", (int)nPoints);
 		Error("- nDims = %d\n", (int)nDims);
@@ -112,9 +113,6 @@ void KK::AllocateArrays() {
     nDims2 = nDims*nDims;
     NoisePoint = 1; // Ensures that the mixture weight for the noise cluster never gets to zero
 
-	integer num_bytes_allocated = NumBytesRequired();
-	mem.add(num_bytes_allocated);
-
     // Set sizes for arrays
 	resize_and_fill_with_zeros(Data, nPoints * nDims);
     //SNK
@@ -191,7 +189,7 @@ scalar KK::Penalty(integer n)
 // Penalties for Masked CEM
 void KK::ComputeClassPenalties()
 {
-    if(!((bool)UseDistributional)) // This function must only be called in Use Distributional  mode
+    if(UseDistributional==0) // This function must only be called in Use Distributional  mode
     {
   //      Output("Caught in ComputeClassPenalties");
         return;
@@ -1824,7 +1822,6 @@ int main(int argc, char **argv)
 		RamLimitGB = 1e20;
 		Output("WARNING: You have chosen not to set a RAM limit, this may cause problems.\n");
 	}
-	memory_tracker.limit_gb = RamLimitGB;
     
     //clock_t Clock0 = clock();
     Clock0 = clock();

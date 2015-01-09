@@ -213,8 +213,6 @@ public:
     // debugging info
     integer numiterations;
 	integer init_type;
-	// memory tracking
-	KKMemoryRequest mem;
 };
 
 #endif /* MASKED_KLUSTA_KWIK_2_H_ */
