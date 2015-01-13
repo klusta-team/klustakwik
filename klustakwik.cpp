@@ -2,6 +2,10 @@
 //
 // Fast clustering using the CEM algorithm with Masks.
 
+#ifndef VERSION
+#define VERSION "0.3.0-nogit"
+#endif
+
 // Disable some Visual Studio warnings
 #define _CRT_SECURE_NO_WARNINGS
 
