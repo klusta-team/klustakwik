@@ -39,7 +39,7 @@ void KK::LoadData(char *FileBase, integer ElecNo, char *UseFeatures)
     scalar val;
     //int maskval; // use int rather than integer because it is read as %d
     integer UseLen;
-    scalar max, min;
+    //scalar max, min;
     //bool usemasks = (UseDistributional && !UseFloatMasks);
 
     // open file
