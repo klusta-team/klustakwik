@@ -71,19 +71,20 @@ void check_memory_usage(vector<MemoryUsage> &usages, scalar limit_gb, integer nP
 		double max_usage = m.max_multiplier*base_usage;
 		total_min += min_usage;
 		total_max += max_usage;
-		Output("Array %s uses %lld bytes per element (%s) and has %lld elements when full. Total usage will be between %.2f and %.2f GB. Memory usage scales as %s.\n",
-			m.name_of_array, m.bytes_per_element, m.name_of_type, m.num_elements, min_usage, max_usage, m.expr);
+		Output("Array %s will use between %.2f and %.2f GB.\n", m.name_of_array, min_usage, max_usage);
+		Output("- %lld bytes per element (%s), %lld elements when full.\n", m.bytes_per_element, m.name_of_type, m.num_elements);
+		Output("- Memory usage scales as %s.\n", m.expr);
 	}
 	Output("\nNote that nPoints=%d, nDims=%d, MaxPossibleClusters=%d", (int)nPoints, (int)nDims, (int)MaxPossibleClusters);
 	Output("\nTotal memory usage will be between %.2f and %.2f GB.\n", total_min, total_max);
 	Output("RAM limit is set at %.2f GB.\n", limit_gb);
 	if (total_min > limit_gb)
 	{
-		Error("The RAM limit does not cover the minimum possible memory usage: KlustaKwik definitely cannot run this.\n");
+		Error("The RAM limit does not cover the minimum possible memory usage.\nKlustaKwik definitely cannot run this.\nOptions include: buying more RAM; reducing the key parameters above.\n");
 		exit(EXIT_FAILURE);
 	} else if(total_max > limit_gb)
 	{
-		Error("The RAM limit covers the minimum but not maximum possible memory usage, so it cannot be guaranteed not to crash. Call KlustaKwik with -RamLimitGB -1 to force it to run.\n");
+		Error("The RAM limit covers the minimum but not maximum possible memory usage, so it\ncannot be guaranteed not to crash. Call KlustaKwik with -RamLimitGB -1 to\nforce it to run.\n");
 		exit(EXIT_FAILURE);
 	}
 }
