@@ -28,66 +28,38 @@ scalar timesofar;
 // Does a memory check (should only be called for first instance of KK)
 void KK::MemoryCheck()
 {
-	integer num_bytes_required = 3 * NumBytesRequired();
-	scalar memory_required = (num_bytes_required*1.0) / (1024.0*1024.0*1024.0);
-	if (memory_required > memory_tracker.limit_gb)
-	{
-		Error("Running KlustaKwik on this data will use between %.2f and %.2f GB of RAM, and the limit is set at %.2f.\n", (double)(memory_required*2.0 / 3.0), (double)memory_required, (double)memory_tracker.limit_gb);
-		Error("Possible candidates are:\n");
-		Error("- nPoints = %d\n", (int)nPoints);
-		Error("- nDims = %d\n", (int)nDims);
-		Error("- MaxPossibleClusters = %d\n", (int)MaxPossibleClusters);
-		exit(EXIT_FAILURE);
-	}
-	Output("This run is expected to use between %.2f and %.2f GB of RAM.\n", (double)(memory_required*2.0 / 3.0), (double)memory_required);
-}
-
-integer KK::NumBytesRequired()
-{
-	// we don't allocate any memory if we have already allocated memory to this
-	// (i.e. if we are in TrySplits)
-	if (Data.size())
-		return 0;
-	nDims2 = nDims*nDims;
-	// Compute required memory and check if it exceeds the limit set
-	integer num_bytes_allocated =
+	long long NP = (long long)nPoints;
+	long long MPC = (long long)MaxPossibleClusters;
+	long long ND = (long long)nDims;
+	vector<MemoryUsage> usages;
 #ifdef STORE_DATA_AS_INTEGER
-		sizeof(data_int)*nPoints*nDims +             // Data
+	usages.push_back(MemoryUsage("Data", "data_int", sizeof(data_int), NP*ND, "nPoints*nDims", 2, 3));
 #else
-		sizeof(scalar)*nPoints*nDims +               // Data
+	usages.push_back(MemoryUsage("Data", "scalar", sizeof(scalar), NP*ND, "nPoints*nDims", 2, 3));
 #endif
 #ifdef COMPUTED_BINARY_MASK
-		(!UseDistributional)*sizeof(char)*nPoints*nDims + // Masks
+	if (!UseDistributional)
+		usages.push_back(MemoryUsage("Masks", "char", sizeof(char), NP*ND, "nPoints*nDims", 2, 3));
 #else
-		sizeof(char)*nPoints*nDims +                 // Masks
+	usages.push_back(MemoryUsage("Masks", "char", sizeof(char), NP*ND, "nPoints*nDims", 2, 3));
 #endif
 #ifdef STORE_FLOAT_MASK_AS_CHAR
-		sizeof(char)*nPoints*nDims +               // CharFloatMasks
+	usages.push_back(MemoryUsage("CharFloatMasks", "char", sizeof(char), NP*ND, "nPoints*nDims", 2, 3));
 #else
-		sizeof(scalar)*nPoints*nDims +               // FloatMasks
+	usages.push_back(MemoryUsage("FloatMasks", "scalar", sizeof(scalar), NP*ND, "nPoints*nDims", 2, 3));
 #endif
-		sizeof(scalar)*nPoints +                     // UnMaskDims
-		sizeof(scalar)*MaxPossibleClusters +         // Weight
-		sizeof(scalar)*MaxPossibleClusters*nDims +   // Mean
-		(1 - UseDistributional)*sizeof(scalar)*MaxPossibleClusters*nDims2 + // Cov
-		sizeof(scalar)*MaxPossibleClusters*nPoints + // LogP
-		sizeof(integer)*nPoints +                    // Class
-		sizeof(integer)*nPoints +                    // OldClass
-		sizeof(integer)*nPoints +                    // Class2
-		sizeof(integer)*nPoints +                    // BestClass
-		sizeof(integer)*MaxPossibleClusters +        // ClassAlive
-		sizeof(integer)*MaxPossibleClusters +        // AliveIndex
-		sizeof(scalar)*MaxPossibleClusters +         // ClassPenalty
-		sizeof(integer)*MaxPossibleClusters +        // nClassMembers
-		sizeof(scalar)*nPoints*nDims +               // AllVector2Mean
-		// UseDistributional only
+	if (UseDistributional)
+		usages.push_back(MemoryUsage("Cov", "scalar", sizeof(scalar), MPC*ND*ND, "MaxPossibleClusters*nDims*nDims", 0, 3));
+	else
+		usages.push_back(MemoryUsage("Cov", "scalar", sizeof(scalar), MPC*ND*ND, "MaxPossibleClusters*nDims*nDims", 2, 3));
+	usages.push_back(MemoryUsage("LogP", "scalar", sizeof(scalar), MPC*NP, "MaxPossibleClusters*nPoints", 2, 3));
+	usages.push_back(MemoryUsage("AllVector2Mean", "scalar", sizeof(scalar), NP*ND, "nPoints*nDims", 2, 3));
 #ifndef COMPUTED_CORRECTION_TERM
-		UseDistributional*sizeof(scalar)*nPoints*nDims +  // CorrectionTerm
+	if (UseDistributional)
+		usages.push_back(MemoryUsage("CorrectionTerm", "scalar", sizeof(scalar), NP*ND, "nPoints*nDims", 2, 3));
 #endif
-		sizeof(scalar)*(UseDistributional*MaxPossibleClusters*nDims) + // ClusterMask (vector<scalar>)
-		UseDistributional*sizeof(integer)*MaxPossibleClusters*nDims; // ClusterUnmaskedFeatures + ClusterMaskedFeatures
 
-	return num_bytes_allocated;
+	check_memory_usage(usages, RamLimitGB, nPoints, nDims, MaxPossibleClusters);
 }
 
 template<class T>
@@ -115,9 +87,6 @@ void KK::AllocateArrays() {
 
     nDims2 = nDims*nDims;
     NoisePoint = 1; // Ensures that the mixture weight for the noise cluster never gets to zero
-
-	integer num_bytes_allocated = NumBytesRequired();
-	mem.add(num_bytes_allocated);
 
     // Set sizes for arrays
 	resize_and_fill_with_zeros(Data, nPoints * nDims);
@@ -195,7 +164,7 @@ scalar KK::Penalty(integer n)
 // Penalties for Masked CEM
 void KK::ComputeClassPenalties()
 {
-    if(!((bool)UseDistributional)) // This function must only be called in Use Distributional  mode
+    if(UseDistributional==0) // This function must only be called in Use Distributional  mode
     {
   //      Output("Caught in ComputeClassPenalties");
         return;
@@ -1821,21 +1790,14 @@ int main(int argc, char **argv)
 	Output("Starting KlustaKwik. Version: %s\n", VERSION);
 	if (RamLimitGB == 0.0)
 	{
-		RamLimitGB = (1.0*available_physical_memory()) / (1024.0*1024.0*1024.0);
-#ifdef __APPLE__
+		RamLimitGB = (1.0*total_physical_memory()) / (1024.0*1024.0*1024.0);
 		Output("Setting RAM limit to total physical memory, %.2f GB.\n", (double)RamLimitGB);
-		Output("WARNING: Not all physical memory will be available, but on Macs it is not possible\n");
-		Output("         to get the available physical memory.\n");
-#else
-		Output("Setting RAM limit to available physical memory, %.2f GB.\n", (double)RamLimitGB);
-#endif
 	}
 	else if (RamLimitGB < 0.0)
 	{
 		RamLimitGB = 1e20;
 		Output("WARNING: You have chosen not to set a RAM limit, this may cause problems.\n");
 	}
-	memory_tracker.limit_gb = RamLimitGB;
     
     //clock_t Clock0 = clock();
     Clock0 = clock();

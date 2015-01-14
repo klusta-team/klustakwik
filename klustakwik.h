@@ -39,7 +39,6 @@ public:
 	~KK();
     /////////////// FUNCTIONS //////////////////////////////////////////////////
 	void MemoryCheck();
-	integer NumBytesRequired();
     void AllocateArrays();
     void Reindex();
     // Random initial starting conditions functions
@@ -213,8 +212,6 @@ public:
     // debugging info
     integer numiterations;
 	integer init_type;
-	// memory tracking
-	KKMemoryRequest mem;
 };
 
 #endif /* MASKED_KLUSTA_KWIK_2_H_ */
