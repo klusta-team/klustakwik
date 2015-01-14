@@ -2,6 +2,10 @@
 //
 // Fast clustering using the CEM algorithm with Masks.
 
+#ifndef VERSION
+#define VERSION "0.3.0-nogit"
+#endif
+
 // Disable some Visual Studio warnings
 #define _CRT_SECURE_NO_WARNINGS
 
@@ -1783,6 +1787,7 @@ int main(int argc, char **argv)
     scalar BestScore = HugeScore;
     integer p, i;
     SetupParams((integer)argc, argv); // This function is defined in parameters.cpp
+	Output("Starting KlustaKwik. Version: %s\n", VERSION);
 	if (RamLimitGB == 0.0)
 	{
 		RamLimitGB = (1.0*total_physical_memory()) / (1024.0*1024.0*1024.0);

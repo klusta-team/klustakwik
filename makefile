@@ -6,6 +6,7 @@ CC = g++
 DEBUG = -g
 PROFILE = -pg
 OPTIMISATIONS = -O3 -ffast-math -march=native
+GIT_VERSION := $(shell git describe --abbrev=4 --dirty --always --tags)
 
 ifdef NOOPENMP
 OPENMPFLAG =
@@ -13,7 +14,13 @@ else
 OPENMPFLAG = -fopenmp
 endif
 
+# If the git command failed, GIT_VERSION will be empty, so don't pass a DVERSION flag (fallback)
+ifeq ($(strip $(GIT_VERSION)),)
 CFLAGS = -Wall -c -Wno-write-strings $(OPTIMISATIONS) $(OPENMPFLAG)
+else
+CFLAGS = -Wall -c -Wno-write-strings $(OPTIMISATIONS) $(OPENMPFLAG) -DVERSION=\"$(GIT_VERSION)\"
+endif
+
 LFLAGS = -Wall $(OPENMPFLAG)
 
 all: executable
