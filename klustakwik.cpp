@@ -1562,8 +1562,7 @@ CompoundScore KK::CEM(char *CluFile, integer Recurse, integer InitRand,
                         nChanged>ChangedThresh*nPoints
                         || nChanged == 0
                         || Iter%FullStepEvery==0
-                        || Score.raw > OldScore.raw // SNK: Resurrected
-                    //SNK    Score decreases ARE because of quick steps!
+                        || ((Score.raw > OldScore.raw) && (Score.total > OldScore.total))
                     ) ;
         if (Iter>MaxIter)
         {
