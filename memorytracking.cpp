@@ -4,7 +4,7 @@
 
 // Platform independent way to get available memory
 
-#ifdef __linux__
+#if defined( __linux__ ) || defined( __CYGWIN__)
 // Unix way
 #include <unistd.h>
 
