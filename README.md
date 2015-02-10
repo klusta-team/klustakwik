@@ -15,11 +15,6 @@ You may subscribe to our googlegroups discussions by sending an email to:  klust
 Installation
 ------------
 
-### Windows 64 bit (from binary installer, may be an older version)
-
-  * Download and install the [KlustaKwik installer for Windows 64 bits.](http://klustakwik.rossant.net/klustakwik-setup.exe)
-  * After the installation, the command `klustakwik` will be available in the terminal.
-  
 ### Windows from source
 
   * The source files contain Visual Studio project files. This has been tested
