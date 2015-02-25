@@ -325,7 +325,9 @@ void KK::MStep()
             }
             else if(c==1)
             {
-            	// TODO: BLACK HOLE
+            	// Add MUAPoint to the denominator of all of them
+            	// nClustersAlive-1 => -2
+            	Weight[c] = ((scalar)nClassMembers[c]+MUAPoint) / (nPoints+NoisePoint+priorPoint*(nClustersAlive-1));
             }
             else
             {
@@ -357,6 +359,10 @@ void KK::MStep()
     Reindex();
 
     // Accumulate sums for mean calculation
+    // TODO: BLACK HOLE
+    // Add prior on mean
+    // priorPoint*NoiseMean for normal clusters
+    // MUAPoint*NoiseMean for other clusters
     for (p=0; p<nPoints; p++)
     {
         c = Class[p];
@@ -419,6 +425,7 @@ void KK::MStep()
 		}
 
 		// TODO: BLACK HOLE
+		// Add a new one here that just computes variances
 #pragma omp parallel for schedule(dynamic)
 		for (integer cc = 0; cc<nClustersAlive; cc++)
 		{
@@ -491,6 +498,9 @@ void KK::MStep()
 
 			//
 
+			// TODO: BLACK HOLE
+			// We want to do something like this for MUA cluster
+			// exactly the same with priorPoint -> MUAPoint ?
 			for (integer ii = 0; ii < CurrentCov.NumUnmasked; ii++)
 				CurrentCov.Block[ii*CurrentCov.NumUnmasked + ii] += priorPoint*NoiseVariance[(*CurrentCov.Unmasked)[ii]];
 			for (integer ii = 0; ii < CurrentCov.NumMasked; ii++)
@@ -968,6 +978,8 @@ void KK::CStep(bool allow_assign_to_noise)
     integer p, c, cc, TopClass, SecondClass;
     integer ccstart = 0;
     // TODO: BLACK HOLE
+    // ccstart should change to 2
+    // this comes from trysplits and considerdeletion
     if(!allow_assign_to_noise)
         ccstart = 1;
     scalar ThisScore, BestScore, SecondScore;
@@ -1013,6 +1025,9 @@ void KK::ConsiderDeletion()
     if (Debug)
         Output(" Entering ConsiderDeletion: ");
 
+    // TODO: BLACK HOLE
+    // never delete cluster 1 if UseDistributional
+    // same throughout
     for(c=1; c<MaxPossibleClusters; c++)
     {
         if (ClassAlive[c]) DeletionLoss[c] = 0;
@@ -1214,6 +1229,8 @@ integer KK::TrySplits()
         }
 
         // do it
+        // TODO: BLACK HOLE
+        // nStartingClusters should be increased by 1
 		if (Verbose >= 1) Output("\n Trying to split cluster %d (%d points) \n", (int)c, (int)K2.nPoints);
         K2.nStartingClusters=2; // (2 = 1 clusters + 1 unused noise cluster)
         UnsplitScore = K2.CEM(NULL, 0, 1, false);
@@ -1411,6 +1428,7 @@ void KK::StartingConditionsFromMasks()
         for(integer p=0; p<nPoints; p++)
         {
             if(MaskUsed[MaskIndex[p]]) // we included this points mask
+            	// TODO: BLACK HOLE +2 but may need to make other changes too
                 Class[p] = FoundMaskIndex[MaskIndex[p]]+1; // so assign class to mask index
             else // this points mask not included
             {
