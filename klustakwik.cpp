@@ -132,8 +132,9 @@ void KK::Reindex()
     integer c;
 
     AliveIndex[0] = 0;
-    nClustersAlive=1;
-    for(c=1;c<MaxPossibleClusters;c++)
+    AliveIndex[1] = 1;
+    nClustersAlive = 2;
+    for(c=2; c<MaxPossibleClusters; c++)
     {
         if (ClassAlive[c])
         {
@@ -283,7 +284,7 @@ void KK::MStep()
         {
             integer c = AliveIndex[cc];
             if (Debug){Output("DistributionalMstep: Class %d contains %d members \n", (int)c, (int)nClassMembers[c]);}
-                if (c>0 && nClassMembers[c]<1)//nDims)
+                if (c>1 && nClassMembers[c]<1)//nDims)
                 {
                     ClassAlive[c]=0;
                     if (Debug) {Output("UnmaskedMstep_dist: Deleted class %d: no members\n", (int)c);}
@@ -297,7 +298,7 @@ void KK::MStep()
         {
                 c = AliveIndex[cc];
                 if (Debug) {Output("Mstep: Class %d contains %d members \n", (int)c, (int)nClassMembers[c]);}
-                if (c>0 && nClassMembers[c]<=nDims)
+                if (c>1 && nClassMembers[c]<=nDims)
                 {
                     ClassAlive[c]=0;
                     if (Debug) {Output("Deleted class %d: not enough members\n", (int)c);}
@@ -322,6 +323,10 @@ void KK::MStep()
             {
                 Weight[c] = ((scalar)nClassMembers[c]+NoisePoint) / (nPoints+NoisePoint+priorPoint*(nClustersAlive-1));
             }
+            else if(c==1)
+            {
+            	// TODO: BLACK HOLE
+            }
             else
             {
                 Weight[c] = ((scalar)nClassMembers[c]+priorPoint) / (nPoints+NoisePoint+priorPoint*(nClustersAlive-1));
@@ -337,6 +342,9 @@ void KK::MStep()
             if(c==0)
             {
                 Weight[c] = ((scalar)nClassMembers[c]+NoisePoint) / (nPoints+NoisePoint);
+            } else if(c==1)
+            {
+            	// TODO: BLACK HOLE
             }
             else
             {
@@ -400,6 +408,8 @@ void KK::MStep()
 		// Empty the dynamic covariance matrices (we will fill it up as we go)
 		DynamicCov.clear();
 
+		// TODO: BLACK HOLE
+		// What should we do about clusters 0 and 1 anyway?
 		for (cc = 0; cc < nClustersAlive; cc++)
 		{
 			c = AliveIndex[cc];
@@ -408,6 +418,7 @@ void KK::MStep()
 			DynamicCov.push_back(BlockPlusDiagonalMatrix(CurrentMasked, CurrentUnmasked));
 		}
 
+		// TODO: BLACK HOLE
 #pragma omp parallel for schedule(dynamic)
 		for (integer cc = 0; cc<nClustersAlive; cc++)
 		{
@@ -651,6 +662,7 @@ void KK::MStep()
     // and normalize
     if(!UseDistributional)
 	{    //For original KlustaKwik classical EM
+    	// TODO: BLACK HOLE
         for (cc=0; cc<nClustersAlive; cc++)
         {
             c = AliveIndex[cc];
@@ -723,6 +735,7 @@ void KK::EStep()
 	BlockPlusDiagonalMatrix *CurrentCov;
 	BlockPlusDiagonalMatrix *CholBPD = NULL;
 
+	// TODO: BLACK HOLE
 	for (cc = 1; cc<nClustersAlive; cc++)
     {
         c = AliveIndex[cc];
@@ -954,6 +967,7 @@ void KK::CStep(bool allow_assign_to_noise)
 {
     integer p, c, cc, TopClass, SecondClass;
     integer ccstart = 0;
+    // TODO: BLACK HOLE
     if(!allow_assign_to_noise)
         ccstart = 1;
     scalar ThisScore, BestScore, SecondScore;
@@ -1150,6 +1164,7 @@ integer KK::TrySplits()
     Score = ComputeScore();
 
     // loop thu clusters, trying to split
+    // TODO: BLACK HOLE
     for (cc=1; cc<nClustersAlive; cc++)
     {
         c = AliveIndex[cc];
