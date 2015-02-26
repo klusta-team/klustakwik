@@ -109,6 +109,8 @@ enum type_t {FLOAT = 'f', INT = 'd',  BOOLEAN = 'b', STRING = 's'};
       FLOAT_PARAM,   PointsForClusterMask,  scalar PointsForClusterMask, 10 )\
     F("Minimum point to cluster mask overlap.",                                \
       FLOAT_PARAM,   MinMaskOverlap,      scalar MinMaskOverlap,      0.0     )\
+      F("Number of 'MUAPoints'",                                               \
+        INT_PARAM,   MUAPoint,            integer MUAPoint,             1        )\
 
 
 //TODO: Implement the two Debug modes, one less verbose than the other

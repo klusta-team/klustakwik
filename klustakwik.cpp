@@ -131,8 +131,8 @@ void KK::Reindex()
 {
     integer c;
 
-    AliveIndex[0] = 0;
-    AliveIndex[1] = 1;
+    AliveIndex[0] = 0; // noise cluster
+    AliveIndex[1] = 1; // MUA cluster
     nClustersAlive = 2;
     for(c=2; c<MaxPossibleClusters; c++)
     {
@@ -205,13 +205,15 @@ void KK::ComputeClusterMasks()
 	Reindex();
 
 	// Initialise cluster mask to 0
-	for(integer i=0; i<nDims*MaxPossibleClusters; i++)
-		ClusterMask[i] = 0;
+	for(c=0; c<MaxPossibleClusters; c++)
+		for(integer i=0; i<nDims; i++)
+			ClusterMask[c*nDims + i] = (c<=1)*-1; // -1 to make sure the noise and MUA clusters are masked
 
 	// Compute cluster mask
     for(integer p=0; p<nPoints; p++)
     {
         integer c = Class[p];
+        if(c<=1) continue;
 		for (integer i = 0; i < nDims; i++)
 		{
 #ifdef STORE_FLOAT_MASK_AS_CHAR
@@ -321,17 +323,16 @@ void KK::MStep()
             // add "noise point" to make sure Weight for noise cluster never gets to zero
             if(c==0)
             {
-                Weight[c] = ((scalar)nClassMembers[c]+NoisePoint) / (nPoints+NoisePoint+priorPoint*(nClustersAlive-1));
+                Weight[c] = ((scalar)nClassMembers[c]+NoisePoint) / (nPoints+NoisePoint+MUAPoint+priorPoint*(nClustersAlive-2));
             }
             else if(c==1)
             {
             	// Add MUAPoint to the denominator of all of them
-            	// nClustersAlive-1 => -2
-            	Weight[c] = ((scalar)nClassMembers[c]+MUAPoint) / (nPoints+NoisePoint+priorPoint*(nClustersAlive-1));
+            	Weight[c] = ((scalar)nClassMembers[c]+MUAPoint) / (nPoints+NoisePoint+MUAPoint+priorPoint*(nClustersAlive-2));
             }
             else
             {
-                Weight[c] = ((scalar)nClassMembers[c]+priorPoint) / (nPoints+NoisePoint+priorPoint*(nClustersAlive-1));
+                Weight[c] = ((scalar)nClassMembers[c]+priorPoint) / (nPoints+NoisePoint+MUAPoint+priorPoint*(nClustersAlive-2));
             }
         }
     }
@@ -346,7 +347,8 @@ void KK::MStep()
                 Weight[c] = ((scalar)nClassMembers[c]+NoisePoint) / (nPoints+NoisePoint);
             } else if(c==1)
             {
-            	// TODO: BLACK HOLE
+            	// This should never happen!
+            	exit(1);
             }
             else
             {
@@ -359,10 +361,6 @@ void KK::MStep()
     Reindex();
 
     // Accumulate sums for mean calculation
-    // TODO: BLACK HOLE
-    // Add prior on mean
-    // priorPoint*NoiseMean for normal clusters
-    // MUAPoint*NoiseMean for other clusters
     for (p=0; p<nPoints; p++)
     {
         c = Class[p];
@@ -371,12 +369,23 @@ void KK::MStep()
             Mean[c*nDims + i] += GetData(p, i);
         }
     }
-
     // and normalize
     for (cc=0; cc<nClustersAlive; cc++)
     {
         c = AliveIndex[cc];
-        for (i=0; i<nDims; i++) Mean[c*nDims + i] /= nClassMembers[c];
+        integer curprior = 0;
+        if(UseDistributional)
+    	{
+    		if(c==1)
+    			curprior = MUAPoint;
+			else if(c>=2)
+				curprior = priorPoint;
+    	}
+        for (i=0; i<nDims; i++)
+		{
+        	Mean[c*nDims + i] += curprior*NoiseMean[i];
+        	Mean[c*nDims + i] /= nClassMembers[c]+curprior;
+		}
     }
 
     // Covariance matrix is quite big, and won't fit in the L1d cache
@@ -414,8 +423,8 @@ void KK::MStep()
 		// Empty the dynamic covariance matrices (we will fill it up as we go)
 		DynamicCov.clear();
 
-		// TODO: BLACK HOLE
-		// What should we do about clusters 0 and 1 anyway?
+		// we allocate more matrices than we need to keep the indexing simple
+		// (i.e. matrices for clusters 0 and 1)
 		for (cc = 0; cc < nClustersAlive; cc++)
 		{
 			c = AliveIndex[cc];
@@ -424,10 +433,37 @@ void KK::MStep()
 			DynamicCov.push_back(BlockPlusDiagonalMatrix(CurrentMasked, CurrentUnmasked));
 		}
 
-		// TODO: BLACK HOLE
-		// Add a new one here that just computes variances
+		// MUA cluster has diagonal only
+		{
+			const integer cc = 1;
+			const integer c = 1;
+			const vector<integer> &PointsInThisClass = PointsInClass[c];
+			const integer NumPointsInThisClass = PointsInThisClass.size();
+			BlockPlusDiagonalMatrix &CurrentCov = DynamicCov[cc];
+			const integer npoints = (integer)PointsInThisClass.size();
+			for (integer q = 0; q < NumPointsInThisClass; q++)
+			{
+				const integer p = PointsInThisClass[q];
+				const scalar * __restrict av2mp = &(AllVector2Mean[p*nDims]);
+				for(integer i=0; i<nDims; i++)
+				{
+					scalar ccf = av2mp[i]*av2mp[i];
+#ifdef COMPUTED_CORRECTION_TERM
+					ccf += GetCorrectionTerm(p, i);
+#else
+					ccf += CorrectionTerm[p*nDims + i];
+#endif
+					ccf += MUAPoint*NoiseVariance[i];
+					CurrentCov.Diagonal[i] += ccf;
+				}
+			}
+			const scalar factor = 1.0 / (nClassMembers[c] + MUAPoint - 1);
+			for(integer i=0; i<nDims; i++)
+				CurrentCov.Diagonal[i] *= factor;
+		}
+		// now compute cov matrices for all the normal clusters
 #pragma omp parallel for schedule(dynamic)
-		for (integer cc = 0; cc<nClustersAlive; cc++)
+		for (integer cc = 2; cc<nClustersAlive; cc++)
 		{
 			const integer c = AliveIndex[cc];
 			const vector<integer> &PointsInThisClass = PointsInClass[c];
@@ -498,9 +534,6 @@ void KK::MStep()
 
 			//
 
-			// TODO: BLACK HOLE
-			// We want to do something like this for MUA cluster
-			// exactly the same with priorPoint -> MUAPoint ?
 			for (integer ii = 0; ii < CurrentCov.NumUnmasked; ii++)
 				CurrentCov.Block[ii*CurrentCov.NumUnmasked + ii] += priorPoint*NoiseVariance[(*CurrentCov.Unmasked)[ii]];
 			for (integer ii = 0; ii < CurrentCov.NumMasked; ii++)
@@ -635,7 +668,7 @@ void KK::MStep()
 	else
 	{
 		// I think this code gives wrong results (but only slightly) (DFMG: 2014/10/13)
-		for (c = 0; c < MaxPossibleClusters; c++)
+		for (c = 2; c < MaxPossibleClusters; c++)
 		{
 			vector<integer> &PointsInThisClass = PointsInClass[c];
 			SafeArray<scalar> safeCov(Cov, c*nDims2, "safeCovMStep");
@@ -672,7 +705,6 @@ void KK::MStep()
     // and normalize
     if(!UseDistributional)
 	{    //For original KlustaKwik classical EM
-    	// TODO: BLACK HOLE
         for (cc=0; cc<nClustersAlive; cc++)
         {
             c = AliveIndex[cc];
