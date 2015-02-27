@@ -777,8 +777,8 @@ void KK::EStep()
 	BlockPlusDiagonalMatrix *CurrentCov;
 	BlockPlusDiagonalMatrix *CholBPD = NULL;
 
-	// TODO: BLACK HOLE
-	for (cc = 1; cc<nClustersAlive; cc++)
+	// If we're not UseDistributional we want to skip both the first two clusters (noise+MUA)
+	for (cc = 1+(int)(!UseDistributional); cc<nClustersAlive; cc++)
     {
         c = AliveIndex[cc];
 
@@ -1009,11 +1009,8 @@ void KK::CStep(bool allow_assign_to_noise)
 {
     integer p, c, cc, TopClass, SecondClass;
     integer ccstart = 0;
-    // TODO: BLACK HOLE
-    // ccstart should change to 2
-    // this comes from trysplits and considerdeletion
     if(!allow_assign_to_noise)
-        ccstart = 1;
+        ccstart = 2;
     scalar ThisScore, BestScore, SecondScore;
 
     for (p=0; p<nPoints; p++)
