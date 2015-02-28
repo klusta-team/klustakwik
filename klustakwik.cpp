@@ -125,7 +125,7 @@ void KK::AllocateArrays() {
     }
 }
 
-// recompute index of alive clusters (including 0, the noise cluster)
+// recompute index of alive clusters (including 0, the noise cluster and 1 the MUA cluster)
 // should be called after anything that changes ClassAlive
 void KK::Reindex()
 {
@@ -1054,10 +1054,7 @@ void KK::ConsiderDeletion()
     if (Debug)
         Output(" Entering ConsiderDeletion: ");
 
-    // TODO: BLACK HOLE
-    // never delete cluster 1 if UseDistributional
-    // same throughout
-    for(c=1; c<MaxPossibleClusters; c++)
+    for(c=2; c<MaxPossibleClusters; c++)
     {
         if (ClassAlive[c]) DeletionLoss[c] = 0;
         else DeletionLoss[c] = HugeScore; // don't delete classes that are already there
@@ -1076,7 +1073,7 @@ void KK::ConsiderDeletion()
     Loss = HugeScore;
     if (UseDistributional) //For UseDistribution, we use the ClusterPenalty
     {
-        for(c=1; c<MaxPossibleClusters; c++)
+        for(c=2; c<MaxPossibleClusters; c++)
         {
             if ((DeletionLoss[c]-ClassPenalty[c])<Loss)
             {
@@ -1088,7 +1085,7 @@ void KK::ConsiderDeletion()
     }// or in the case of fixed penalty find class with least to lose
     else
     {
-        for(c=1; c<MaxPossibleClusters; c++)
+        for(c=2; c<MaxPossibleClusters; c++)
         {
             if (DeletionLoss[c]<Loss)
             {
@@ -1175,7 +1172,7 @@ integer KK::TrySplits()
     //KK K2; // second KK structure for sub-clustering
     //KK K3; // third one for comparison
 
-    if(nClustersAlive>=MaxPossibleClusters-1)
+    if(nClustersAlive>=MaxPossibleClusters-2)
     {
         Output("Won't try splitting - already at maximum number of clusters\n");
         return 0;
@@ -1208,8 +1205,7 @@ integer KK::TrySplits()
     Score = ComputeScore();
 
     // loop thu clusters, trying to split
-    // TODO: BLACK HOLE
-    for (cc=1; cc<nClustersAlive; cc++)
+    for (cc=2; cc<nClustersAlive; cc++)
     {
         c = AliveIndex[cc];
 
@@ -1243,7 +1239,7 @@ integer KK::TrySplits()
 
         // find an unused cluster
         UnusedCluster = -1;
-        for(c2=1; c2<MaxPossibleClusters; c2++)
+        for(c2=2; c2<MaxPossibleClusters; c2++)
         {
              if (!ClassAlive[c2])
              {
@@ -1258,18 +1254,16 @@ integer KK::TrySplits()
         }
 
         // do it
-        // TODO: BLACK HOLE
-        // nStartingClusters should be increased by 1
 		if (Verbose >= 1) Output("\n Trying to split cluster %d (%d points) \n", (int)c, (int)K2.nPoints);
-        K2.nStartingClusters=2; // (2 = 1 clusters + 1 unused noise cluster)
+        K2.nStartingClusters=3; // (3 = 1 clusters + 2 unused noise/MUA cluster)
         UnsplitScore = K2.CEM(NULL, 0, 1, false);
-        K2.nStartingClusters=3; // (3 = 2 clusters + 1 unused noise cluster)
+        K2.nStartingClusters=4; // (4 = 2 clusters + 2 unused noise/MUA cluster)
         SplitScore = K2.CEM(NULL, 0, 1, false);
 
-        // Fix by Michaël Zugaro: replace next line with following two lines
+        // Fix by Michael Zugaro: replace next line with following two lines
         // if(SplitScore<UnsplitScore) {
-        if(K2.nClustersAlive<2) Output("\n Split failed - leaving alone\n");
-        if((SplitScore<UnsplitScore)&&(K2.nClustersAlive>=2)) {
+        if(K2.nClustersAlive<3) Output("\n Split failed - leaving alone\n");
+        if((SplitScore<UnsplitScore)&&(K2.nClustersAlive>=3)) {
 			if (AlwaysSplitBimodal)
 			{
 				DidSplit = 1;
@@ -1376,9 +1370,9 @@ scalar KK::ComputeScore()
 void KK::StartingConditionsRandom()
 {
     // initialize data to random
-    if(nStartingClusters>1)
+    if(nStartingClusters>2)
         for(integer p=0; p<nPoints; p++) // No points are put in the noise cluster to begin 
-            Class[p] = irand(1, nStartingClusters-1);
+            Class[p] = irand(2, nStartingClusters-1);
     else
         for(integer p=0; p<nPoints; p++) //If there is only one cluster, put all the points in the noise cluster
             Class[p] = 0;
@@ -1398,7 +1392,7 @@ void KK::StartingConditionsFromMasks()
     //    Output("StartingConditionsFromMasks: ");
     Output("Starting initial clusters from distinct float masks \n ");
     
-    if(nStartingClusters<=1) // If only 1 starting clutser has been requested, assign all the points to cluster 0
+    if(nStartingClusters<=2) // If only 1 or 2 starting clutser has been requested, assign all the points to cluster 0
     {
         for(integer p=0; p<nPoints; p++)
             Class[p] = 0;
@@ -1409,12 +1403,12 @@ void KK::StartingConditionsFromMasks()
         for(integer p=0; p<nPoints; p++)
             num_masks += (integer)SortedMaskChange[p];
         
-        if((nStartingClusters-1)>num_masks)
+        if((nStartingClusters-2)>num_masks)
         {
             Error("Not enough masks (%d) to generate starting clusters (%d), "
 				"so starting with (%d) clusters instead.\n", (int)num_masks,
-				(int)nStartingClusters, (int)(num_masks + 1));
-            nClusters2start = num_masks+1;
+				(int)nStartingClusters, (int)(num_masks + 2));
+            nClusters2start = num_masks+2;
             //return;
         }
         else
@@ -1441,7 +1435,7 @@ void KK::StartingConditionsFromMasks()
         integer masks_found = 0;
         vector<integer> MaskIndexToUse;
         vector<integer> FoundMaskIndex(num_masks);
-        while(masks_found<nClusters2start-1)
+        while(masks_found<nClusters2start-2)
         {
             integer p = irand(0, nPoints-1);
             integer mask_index = MaskIndex[p];
@@ -1457,15 +1451,14 @@ void KK::StartingConditionsFromMasks()
         for(integer p=0; p<nPoints; p++)
         {
             if(MaskUsed[MaskIndex[p]]) // we included this points mask
-            	// TODO: BLACK HOLE +2 but may need to make other changes too
-                Class[p] = FoundMaskIndex[MaskIndex[p]]+1; // so assign class to mask index
+                Class[p] = FoundMaskIndex[MaskIndex[p]]+2; // so assign class to mask index
             else // this points mask not included
             {
                 // so find closest match
                 integer closest_index = 0;
                 integer distance = nDims+1;
                 vector<integer> possibilities;
-                for(integer mi=0; mi<nClusters2start-1; mi++)
+                for(integer mi=0; mi<nClusters2start-2; mi++)
                 {
                     integer mip = MaskPointIndex[MaskIndexToUse[mi]];
                     // compute mask distance
@@ -1485,7 +1478,7 @@ void KK::StartingConditionsFromMasks()
                     closest_index = possibilities[0];
                 else
                     closest_index = possibilities[irand(0, possibilities.size()-1)];
-                Class[p] = closest_index+1;
+                Class[p] = closest_index+2;
             }
         }
         // print some info
@@ -1502,7 +1495,8 @@ void KK::StartingConditionsFromMasks()
 			fprintf(fp, "%d\n", (int)Class[p]);
         fclose(fp);
     }
-    for(integer c=0; c<MaxPossibleClusters; c++)
+    ClassAlive[0] = ClassAlive[1] = 1;
+    for(integer c=2; c<MaxPossibleClusters; c++)
         ClassAlive[c] = (c<nClusters2start);
 }
 
