@@ -205,7 +205,7 @@ void KK::ComputeClusterMasks()
 	Reindex();
 
 	// Initialise cluster mask to 0
-	for(c=0; c<MaxPossibleClusters; c++)
+	for(integer c=0; c<MaxPossibleClusters; c++)
 		for(integer i=0; i<nDims; i++)
 			ClusterMask[c*nDims + i] = (c<=1)*-1; // -1 to make sure the noise and MUA clusters are masked
 
