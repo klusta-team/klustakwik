@@ -453,9 +453,12 @@ void KK::MStep()
 #else
 					ccf += CorrectionTerm[p*nDims + i];
 #endif
-					ccf += MUAPoint*NoiseVariance[i];
 					CurrentCov.Diagonal[i] += ccf;
 				}
+			}
+			for(integer i=0; i<nDims; i++)
+			{
+				CurrentCov.Diagonal[i] += MUAPoint*NoiseVariance[i];
 			}
 			const scalar factor = 1.0 / (nClassMembers[c] + MUAPoint - 1);
 			for(integer i=0; i<nDims; i++)
@@ -1273,8 +1276,8 @@ integer KK::TrySplits()
 				{
 					if (Class[p] == c)
 					{
-						if (K2.Class[p2] == 1) Class[p] = c;
-						else if (K2.Class[p2] == 2) Class[p] = UnusedCluster;
+						if (K2.Class[p2] == 2) Class[p] = c;
+						else if (K2.Class[p2] == 3) Class[p] = UnusedCluster;
 						else Error("split should only produce 2 clusters\n");
 						p2++;
 					}
@@ -1293,8 +1296,8 @@ integer KK::TrySplits()
 				{
 					if (Class[p] == c)
 					{
-						if (K2.Class[p2] == 1) K3.Class[p] = c;
-						else if (K2.Class[p2] == 2) K3.Class[p] = UnusedCluster;
+						if (K2.Class[p2] == 2) K3.Class[p] = c;
+						else if (K2.Class[p2] == 3) K3.Class[p] = UnusedCluster;
 						else Error("split should only produce 2 clusters\n");
 						p2++;
 					}
