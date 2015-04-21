@@ -256,7 +256,6 @@ void KK::ComputeClusterMasks()
 // also deletes any classes with fewer points than nDim
 void KK::MStep()
 {
-    integer p, c, cc, i, j;
     vector<scalar> Vec2Mean(nDims);
 
     // clear arrays
@@ -273,7 +272,7 @@ void KK::MStep()
     if (Debug) { Output("Entering Unmasked Mstep \n");}
 
     // Accumulate total number of points in each class
-    for (p=0; p<nPoints; p++) nClassMembers[Class[p]]++;
+    for (integer p=0; p<nPoints; p++) nClassMembers[Class[p]]++;
 
     // check for any dead classes
 
@@ -293,9 +292,9 @@ void KK::MStep()
     else
     {
 
-        for (cc=0; cc<nClustersAlive; cc++)
+        for (integer cc=0; cc<nClustersAlive; cc++)
         {
-                c = AliveIndex[cc];
+        		integer c = AliveIndex[cc];
                 if (Debug) {Output("Mstep: Class %d contains %d members \n", (int)c, (int)nClassMembers[c]);}
                 if (c>0 && nClassMembers[c]<=nDims)
                 {
@@ -313,9 +312,9 @@ void KK::MStep()
     // Also check for dead classes
     if(UseDistributional)
     {
-        for (cc=0; cc<nClustersAlive; cc++)
+        for (integer cc=0; cc<nClustersAlive; cc++)
         {
-            c = AliveIndex[cc];
+        	integer c = AliveIndex[cc];
             //Output("DistributionalMstep: PriorPoint on weights ");
             // add "noise point" to make sure Weight for noise cluster never gets to zero
             if(c==0)
@@ -330,9 +329,9 @@ void KK::MStep()
     }
     else  // For Original KlustaKwik, Classical EM
     {
-        for (cc=0; cc<nClustersAlive; cc++)
+        for (integer cc=0; cc<nClustersAlive; cc++)
         {
-            c = AliveIndex[cc];
+        	integer c = AliveIndex[cc];
             // add "noise point" to make sure Weight for noise cluster never gets to zero
             if(c==0)
             {
@@ -349,20 +348,20 @@ void KK::MStep()
     Reindex();
 
     // Accumulate sums for mean calculation
-    for (p=0; p<nPoints; p++)
+    for (integer p=0; p<nPoints; p++)
     {
-        c = Class[p];
-        for(i=0; i<nDims; i++)
+    	integer c = Class[p];
+        for(integer i=0; i<nDims; i++)
         {
             Mean[c*nDims + i] += GetData(p, i);
         }
     }
 
     // and normalize
-    for (cc=0; cc<nClustersAlive; cc++)
+    for (integer cc=0; cc<nClustersAlive; cc++)
     {
-        c = AliveIndex[cc];
-        for (i=0; i<nDims; i++) Mean[c*nDims + i] /= nClassMembers[c];
+    	integer c = AliveIndex[cc];
+        for (integer i=0; i<nDims; i++) Mean[c*nDims + i] /= nClassMembers[c];
     }
 
     // Covariance matrix is quite big, and won't fit in the L1d cache
@@ -385,11 +384,11 @@ void KK::MStep()
 		AllVector2Mean.resize(nPoints*nDims);
 	}
     vector< vector<integer> > PointsInClass(MaxPossibleClusters);
-    for(p=0; p<nPoints; p++)
+    for(integer p=0; p<nPoints; p++)
     {
-        c = Class[p];
+    	integer c = Class[p];
         PointsInClass[c].push_back(p);
-		for (i = 0; i < nDims; i++)
+		for (integer i = 0; i < nDims; i++)
 			AllVector2Mean[p*nDims + i] = GetData(p, i) - Mean[c*nDims + i];
     }
 
@@ -400,9 +399,9 @@ void KK::MStep()
 		// Empty the dynamic covariance matrices (we will fill it up as we go)
 		DynamicCov.clear();
 
-		for (cc = 0; cc < nClustersAlive; cc++)
+		for (integer cc = 0; cc < nClustersAlive; cc++)
 		{
-			c = AliveIndex[cc];
+			integer c = AliveIndex[cc];
 			vector<integer> &CurrentUnmasked = ClusterUnmaskedFeatures[c];
 			vector<integer> &CurrentMasked = ClusterMaskedFeatures[c];
 			DynamicCov.push_back(BlockPlusDiagonalMatrix(CurrentMasked, CurrentUnmasked));
@@ -488,9 +487,9 @@ void KK::MStep()
 			//
 
 			const scalar factor = 1.0 / (nClassMembers[c] + priorPoint - 1);
-			for (i = 0; i < (integer)CurrentCov.Block.size(); i++)
+			for (integer i = 0; i < (integer)CurrentCov.Block.size(); i++)
 				CurrentCov.Block[i] *= factor;
-			for (i = 0; i < (integer)CurrentCov.Diagonal.size(); i++)
+			for (integer i = 0; i < (integer)CurrentCov.Diagonal.size(); i++)
 				CurrentCov.Diagonal[i] *= factor;
 
 		}
@@ -614,7 +613,7 @@ void KK::MStep()
 	else
 	{
 		// I think this code gives wrong results (but only slightly) (DFMG: 2014/10/13)
-		for (c = 0; c < MaxPossibleClusters; c++)
+		for (integer c = 0; c < MaxPossibleClusters; c++)
 		{
 			vector<integer> &PointsInThisClass = PointsInClass[c];
 			SafeArray<scalar> safeCov(Cov, c*nDims2, "safeCovMStep");
@@ -624,9 +623,9 @@ void KK::MStep()
 				{
 					for (integer q = 0; q < (integer)PointsInThisClass.size(); q++)
 					{
-						p = PointsInThisClass[q];
+						integer p = PointsInThisClass[q];
 						scalar *cv2m = &AllVector2Mean[p*nDims];
-						for (i = iblock; i < MIN(nDims, iblock + COVARIANCE_BLOCKSIZE); i++)
+						for (integer i = iblock; i < MIN(nDims, iblock + COVARIANCE_BLOCKSIZE); i++)
 						{
 							scalar cv2mi = cv2m[i];
 							integer jstart;
@@ -639,7 +638,7 @@ void KK::MStep()
 							//scalar *cv2mjend = cv2m+MIN(nDims, jblock+COVARIANCE_BLOCKSIZE);
 							//for(j=jstart; j<MIN(nDims, jblock+COVARIANCE_BLOCKSIZE); j++)
 							//for(; cv2mjptr!=cv2mjend;)
-							for (j = MIN(nDims, jblock + COVARIANCE_BLOCKSIZE) - jstart; j; j--)
+							for (integer j = MIN(nDims, jblock + COVARIANCE_BLOCKSIZE) - jstart; j; j--)
 								*covptr++ += cv2mi*(*cv2mjptr++);
 						}
 					}
@@ -651,11 +650,11 @@ void KK::MStep()
     // and normalize
     if(!UseDistributional)
 	{    //For original KlustaKwik classical EM
-        for (cc=0; cc<nClustersAlive; cc++)
+        for (integer cc=0; cc<nClustersAlive; cc++)
         {
-            c = AliveIndex[cc];
-            for(i=0; i<nDims; i++)
-                for(j=i; j<nDims; j++)
+        	integer c = AliveIndex[cc];
+            for(integer i=0; i<nDims; i++)
+                for(integer j=i; j<nDims; j++)
                     Cov[c*nDims2 + i*nDims + j] /= (nClassMembers[c]-1);
         }
     }
@@ -666,9 +665,9 @@ void KK::MStep()
     // Diagnostics
     if (Debug)
     {
-        for (cc=0; cc<nClustersAlive; cc++)
+        for (integer cc=0; cc<nClustersAlive; cc++)
         {
-            c = AliveIndex[cc];
+        	integer c = AliveIndex[cc];
 			Output("Class %d - Weight %.2g\n", (int)c, Weight[c]);
             Output("Mean: ");
             MatPrint(stdout, &Mean.front() + c*nDims, 1, nDims);
@@ -689,7 +688,6 @@ void KK::MStep()
 // also counts number of living classes
 void KK::EStep()
 {
-    integer p, c, cc, i;
     integer nSkipped;
     scalar LogRootDet; // log of square root of covariance determinant
     scalar correction_factor = (scalar)1; // for partial correction in distributional step
@@ -713,7 +711,7 @@ void KK::EStep()
     // start with cluster 0 - uniform distribution over space
     // because we have normalized all dims to 0...1, density will be 1.
     vector<integer> NumberInClass(MaxPossibleClusters);  // For finding number of points in each class
-    for (p=0; p<nPoints; p++)
+    for (integer p=0; p<nPoints; p++)
     {
         LogP[p*MaxPossibleClusters + 0] = (float)-log(Weight[0]);
         integer ccc = Class[p];
@@ -723,9 +721,9 @@ void KK::EStep()
 	BlockPlusDiagonalMatrix *CurrentCov;
 	BlockPlusDiagonalMatrix *CholBPD = NULL;
 
-	for (cc = 1; cc<nClustersAlive; cc++)
+	for (integer cc = 1; cc<nClustersAlive; cc++)
     {
-        c = AliveIndex[cc];
+        integer c = AliveIndex[cc];
 
         // calculate cholesky decomposition for class c
 		integer chol_return;
@@ -783,7 +781,7 @@ void KK::EStep()
 		else
 		{
 			LogRootDet = 0;
-			for (i = 0; i < nDims; i++)
+			for (integer i = 0; i < nDims; i++)
 				LogRootDet += log(Chol[i*nDims + i]);
 		}
 
@@ -878,7 +876,7 @@ void KK::EStep()
 			restricted_data_pointer Data_p = &(Data[p*nDims]);
 			scalar * __restrict Mean_c = &(Mean[c*nDims]);
 			scalar * __restrict v2m = &(Vec2Mean[0]);
-			for (i = 0; i < nDims; i++)
+			for (integer i = 0; i < nDims; i++)
 				v2m[i] = get_data_from_pointer(Data_p, i) - Mean_c[i];
 
             // calculate Root vector - by Chol*Root = Vec2Mean
@@ -888,7 +886,7 @@ void KK::EStep()
 				TriSolve(safeChol, safeVec2Mean, safeRoot, nDims);
 
             // add half of Root vector squared to log p
-            for(i=0; i<nDims; i++)
+            for(integer i=0; i<nDims; i++)
                 Mahal += Root[i]*Root[i];
 
             // if distributional E step, add correction term
@@ -905,7 +903,7 @@ void KK::EStep()
 				const scalar * __restrict ptr_nu = &(NoiseMean[0]);
 				const scalar * __restrict ptr_sigma2 = &(NoiseVariance[0]);
 				restricted_data_pointer ptr_y = &(Data[p*nDims]);
-				for (i = 0; i < nDims; i++)
+				for (integer i = 0; i < nDims; i++)
 				{
 #ifdef STORE_FLOAT_MASK_AS_CHAR
 				    const scalar w = ptr_char_w[i]/(scalar)255.0;
@@ -930,7 +928,7 @@ void KK::EStep()
 				}
 #else
 				const scalar * __restrict ctp = &(CorrectionTerm[p*nDims]);
-				for (i = 0; i < nDims; i++)
+				for (integer i = 0; i < nDims; i++)
 					subMahal += ctp[i] * icd[i];
 #endif
 				Mahal += subMahal*correction_factor;
