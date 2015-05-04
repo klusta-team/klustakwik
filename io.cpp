@@ -314,7 +314,7 @@ void KK::SaveOutput()
 }
 
 // write output to .clu file - with 1 added to cluster numbers, and empties removed.
-void KK::SaveTempOutput()
+void KK::SaveTempOutput(integer Iter)
 {
     integer c;
     uinteger p;
@@ -354,7 +354,7 @@ void KK::SaveTempOutput()
     // print temp.clu file
    //This is the clu for the current iteration
    //This fixes the bug of having a trivial temp.clu file if there is only one iteration
-    sprintf(fname, "%s.temp.clu.%d", FileBase, (int)ElecNo);
+    sprintf(fname, "%s.temp.%d.clu.%d", FileBase, (int)Iter, (int)ElecNo);
     fp = fopen_safe(fname, "w");
     
     fprintf(fp, "%d\n", (int)MaxClass);

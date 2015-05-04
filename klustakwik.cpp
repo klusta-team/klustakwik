@@ -1574,7 +1574,7 @@ CompoundScore KK::CEM(char *CluFile, integer Recurse, integer InitRand,
 		if ((SaveTempCluEveryIter && Recurse) && (OldScore.raw >= Score.raw))
 		{
       
-            SaveTempOutput(); //SNK Saves a temporary output clu file on each iteration
+            SaveTempOutput(Iter); //SNK Saves a temporary output clu file on each iteration
             Output("Writing temp clu file \n");	
 	    Output("Because OldScore.raw, %f, is greater than current (better) Score.raw,%f  \n ", OldScore.raw, Score.raw);
 		}
@@ -1587,7 +1587,7 @@ CompoundScore KK::CEM(char *CluFile, integer Recurse, integer InitRand,
         {    
 	    if (OldScore.raw >= Score.raw) //This should be trivially true for the first run of KlustaKwik
 	    {
-	            SaveTempOutput(); //SNK Saves a temporary output clu file before each split
+	            SaveTempOutput(Iter); //SNK Saves a temporary output clu file before each split
 		    Output("Writing temp clu file \n");	
 		    Output("Because OldScore.raw, %f, is greater than current (better) Score.raw,%f \n ", OldScore.raw, Score.raw);
 	    }

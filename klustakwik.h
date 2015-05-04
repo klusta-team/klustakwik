@@ -83,7 +83,7 @@ public:
     void LoadData(char *FileBase, integer ElecNo, char *UseFeatures);
     void LoadClu(char *StartCluFile);
     void SaveOutput();
-    void SaveTempOutput();
+    void SaveTempOutput(integer Iter);
     void SaveSortedData();
     void SaveSortedClu();
     void SaveCovMeans();
