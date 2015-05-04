@@ -23,6 +23,16 @@
 
 using namespace std;
 
+class CompoundScore
+{
+public:
+	scalar raw;
+	scalar total;
+	scalar penalty;
+	CompoundScore() : raw(0.0), total(0.0), penalty(0.0) {};
+	CompoundScore(scalar _raw, scalar _total, scalar _penalty) : raw(_raw), total(_total), penalty(_penalty) {};
+};
+
 class KK {
 public:
     /////////////// CONSTRUCTORS ///////////////////////////////////////////////
@@ -58,7 +68,7 @@ public:
     // Precomputations for cluster masks
     void ComputeClusterMasks();
     // Score and penalty functions
-    scalar ComputeScore();
+    CompoundScore ComputeScore();
     scalar Penalty(integer n);
     void ComputeClassPenalties();
     // Main algorithm functions
@@ -67,13 +77,13 @@ public:
     void CStep(bool allow_assign_to_noise=true);
     void ConsiderDeletion();
     integer TrySplits();
-    scalar CEM(char *CluFile, integer recurse, integer InitRand, bool allow_assign_to_noise=true);
-    scalar Cluster(char *CluFile);
+	CompoundScore CEM(char *CluFile, integer recurse, integer InitRand, bool allow_assign_to_noise = true);
+	CompoundScore Cluster(char *CluFile);
     // IO related functions
     void LoadData(char *FileBase, integer ElecNo, char *UseFeatures);
     void LoadClu(char *StartCluFile);
     void SaveOutput();
-    void SaveTempOutput();
+    void SaveTempOutput(integer Iter);
     void SaveSortedData();
     void SaveSortedClu();
     void SaveCovMeans();

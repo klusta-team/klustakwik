@@ -1110,7 +1110,7 @@ void KK::LoadClu(char *CluFile)
 integer KK::TrySplits()
 {
     integer c, cc, c2, p, p2, DidSplit = 0;
-    scalar Score, NewScore, UnsplitScore, SplitScore;
+    CompoundScore Score, NewScore, UnsplitScore, SplitScore;
     integer UnusedCluster;
     //KK K2; // second KK structure for sub-clustering
     //KK K3; // third one for comparison
@@ -1206,7 +1206,7 @@ integer KK::TrySplits()
         // Fix by Michaël Zugaro: replace next line with following two lines
         // if(SplitScore<UnsplitScore) {
         if(K2.nClustersAlive<2) Output("\n Split failed - leaving alone\n");
-        if((SplitScore<UnsplitScore)&&(K2.nClustersAlive>=2)) {
+        if((SplitScore.total<UnsplitScore.total)&&(K2.nClustersAlive>=2)) {
 			if (AlwaysSplitBimodal)
 			{
 				DidSplit = 1;
@@ -1253,9 +1253,9 @@ integer KK::TrySplits()
 				//Output("About to compute K3 class penalties");
 				if (UseDistributional) K3.ComputeClassPenalties(); //SNK Fixed bug: Need to compute the cluster penalty properly, cluster penalty is only used in UseDistributional mode
 				NewScore = K3.ComputeScore();
-				Output("\nSplitting cluster %d changes total score from " SCALARFMT " to " SCALARFMT "\n", (int)c, Score, NewScore);
+				Output("\nSplitting cluster %d changes total score from " SCALARFMT " to " SCALARFMT "\n", (int)c, Score.total, NewScore.total);
 
-				if (NewScore < Score)
+				if (NewScore.total < Score.total)
 				{
 					DidSplit = 1;
 					Output("\n So it's getting split into cluster %d.\n", (int)UnusedCluster);
@@ -1275,7 +1275,7 @@ integer KK::TrySplits()
 }
 
 // ComputeScore() - computes total score.  Requires M, E, and C steps to have been run
-scalar KK::ComputeScore()
+CompoundScore KK::ComputeScore()
 {
     integer p;
    // integer debugadd;
@@ -1306,7 +1306,8 @@ scalar KK::ComputeScore()
         }
     }
 
-    return Score;
+	CompoundScore cscore(Score - penalty, Score, penalty);
+	return cscore;
 }
 
 // Initialise starting conditions randomly
@@ -1447,14 +1448,14 @@ void KK::StartingConditionsFromMasks()
 // optional start file loads this cluster file to start iteration
 // if Recurse is 0, it will not try and split.
 // if InitRand is 0, use cluster assignments already in structure
-scalar KK::CEM(char *CluFile, integer Recurse, integer InitRand,
+CompoundScore KK::CEM(char *CluFile, integer Recurse, integer InitRand,
         bool allow_assign_to_noise)
 {
     integer p;
     integer nChanged;
     integer Iter;
     vector<integer> OldClass(nPoints);
-    scalar Score, OldScore;
+    CompoundScore Score, OldScore;
     integer LastStepFull; // stores whether the last step was a full one
     integer DidSplit;
 
@@ -1480,7 +1481,7 @@ scalar KK::CEM(char *CluFile, integer Recurse, integer InitRand,
     // main loop
     Iter = 0;
     FullStep = 1;
-    Score = 0.0;
+    Score = CompoundScore(0.0, 0.0, 0.0);
     do {
         // Store old classifications
         for(p=0; p<nPoints; p++) OldClass[p] = Class[p];
@@ -1559,8 +1560,7 @@ scalar KK::CEM(char *CluFile, integer Recurse, integer InitRand,
                         nChanged>ChangedThresh*nPoints
                         || nChanged == 0
                         || Iter%FullStepEvery==0
-                        || Score > OldScore // SNK: Resurrected
-                    //SNK    Score decreases ARE because of quick steps!
+                        || ((Score.raw > OldScore.raw) && (Score.total > OldScore.total))
                     ) ;
         if (Iter>MaxIter)
         {
@@ -1569,12 +1569,12 @@ scalar KK::CEM(char *CluFile, integer Recurse, integer InitRand,
         }
         
 		//Save a temporary clu file when not splitting
-		if ((SaveTempCluEveryIter && Recurse) && (OldScore> Score))
+		if ((SaveTempCluEveryIter && Recurse) && (OldScore.raw >= Score.raw))
 		{
       
-            SaveTempOutput(); //SNK Saves a temporary output clu file on each iteration
+            SaveTempOutput(Iter); //SNK Saves a temporary output clu file on each iteration
             Output("Writing temp clu file \n");	
-	    Output("Because OldScore, %f, is greater than current (better) Score,%f  \n ", OldScore, Score);
+	    Output("Because OldScore.raw, %f, is greater than current (better) Score.raw,%f  \n ", OldScore.raw, Score.raw);
 		}
 		
         // try splitting
@@ -1583,11 +1583,11 @@ scalar KK::CEM(char *CluFile, integer Recurse, integer InitRand,
         //Output("Iter-SplitFirst %d \n",(int)(Iter-SplitFirst));
         if ((Recurse && SplitEvery>0) && ( Iter==SplitFirst  ||( Iter>=SplitFirst+1 && (Iter-SplitFirst)%SplitEvery==SplitEvery-1 )  || (nChanged==0 && LastStepFull) ) )
         {    
-	    if (OldScore> Score) //This should be trivially true for the first run of KlustaKwik
+	    if (OldScore.raw >= Score.raw) //This should be trivially true for the first run of KlustaKwik
 	    {
-	            SaveTempOutput(); //SNK Saves a temporary output clu file before each split
+	            SaveTempOutput(Iter); //SNK Saves a temporary output clu file before each split
 		    Output("Writing temp clu file \n");	
-		    Output("Because OldScore, %f, is greater than current (better) Score,%f \n ", OldScore, Score);
+		    Output("Because OldScore.raw, %f, is greater than current (better) Score.raw,%f \n ", OldScore.raw, Score.raw);
 	    }
             DidSplit = TrySplits();
         } else DidSplit = 0;
@@ -1604,7 +1604,7 @@ scalar KK::CEM(char *CluFile, integer Recurse, integer InitRand,
 // then run CEM on this
 // then use these clusters to do a CEM on the full data
 // It calls CEM whenever there is no initialization clu file (i.e. the most common usage)
-scalar KK::Cluster(char *StartCluFile=NULL)
+CompoundScore KK::Cluster(char *StartCluFile = NULL)
 {
     if (Debug)
     {
@@ -1781,8 +1781,8 @@ KK::~KK()
 // Main loop
 int main(int argc, char **argv)
 {
-    scalar Score;
-    scalar BestScore = HugeScore;
+    CompoundScore Score;
+    CompoundScore BestScore(HugeScore, HugeScore, 0.0);
     integer p, i;
     SetupParams((integer)argc, argv); // This function is defined in parameters.cpp
 	Output("Starting KlustaKwik. Version: %s\n", VERSION);
@@ -1825,7 +1825,7 @@ int main(int argc, char **argv)
         iterationtime = (clock()-iterationtime)/(scalar) CLOCKS_PER_SEC;
         Output("Time taken for this iteration:" SCALARFMT " seconds.\n", iterationtime);
         
-		Output(" %d->%d Clusters: Score " SCALARFMT "\n\n", (int)K1.nStartingClusters, (int)K1.nClustersAlive, BestScore);
+		Output(" %d->%d Clusters: Score " SCALARFMT "\n\n", (int)K1.nStartingClusters, (int)K1.nClustersAlive, BestScore.total);
         for(p=0; p<K1.nPoints; p++)
             K1.BestClass[p] = K1.Class[p];
 	    K1.SaveOutput();
@@ -1843,8 +1843,8 @@ int main(int argc, char **argv)
             iterationtime = (clock()-iterationtime)/(scalar) CLOCKS_PER_SEC;
             Output("Time taken for this iteration:" SCALARFMT " seconds.\n", iterationtime);
 
-			Output(" %d->%d Clusters: Score " SCALARFMT ", best is " SCALARFMT "\n", (int)K1.nStartingClusters, (int)K1.nClustersAlive, Score, BestScore);
-            if (Score < BestScore)
+			Output(" %d->%d Clusters: Score " SCALARFMT ", best is " SCALARFMT "\n", (int)K1.nStartingClusters, (int)K1.nClustersAlive, Score.total, BestScore.total);
+            if (Score.total < BestScore.total)
             {
                 Output("THE BEST YET!\n"); // New best classification found
                 BestScore = Score;
