@@ -1516,7 +1516,7 @@ scalar KK::CEM(char *CluFile, integer Recurse, integer InitRand,
         if(Verbose>=1)
         {
             if(Recurse==0) Output("\t\tSP:");
-            if ((Recurse!=0)||(SplitInfo==1&&Recurse==0))
+            if ((Recurse!=0)||(SplitInfo==1))
                 Output("Iteration %d%c (" SCALARFMT " sec): %d clusters\n",
 				       (int)Iter, FullStep ? 'F' : 'Q', timesofar, (int)nClustersAlive);
         }
