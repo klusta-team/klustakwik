@@ -171,7 +171,7 @@ void print_params(FILE *fp)
     add_param(BOOLEAN, "help", &help);
     if (help)
     {
-        fprintf(fp, HelpString);
+        fprintf(fp, "%s\n", HelpString);
         PARAMETERS_TABLE(PRINT_PARAMETERS);
         exit(0);
     }
